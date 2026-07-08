@@ -14,3 +14,10 @@ export type { SelectItem, SelectListLayoutOptions, SelectListTheme, SelectListTr
 export { SettingsList } from "./settings-list.ts";
 export type { SettingItem, SettingsChange, SettingsListOptions, SettingsListTheme } from "./settings-list-types.ts";
 export { type PitStyle } from "./component-style.ts";
+export { Markdown } from "./markdown/index.ts";
+export type {
+  DefaultTextStyle,
+  MarkdownOptions,
+  MarkdownStyle,
+  MarkdownTheme,
+} from "./markdown/index.ts";
