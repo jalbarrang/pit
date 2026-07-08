@@ -5,4 +5,6 @@ export { Spacer } from "./spacer.ts";
 export { Text, type TextContent } from "./text.ts";
 export { TruncatedText, type TruncatedTextContent } from "./truncated-text.ts";
 export { Input } from "./input.ts";
+export { Loader, type LoaderIndicatorOptions } from "./loader.ts";
+export { CancellableLoader } from "./cancellable-loader.ts";
 export { type PitStyle } from "./component-style.ts";
