@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import type { Renderable } from "@opentui/core";
+import { NodeFileSearchPort } from "../adapters/node-file-search.ts";
 import { CombinedAutocompleteProvider } from "../domain/input/index.ts";
 import { Editor } from "./index.ts";
 
@@ -29,7 +30,7 @@ describe("Editor autocomplete", () => {
 
   it("shows slash commands and accepts one with tab", async () => {
     const e = editor();
-    e.setAutocompleteProvider(new CombinedAutocompleteProvider([{ name: "help", description: "Show help" }], dir));
+    e.setAutocompleteProvider(new CombinedAutocompleteProvider([{ name: "help", description: "Show help" }], dir, new NodeFileSearchPort()));
     e.handleInput("/");
     e.handleInput("h");
     await tick();
@@ -40,7 +41,7 @@ describe("Editor autocomplete", () => {
 
   it("shows path completions and accepts one with enter", async () => {
     const e = editor();
-    e.setAutocompleteProvider(new CombinedAutocompleteProvider([], dir));
+    e.setAutocompleteProvider(new CombinedAutocompleteProvider([], dir, new NodeFileSearchPort()));
     for (const ch of "./pack") e.handleInput(ch);
     await tick();
     assert.equal(e.getAutocompleteItems()[0]?.value, "./package.json");
@@ -50,7 +51,7 @@ describe("Editor autocomplete", () => {
 
   it("dismisses autocomplete with escape", async () => {
     const e = editor();
-    e.setAutocompleteProvider(new CombinedAutocompleteProvider([{ name: "help" }], dir));
+    e.setAutocompleteProvider(new CombinedAutocompleteProvider([{ name: "help" }], dir, new NodeFileSearchPort()));
     e.handleInput("/");
     await tick();
     assert.equal(e.isShowingAutocomplete(), true);

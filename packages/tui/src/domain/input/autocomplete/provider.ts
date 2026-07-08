@@ -1,26 +1,27 @@
 import { fuzzyFilter } from "../fuzzy.ts";
 import { extractAtPrefix, extractPathPrefix } from "./path-prefix.ts";
 import { getFileSuggestions, parsePathPrefix } from "./files.ts";
+import type { FileSearchPort } from "./file-port.ts";
 import type { AutocompleteItem, AutocompleteProvider, AutocompleteSuggestions, SlashCommand } from "./types.ts";
 
 export class CombinedAutocompleteProvider implements AutocompleteProvider {
   private commands: (SlashCommand | AutocompleteItem)[];
   private basePath: string;
-  private fdPath: string | null;
-  constructor(commands: (SlashCommand | AutocompleteItem)[] = [], basePath: string, fdPath: string | null = null) {
+  private fileSearch?: FileSearchPort;
+  constructor(commands: (SlashCommand | AutocompleteItem)[] = [], basePath: string, fileSearch?: FileSearchPort) {
     this.commands = commands;
     this.basePath = basePath;
-    this.fdPath = fdPath;
+    this.fileSearch = fileSearch;
   }
 
   async getSuggestions(lines: string[], cursorLine: number, cursorCol: number, options: { signal: AbortSignal; force?: boolean }): Promise<AutocompleteSuggestions | null> {
     const text = (lines[cursorLine] || "").slice(0, cursorCol);
     const atPrefix = extractAtPrefix(text);
-    if (atPrefix) return this.files(atPrefix);
+    if (atPrefix) return this.files(atPrefix, options.signal);
     const slash = await this.slashSuggestions(text, options.force ?? false);
     if (slash) return slash;
     const pathPrefix = extractPathPrefix(text, options.force ?? false);
-    return pathPrefix === null ? null : this.files(pathPrefix);
+    return pathPrefix === null ? null : this.files(pathPrefix, options.signal);
   }
 
   applyCompletion(lines: string[], cursorLine: number, cursorCol: number, item: AutocompleteItem, prefix: string) {
@@ -40,9 +41,9 @@ export class CombinedAutocompleteProvider implements AutocompleteProvider {
     return !(text.startsWith("/") && !text.includes(" "));
   }
 
-  private files(prefix: string): AutocompleteSuggestions | null {
+  private async files(prefix: string, signal: AbortSignal): Promise<AutocompleteSuggestions | null> {
     const { rawPrefix } = parsePathPrefix(prefix);
-    const items = getFileSuggestions(prefix, this.basePath);
+    const items = await getFileSuggestions(prefix, this.basePath, this.fileSearch, signal);
     if (items.length === 0 && rawPrefix !== "/") return null;
     return { items, prefix };
   }
