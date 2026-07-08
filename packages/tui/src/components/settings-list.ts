@@ -5,7 +5,7 @@ import { Component } from "./component.ts";
 import type { SettingItem, SettingsChange, SettingsListOptions, SettingsListTheme } from "./settings-list-types.ts";
 
 type TextLike = Renderable & { content: string; width?: number };
-const createRenderable = (ctx: RenderContext): TextLike => new TextRenderable(ctx, { content: "", height: "auto", wrapMode: "none" }) as TextLike;
+const createRenderable = (ctx: RenderContext): TextLike => new TextRenderable(ctx, { content: "", height: "auto", wrapMode: "none" }) as unknown as TextLike;
 
 export class SettingsList extends Component {
   readonly renderable: TextLike;

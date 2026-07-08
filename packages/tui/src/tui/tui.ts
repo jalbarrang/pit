@@ -1,5 +1,5 @@
 import { createCliRenderer } from "@opentui/core";
-import { applyFocusTransition, transitionFocus } from "../domain/composition/index.ts";
+import { applyFocusTransition, type FocusTarget, transitionFocus } from "../domain/composition/index.ts";
 import { type Component } from "../components/index.ts";
 import { KeyRouter } from "./key-routing.ts";
 import { OverlayManager } from "./overlays.ts";
@@ -35,7 +35,7 @@ export class TUI {
   }
 
   setFocus(component: Component | null): void {
-    const transition = transitionFocus(this.focusedComponent, component);
+    const transition = transitionFocus(this.focusedComponent as FocusTarget, component as FocusTarget);
     if (!transition.changed) return;
     applyFocusTransition(transition);
     this.focusedComponent = component;

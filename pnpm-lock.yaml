@@ -6,7 +6,14 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      '@types/node':
+        specifier: ^26.1.0
+        version: 26.1.0
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/app:
     dependencies:
@@ -15,7 +22,7 @@ importers:
         version: 0.80.3(ws@8.21.0)(zod@4.4.3)
       '@opentui/core':
         specifier: ^0.4.3
-        version: 0.4.3(typescript@5.9.3)(web-tree-sitter@0.25.10)
+        version: 0.4.3(typescript@6.0.3)(web-tree-sitter@0.25.10)
       '@pit/tui':
         specifier: workspace:*
         version: link:../tui
@@ -24,7 +31,7 @@ importers:
     dependencies:
       '@opentui/core':
         specifier: ^0.4.3
-        version: 0.4.3(typescript@5.9.3)(web-tree-sitter@0.25.10)
+        version: 0.4.3(typescript@6.0.3)(web-tree-sitter@0.25.10)
 
 packages:
 
@@ -632,8 +639,8 @@ packages:
   typebox@1.1.38:
     resolution: {integrity: sha512-pZ0aQPmMmXoUvSbeuWf/Hzsc+avNw/Zd6VeE8CFgkVGWyuHPJvqeJJDeJqLve+K70LvjYIoleGcoJHPT17cWoA==}
 
-  typescript@5.9.3:
-    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+  typescript@6.0.3:
+    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -1075,9 +1082,9 @@ snapshots:
   '@opentui/core-win32-x64@0.4.3':
     optional: true
 
-  '@opentui/core@0.4.3(typescript@5.9.3)(web-tree-sitter@0.25.10)':
+  '@opentui/core@0.4.3(typescript@6.0.3)(web-tree-sitter@0.25.10)':
     dependencies:
-      bun-ffi-structs: 0.2.4(typescript@5.9.3)
+      bun-ffi-structs: 0.2.4(typescript@6.0.3)
       diff: 9.0.0
       marked: 17.0.1
       string-width: 7.2.0
@@ -1194,9 +1201,9 @@ snapshots:
 
   buffer-equal-constant-time@1.0.1: {}
 
-  bun-ffi-structs@0.2.4(typescript@5.9.3):
+  bun-ffi-structs@0.2.4(typescript@6.0.3):
     dependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
 
   chalk@5.6.2: {}
 
@@ -1413,7 +1420,7 @@ snapshots:
 
   typebox@1.1.38: {}
 
-  typescript@5.9.3: {}
+  typescript@6.0.3: {}
 
   undici-types@8.3.0: {}
 

@@ -5,7 +5,7 @@ import { textOptions, type PitStyle } from "./component-style.ts";
 
 type InputLike = Renderable & { content: string; width?: number; options?: Record<string, unknown> };
 const createRenderable = (ctx: RenderContext, style?: PitStyle): InputLike =>
-  new TextRenderable(ctx, { content: "> ", height: 1, wrapMode: "none", truncate: true, ...textOptions(style) }) as InputLike;
+  new TextRenderable(ctx, { content: "> ", height: 1, wrapMode: "none", truncate: true, ...textOptions(style) }) as unknown as InputLike;
 
 export class Input extends Component implements Focusable {
   readonly renderable: InputLike;

@@ -7,7 +7,7 @@ import type { SelectItem, SelectListLayoutOptions, SelectListTheme } from "./sel
 const DEFAULT_PRIMARY_COLUMN_WIDTH = 32;
 const PRIMARY_COLUMN_GAP = 2;
 type TextLike = Renderable & { content: string; width?: number; options?: Record<string, unknown> };
-const createRenderable = (ctx: RenderContext): TextLike => new TextRenderable(ctx, { content: "", height: "auto", wrapMode: "none" }) as TextLike;
+const createRenderable = (ctx: RenderContext): TextLike => new TextRenderable(ctx, { content: "", height: "auto", wrapMode: "none" }) as unknown as TextLike;
 const normalize = (text = ""): string => text.replace(/[\r\n]+/g, " ").trim();
 const clamp = (value: number, min: number, max: number): number => Math.max(min, Math.min(value, max));
 

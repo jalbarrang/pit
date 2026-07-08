@@ -13,8 +13,9 @@ test('file-size command reports authored files over 100 lines', () => {
   try {
     assert.throws(
       () => execFileSync('bash', ['scripts/check-file-size.sh'], { encoding: 'utf8' }),
-      error => {
-        const output = `${error.stdout ?? ''}${error.stderr ?? ''}${error.message}`;
+      (error: unknown) => {
+        const e = error as { stdout?: string; stderr?: string; message?: string };
+        const output = `${e.stdout ?? ''}${e.stderr ?? ''}${e.message ?? ''}`;
         return output.includes(fixture);
       },
     );

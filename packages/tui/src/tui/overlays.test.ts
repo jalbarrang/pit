@@ -28,7 +28,7 @@ const fakeRenderer = (width = 80, height = 24) => {
     requestRender() {},
     destroy() {},
     keyInput: { on() {}, off() {} },
-    resize(w: number, h: number) { this.width = w; this.height = h; },
+    resize(this: { width: number; height: number }, w: number, h: number) { this.width = w; this.height = h; },
     on() {},
     off() {},
   } as unknown as TuiRenderer;

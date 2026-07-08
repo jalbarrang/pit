@@ -13,7 +13,6 @@ class Source implements KeyEventSource {
 class Receiver extends Component {
   readonly renderable = { requestRender() {} } as unknown as Renderable;
   received: string[] = [];
-  wantsKeyRelease?: boolean;
   handleInput(data: string): void { this.received.push(data); }
 }
 const renderer = () => ({

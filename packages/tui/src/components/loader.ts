@@ -7,7 +7,7 @@ const DEFAULT_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", 
 const DEFAULT_INTERVAL_MS = 80;
 type TextLike = Renderable & { content: string; options?: Record<string, unknown> };
 const createRenderable = (ctx: RenderContext, style?: PitStyle): TextLike =>
-  new TextRenderable(ctx, { content: "", height: 1, wrapMode: "none", ...textOptions(style) }) as TextLike;
+  new TextRenderable(ctx, { content: "", height: 1, wrapMode: "none", ...textOptions(style) }) as unknown as TextLike;
 
 export class Loader extends Component {
   readonly renderable: TextLike;

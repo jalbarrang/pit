@@ -4,7 +4,10 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "strict": true,
+    "skipLibCheck": true,
     "noEmit": true,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types"]
   }
 }
