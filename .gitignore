@@ -1,0 +1,21 @@
+# Node
+node_modules/
+dist/
+.cache/
+.env
+
+# macOS
+.DS_Store
+
+# Test artifacts
+/test-results/
+
+.mockups/
+
+.plans/
+.hiker-cache/
+
+.pi/context-folders.json
+
+.references/
+
