@@ -7,4 +7,6 @@ export { TruncatedText, type TruncatedTextContent } from "./truncated-text.ts";
 export { Input } from "./input.ts";
 export { Loader, type LoaderIndicatorOptions } from "./loader.ts";
 export { CancellableLoader } from "./cancellable-loader.ts";
+export { SelectList } from "./select-list.ts";
+export type { SelectItem, SelectListLayoutOptions, SelectListTheme, SelectListTruncatePrimaryContext } from "./select-list-types.ts";
 export { type PitStyle } from "./component-style.ts";

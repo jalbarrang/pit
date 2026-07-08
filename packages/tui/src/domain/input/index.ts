@@ -6,3 +6,4 @@ export * from "./kill-ring.ts";
 export * from "./undo-history.ts";
 export * from "./word-navigation.ts";
 export * from "./text-field.ts";
+export * from "./list-selection.ts";
