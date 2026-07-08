@@ -1,2 +1,7 @@
 export { Component, isFocusable, type Focusable } from "./component.ts";
 export { Container } from "./container.ts";
+export { Box, type BoxStyle } from "./box.ts";
+export { Spacer } from "./spacer.ts";
+export { Text, type TextContent } from "./text.ts";
+export { TruncatedText, type TruncatedTextContent } from "./truncated-text.ts";
+export { type PitStyle } from "./component-style.ts";
