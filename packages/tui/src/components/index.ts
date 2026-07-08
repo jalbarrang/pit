@@ -4,4 +4,5 @@ export { Box, type BoxStyle } from "./box.ts";
 export { Spacer } from "./spacer.ts";
 export { Text, type TextContent } from "./text.ts";
 export { TruncatedText, type TruncatedTextContent } from "./truncated-text.ts";
+export { Input } from "./input.ts";
 export { type PitStyle } from "./component-style.ts";
