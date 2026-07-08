@@ -3,6 +3,7 @@ import { EditorModel } from "../../domain/editing/index.ts";
 import { Component, type Focusable } from "../component.ts";
 import { textOptions } from "../component-style.ts";
 import { editorKey, printableInput } from "./keymap.ts";
+import { cleanPaste, parseBracketedPaste } from "./paste.ts";
 import { defaultEditorTheme } from "./theme.ts";
 import type { EditorComponent, EditorOptions, EditorTheme } from "./types.ts";
 import { renderViewport, withCursor } from "./viewport.ts";
@@ -45,6 +46,13 @@ export class Editor extends Component implements Focusable, EditorComponent {
   setAutocompleteMaxVisible(_maxVisible: number): void {}
 
   handleInput(data: string): void {
+    const parsedPaste = parseBracketedPaste(data);
+    if (parsedPaste) {
+      this.model.insert(cleanPaste(parsedPaste.paste ?? ""), true);
+      this.changed();
+      if (parsedPaste.remaining) this.handleInput(parsedPaste.remaining);
+      return;
+    }
     const key = editorKey(data);
     if (key === "submit") { const value = this.model.submit(); this.changed(false); this.onSubmit?.(value); return; }
     if (key === "newline") this.model.newline();
