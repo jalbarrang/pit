@@ -44,6 +44,6 @@ export function getFileSuggestions(prefix: string, basePath: string): Autocomple
 
 const resolveDir = (path: string, raw: string, base: string): string => raw.startsWith("~") || path.startsWith("/") ? path : join(base, path);
 const buildDisplayPath = (prefix: string, name: string, directory: boolean): string => {
-  const full = prefix.endsWith("/") ? prefix + name : prefix.includes("/") ? join(dirname(prefix), name) : prefix.startsWith("~") ? `~/${name}` : name;
+  const full = prefix.endsWith("/") ? prefix + name : prefix.startsWith("./") ? `./${name}` : prefix.includes("/") ? join(dirname(prefix), name) : prefix.startsWith("~") ? `~/${name}` : name;
   return display(full) + (directory ? "/" : "");
 };

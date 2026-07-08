@@ -21,6 +21,7 @@ export class EditorModel {
   getLines(): string[] { return [...this.state.lines]; }
   getCursor(): EditorCursor { return { ...this.state.cursor }; }
   setText(text: string): void { this.snapshot(); this.state = { lines: linesFromText(text), cursor: { line: 0, col: 0 } }; this.end(); this.history.reset(); }
+  replace(lines: string[], cursor: EditorCursor): void { this.snapshot(); this.state = { lines: [...lines], cursor: { ...cursor } }; this.history.reset(); }
   addToHistory(text: string): void { this.history.add(text); }
   insert(text: string, atomic = false): void { if (!text) return; if (!atomic) this.typeSnapshot(text); else this.snapshot(); insertText(this.state, normalizeText(text)); this.history.reset(); }
   newline(): void { this.snapshot(); insertText(this.state, "\n"); this.lastAction = null; this.history.reset(); }
