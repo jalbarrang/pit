@@ -11,7 +11,7 @@ Use Node 26.4.0 or newer with experimental FFI enabled. `scripts/dev.sh` intenti
 ```bash
 scripts/dev.sh packages/app/src/index.ts
 scripts/dev.sh packages/app/src/smoke.ts
-npm test
+pnpm test
 ```
 
 The smoke entrypoint starts an OpenTUI fullscreen renderer with a rounded bordered box, green `pit smoke test` text, and `Ctrl+C to exit`.
@@ -42,4 +42,4 @@ packages/app/src/components           app UI components
 
 ## Test harness
 
-`npm test` runs `scripts/check-file-size.sh` first, then Node's built-in test runner over `packages/*/src/**/*.test.ts`.
+`pnpm test` runs `scripts/check-file-size.sh` first, then Node's built-in test runner over `packages/*/src/**/*.test.ts`.

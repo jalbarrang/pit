@@ -8,6 +8,6 @@
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.80.3",
     "@opentui/core": "^0.4.3",
-    "@pit/tui": "0.0.0"
+    "@pit/tui": "workspace:*"
   }
 }
