@@ -1,6 +1,7 @@
 import { KillRing, UndoStack } from "../input/index.ts";
 import { backspace, deleteForward, insertText } from "./edit-ops.ts";
 import { PromptHistory } from "./history-nav.ts";
+import { killEnd, killStart, killWordBack, killWordForward, transpose, yankText } from "./kill-ops.ts";
 import { moveHorizontal, moveLineEnd, moveLineStart, moveVertical, moveWord } from "./cursor-motion.ts";
 import { cloneState, linesFromText, normalizeText, textFromState } from "./text.ts";
 import type { EditorCursor, EditorState, LastAction } from "./types.ts";
@@ -12,6 +13,7 @@ export class EditorModel {
   private redoStack = new UndoStack<EditorState>();
   private killRing = new KillRing();
   private lastAction: LastAction = null;
+  private lastYank = "";
   width = 80;
 
   getText(): string { return textFromState(this.state); }
@@ -34,8 +36,17 @@ export class EditorModel {
   wordRight(): void { moveWord(this.state, 1); this.lastAction = null; }
   undo(): void { const snap = this.undoStack.pop(); if (!snap) return; this.redoStack.push(this.state); this.state = snap; this.lastAction = null; }
   redo(): void { const snap = this.redoStack.pop(); if (!snap) return; this.undoStack.push(this.state); this.state = snap; this.lastAction = null; }
+  killStart(): void { this.kill(killStart, true); }
+  killEnd(): void { this.kill(killEnd, false); }
+  killWordBack(): void { this.kill(killWordBack, true); }
+  killWordForward(): void { this.kill(killWordForward, false); }
+  yank(): void { const text = this.killRing.peek(); if (!text) return; this.snapshot(); yankText(this.state, text); this.lastYank = text; this.lastAction = "yank"; }
+  yankPop(): void { if (this.lastAction !== "yank" || this.killRing.length <= 1) return; this.snapshot(); this.removeLastYank(); this.killRing.rotate(); const text = this.killRing.peek()!; yankText(this.state, text); this.lastYank = text; this.lastAction = "yank"; }
+  transpose(): void { this.snapshot(); if (transpose(this.state)) this.lastAction = null; }
   submit(): string { const value = this.getText().trim(); this.state = { lines: [""], cursor: { line: 0, col: 0 } }; this.undoStack.clear(); this.redoStack.clear(); this.lastAction = null; this.history.reset(); return value; }
 
+  private kill(fn: (state: EditorState) => string, prepend: boolean): void { this.snapshot(); const wasKill = this.lastAction === "kill"; const text = fn(this.state); this.killRing.push(text, { prepend, accumulate: wasKill }); this.lastAction = text ? "kill" : null; this.history.reset(); }
+  private removeLastYank(): void { if (!this.lastYank) return; for (let i = 0; i < this.lastYank.length; i++) backspace(this.state); }
   private browse(direction: -1 | 1): void { const text = this.history.browse(this.getText(), direction); if (text === null) return; this.state = { lines: linesFromText(text), cursor: { line: 0, col: 0 } }; if (direction === 1) this.end(); }
   private snapshot(): void { this.undoStack.push(this.state); this.redoStack.clear(); }
   private typeSnapshot(text: string): void { if (/\s/.test(text) || this.lastAction !== "type-word") this.snapshot(); this.lastAction = "type-word"; }

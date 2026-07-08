@@ -58,6 +58,13 @@ export class Editor extends Component implements Focusable, EditorComponent {
     else if (key === "end") this.model.end();
     else if (key === "wordLeft") this.model.wordLeft();
     else if (key === "wordRight") this.model.wordRight();
+    else if (key === "killStart") this.model.killStart();
+    else if (key === "killEnd") this.model.killEnd();
+    else if (key === "killWordBack") this.model.killWordBack();
+    else if (key === "killWordForward") this.model.killWordForward();
+    else if (key === "yank") this.model.yank();
+    else if (key === "yankPop") this.model.yankPop();
+    else if (key === "transpose") this.model.transpose();
     else if (key === "undo") this.model.undo();
     else if (key === "redo") this.model.redo();
     else {
