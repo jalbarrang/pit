@@ -5,6 +5,7 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import { markdownThemeToSyntaxStyles } from "../../domain/styling/markdown-theme.ts";
+import { createCodeBlockRenderNode } from "./code-blocks.ts";
 import type { DefaultTextStyle, MarkdownTheme } from "./theme.ts";
 
 export type MarkdownLike = {
@@ -38,4 +39,5 @@ export const createMarkdown = (
     height: "auto",
     syntaxStyle: SyntaxStyle.fromStyles(markdownThemeToSyntaxStyles(theme, defaultTextStyle) as never),
     streaming: false,
+    renderNode: createCodeBlockRenderNode(ctx),
   }) as MarkdownLike;

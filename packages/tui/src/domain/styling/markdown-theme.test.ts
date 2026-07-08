@@ -54,5 +54,7 @@ describe("markdownThemeToSyntaxStyles", () => {
     assert.deepEqual(styles["markup.link.label"], { fg: "#81A1C1", underline: true });
     assert.deepEqual(styles["markup.link.url"], { fg: "#88C0D0", underline: true });
     assert.deepEqual(styles.conceal, { fg: "#4C566A" });
+    assert.deepEqual(styles.keyword, { fg: "#A3BE8C", bold: true });
+    assert.deepEqual(styles.string, { fg: "#A3BE8C" });
   });
 });

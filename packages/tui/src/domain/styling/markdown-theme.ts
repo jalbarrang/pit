@@ -1,4 +1,5 @@
 import type { DefaultTextStyle, MarkdownTheme, SyntaxStyleRecord } from "./markdown-theme-types.ts";
+import { codeHighlightStyles } from "./code-highlight-styles.ts";
 
 const headingLevels = (heading: MarkdownTheme["heading"]): SyntaxStyleRecord => ({
   "markup.heading": { ...heading },
@@ -29,6 +30,7 @@ export function markdownThemeToSyntaxStyles(
     "markup.link": { ...theme.link },
     "markup.link.label": { ...theme.link },
     "markup.link.url": { ...theme.linkUrl },
-    conceal: { ...theme.hr, ...theme.codeBlockBorder, ...theme.quoteBorder },
+    conceal: { ...theme.codeBlockBorder },
+    ...codeHighlightStyles(theme),
   };
 }
