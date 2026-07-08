@@ -11,7 +11,7 @@ import { defaultEditorTheme } from "./theme.ts";
 import type { EditorComponent, EditorOptions, EditorTheme } from "./types.ts";
 import { renderViewport, withCursor } from "./viewport.ts";
 type TextLike = Renderable & { content: string; width?: number; height?: number | string; options?: Record<string, unknown> };
-const makeRenderable = (ctx: RenderContext, theme: EditorTheme): TextLike => new TextRenderable(ctx, { content: "", height: "auto", wrapMode: "none", ...textOptions({ fg: theme.textColor }) }) as TextLike;
+const makeRenderable = (ctx: RenderContext, theme: EditorTheme): TextLike => new TextRenderable(ctx, { content: "", height: "auto", wrapMode: "none", ...textOptions({ fg: theme.textColor }) }) as unknown as TextLike;
 export class Editor extends Component implements Focusable, EditorComponent {
   readonly renderable: TextLike;
   readonly model = new EditorModel();
@@ -93,7 +93,7 @@ export class Editor extends Component implements Focusable, EditorComponent {
     const width = this.model.width;
     const view = renderViewport(this.model.getState(), width, this.maxHeight, this.model.getCursor());
     const body = withCursor(view.lines, view.cursorRow, view.cursorCol, this.focused).map((line) => " ".repeat(this.paddingX) + line);
-    this.renderable.content = [...body, ...this.autocomplete.render(width)].join("\n");
+    const bar = this.borderColor("─".repeat(width)); this.renderable.content = [bar, ...body, bar, ...this.autocomplete.render(width)].join("\n");
     this.renderable.width = width + this.paddingX * 2;
     this.invalidate();
   }
