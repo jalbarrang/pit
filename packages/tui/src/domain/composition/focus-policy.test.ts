@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { applyFocusTransition, transitionFocus } from "./index.ts";
+import { applyFocusTransition, topVisibleCapturingOverlay, transitionFocus } from "./index.ts";
 
 describe("FocusPolicy", () => {
   it("does nothing when target is unchanged", () => {
@@ -21,5 +21,15 @@ describe("FocusPolicy", () => {
     const current = { focused: true };
     applyFocusTransition(transitionFocus(current, null));
     assert.equal(current.focused, false);
+  });
+
+  it("chooses the topmost visible capturing overlay", () => {
+    const result = topVisibleCapturingOverlay([
+      { target: "base", hidden: false, focusOrder: 1 },
+      { target: "hidden", hidden: true, focusOrder: 3 },
+      { target: "non-capturing", hidden: false, nonCapturing: true, focusOrder: 4 },
+      { target: "top", hidden: false, visible: true, focusOrder: 2 },
+    ]);
+    assert.equal(result, "top");
   });
 });
