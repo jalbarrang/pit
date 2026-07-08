@@ -9,4 +9,6 @@ export { Loader, type LoaderIndicatorOptions } from "./loader.ts";
 export { CancellableLoader } from "./cancellable-loader.ts";
 export { SelectList } from "./select-list.ts";
 export type { SelectItem, SelectListLayoutOptions, SelectListTheme, SelectListTruncatePrimaryContext } from "./select-list-types.ts";
+export { SettingsList } from "./settings-list.ts";
+export type { SettingItem, SettingsChange, SettingsListOptions, SettingsListTheme } from "./settings-list-types.ts";
 export { type PitStyle } from "./component-style.ts";
