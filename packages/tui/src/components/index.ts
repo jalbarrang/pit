@@ -5,6 +5,8 @@ export { Spacer } from "./spacer.ts";
 export { Text, type TextContent } from "./text.ts";
 export { TruncatedText, type TruncatedTextContent } from "./truncated-text.ts";
 export { Input } from "./input.ts";
+export { Editor } from "./editor/index.ts";
+export type { EditorComponent, EditorOptions, EditorTheme } from "./editor/index.ts";
 export { Loader, type LoaderIndicatorOptions } from "./loader.ts";
 export { CancellableLoader } from "./cancellable-loader.ts";
 export { SelectList } from "./select-list.ts";
