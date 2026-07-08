@@ -42,7 +42,7 @@ export class CombinedAutocompleteProvider implements AutocompleteProvider {
 
   private files(prefix: string): AutocompleteSuggestions | null {
     const { rawPrefix } = parsePathPrefix(prefix);
-    const items = this.fdPath && prefix.startsWith("@") ? [] : getFileSuggestions(prefix, this.basePath);
+    const items = getFileSuggestions(prefix, this.basePath);
     if (items.length === 0 && rawPrefix !== "/") return null;
     return { items, prefix };
   }
