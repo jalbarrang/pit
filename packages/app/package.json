@@ -1,0 +1,13 @@
+{
+  "name": "@pit/app",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "^0.80.3",
+    "@opentui/core": "^0.4.3",
+    "@pit/tui": "0.0.0"
+  }
+}

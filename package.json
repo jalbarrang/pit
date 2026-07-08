@@ -1,0 +1,12 @@
+{
+  "name": "pit",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*"],
+  "engines": {
+    "node": ">=26.4.0"
+  },
+  "scripts": {
+    "test": "scripts/check-file-size.sh && node --test --test-reporter=dot 'packages/*/src/**/*.test.ts'"
+  }
+}
