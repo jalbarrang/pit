@@ -127,11 +127,17 @@ Domain (`domain/styling/`):
 - `markdownThemeToSyntaxStyles` (and helpers) — pure `PitStyle` / theme → `Record<string, StyleDefinitionInput>`-shaped plain objects
 - `streaming-doc.ts` — stable-prefix / tail-block split for setText deltas (t-004)
 
-## Streaming mitigation plan (t-004)
+## Streaming mitigation (t-004) — chosen approach + numbers
 
-1. Prefer opentui built-in: `streaming: true` during growth; `false` on complete.
-2. Domain `StreamingDoc`: split at last double-newline; cache stable prefix hash; report whether a delta only dirties the tail (unit-tested with plain strings).
-3. Demo: 2000-word doc, ~30Hz growing `setText` for 20s under `scripts/dev.sh`; record CPU in this file after the run.
+1. Prefer opentui built-in: `streaming: true` during growth; `false` on complete (`Markdown.setStreaming`).
+2. Domain `StreamingDoc` (`domain/styling/streaming-doc.ts`): split at last `\n\n`; cache stable prefix; `cacheHit` when only the tail grows. Wired into `Markdown.setText` via `lastStreamCacheHit()` for observability; full content still assigned to `MarkdownRenderable.content` so opentui's incremental parser remains the render path.
+3. Demo (`packages/tui/demo/markdown-stream-demo.ts`): 2000-word doc, 30Hz growing `setText` for 20s under `scripts/dev.sh`.
+
+**Measured (2026-07-08, Node 26.4 + `--experimental-ffi`, pseudo-TTY):**
+
+`wallMs=20826 userMs=3453.5 sysMs=179.9 cacheHits=599/600 cpuRatio=0.174`
+
+CPU stayed well under one core (~17% of a core). Domain cache hit on nearly every tick. Visual flicker/tearing: needs human TTY verification.
 
 ## API gaps vs checkout / pi
 

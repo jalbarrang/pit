@@ -1,4 +1,5 @@
 import type { Renderable, RenderContext } from "@opentui/core";
+import { StreamingDoc } from "../../domain/styling/streaming-doc.ts";
 import { Component } from "../component.ts";
 import { createBox, createMarkdown, type MarkdownLike } from "./create-renderables.ts";
 import type { DefaultTextStyle, MarkdownOptions, MarkdownTheme } from "./theme.ts";
@@ -8,8 +9,10 @@ type BoxLike = Renderable & { options?: Record<string, unknown> };
 export class Markdown extends Component {
   readonly renderable: BoxLike;
   private readonly markdown: MarkdownLike;
+  private readonly stream = new StreamingDoc();
   private text: string;
   private streaming = false;
+  private lastCacheHit = false;
 
   constructor(
     ctx: RenderContext,
@@ -29,10 +32,12 @@ export class Markdown extends Component {
     this.markdown = markdownRenderable ?? createMarkdown(ctx, text, theme, defaultTextStyle);
     if (markdownRenderable) this.markdown.content = text;
     this.renderable.add(this.markdown as never);
+    this.stream.apply(text);
   }
 
   setText(text: string): void {
     this.text = text;
+    this.lastCacheHit = this.stream.apply(text).cacheHit;
     this.markdown.content = text;
     this.invalidate();
   }
@@ -43,6 +48,10 @@ export class Markdown extends Component {
 
   getText(): string {
     return this.text;
+  }
+
+  lastStreamCacheHit(): boolean {
+    return this.lastCacheHit;
   }
 
   setStreaming(streaming: boolean): void {
