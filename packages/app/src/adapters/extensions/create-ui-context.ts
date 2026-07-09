@@ -1,5 +1,5 @@
 import type { Theme } from "@earendil-works/pi-coding-agent";
-import type { EditorComponent, TUI } from "@pit/tui";
+import type { Component, EditorComponent, TUI } from "@pit/tui";
 import { OverlayDialogPort, PitExtensionUIContext, ShellExtensionPort } from "../extensions/index.ts";
 
 export interface BindHost {
@@ -8,6 +8,11 @@ export interface BindHost {
   getEditor(): EditorComponent;
   getToolsExpanded(): boolean;
   setToolsExpanded(expanded: boolean): void;
+  mountHeader?(component: Component | undefined): void;
+  mountFooter?(component: Component | undefined): void;
+  mountWidget?(key: string, component: Component | undefined, placement?: "aboveEditor" | "belowEditor"): void;
+  setWorkingMessage?(message?: string): void;
+  setWorkingVisible?(visible: boolean): void;
   theme: Theme;
 }
 

@@ -9,6 +9,9 @@ pit runs pi extensions through `ExtensionUIContext` + an ANSI bridge for legacy 
 - `setTitle`, `setStatus`, `setEditorText` / `getEditorText` / `pasteToEditor`
 - `getToolsExpanded` / `setToolsExpanded`
 - `setEditorComponent` / `getEditorComponent` — factory stored; swap when output satisfies pit `EditorComponent`
+- `setHeader` / `setFooter` / `setWidget` — live chrome slots with dispose-on-replace lifecycle
+- `setWorkingMessage` / `setWorkingVisible` — controls the chat status indicator label/visibility
+- `editor()` — multiline editor overlay backed by `@pit/tui` `Editor`
 - `theme` / `getAllThemes` / `getTheme` / `setTheme` — SDK Theme object; name-based switch is best-effort
 - `onTerminalInput` — listener registry (shell dispatches when wired)
 - `custom` — factory result duck-typed through `AnsiBridge` when it lacks `.renderable`
@@ -22,10 +25,8 @@ pit runs pi extensions through `ExtensionUIContext` + an ANSI bridge for legacy 
 
 ## Unsupported / deferred
 
-- Full `setHeader` / `setFooter` / `setWidget` factory mounting into the live chat chrome layout (APIs accept/store; visual mount is stubbed)
-- `setWorkingMessage` / `setWorkingVisible` / `setWorkingIndicator` / `setHiddenThinkingLabel` — no-ops until streaming chrome owns them
+- `setWorkingIndicator` visual variants / `setHiddenThinkingLabel` — accepted but only partially reflected by current streaming chrome
 - `addAutocompleteProvider` — no-op
-- `editor()` multiline overlay — currently reuses single-line `input()`
 - Deep pi-tui internals (direct `TUI` layout APIs, pi-tui-only Component subclasses that are not duck-typed)
 - Dialog countdown UI for `timeout` (timeout still auto-dismisses; no live countdown text)
 - Extensions that import `@earendil-works/pi-tui` and expect string-mode parent containers

@@ -1,15 +1,12 @@
 import { BoxRenderable } from "@opentui/core";
-import { Container, Editor, TUI, Text, type EditorComponent } from "@pit/tui";
+import { Container, Editor, TUI, Text, type Component, type EditorComponent } from "@pit/tui";
 import { FooterComponent } from "../../components/footer.ts";
 import { emptyTokens } from "../../components/footer-format.ts";
 import { createTheme, getEditorTheme, type ThemeName } from "../../domain/theming/index.ts";
 import type { SessionGateway } from "../../domain/index.ts";
-import { AuthStore } from "../auth/index.ts";
-import { SettingsStore } from "../settings/index.ts";
-import { TrustStore } from "../trust/index.ts";
-import { bindShellExtensions } from "./bind-shell.ts";
-import { ShellChrome } from "./chrome.ts";
-import { DoubleCtrlCExit } from "./exit-keys.ts";
+import { AuthStore } from "../auth/index.ts"; import { SettingsStore } from "../settings/index.ts"; import { TrustStore } from "../trust/index.ts";
+import { bindShellExtensions } from "./bind-shell.ts"; import { ShellChrome } from "./chrome.ts";
+import { DoubleCtrlCExit } from "./exit-keys.ts"; import { ExtensionMount } from "./extension-mount.ts";
 import { promptOptionsForStreaming, shouldAbortStream } from "./interrupt-keys.ts";
 import { ScrollChat } from "./scroll-chat.ts";
 import type { ChatShellOptions, Expandable } from "./shell-types.ts";
@@ -27,10 +24,11 @@ export class ChatShell {
   private settingsStore = new SettingsStore();
   private authStore?: AuthStore;
   private trustStore?: TrustStore;
-  readonly tui: TUI; readonly chat: ScrollChat; readonly editor: EditorComponent; readonly footer: FooterComponent; readonly root: Container;
+  readonly tui: TUI; readonly chat: ScrollChat; readonly editor: EditorComponent; readonly footer: FooterComponent; readonly root: Container; readonly extensionMount: ExtensionMount;
 
   private constructor(tui: TUI, chat: ScrollChat, editor: EditorComponent, footer: FooterComponent, root: Container) {
     this.tui = tui; this.chat = chat; this.editor = editor; this.footer = footer; this.root = root;
+    this.extensionMount = new ExtensionMount(tui.ctx, footer, createTheme("dark"));
   }
 
   static async create(options: ChatShellOptions = {}): Promise<ChatShell> {
@@ -48,7 +46,9 @@ export class ChatShell {
 
   private mount(options: ChatShellOptions): void {
     this.hooks = options; this.session = options.session; this.cwd = options.cwd ?? process.cwd();
-    this.root.addChild(this.chat); this.root.addChild(this.editor as never); this.root.addChild(this.footer);
+    this.root.addChild(this.extensionMount.headerSlot); this.root.addChild(this.chat);
+    this.root.addChild(this.extensionMount.widgetAboveSlot); this.root.addChild(this.editor as never);
+    this.root.addChild(this.extensionMount.widgetBelowSlot); this.root.addChild(this.extensionMount.footerSlot);
     this.chat.addDummyLines(this.tui.ctx, options.dummyLines ?? []); this.refreshFooter();
     this.editor.setAutocompleteProvider?.(this.chrome.autocomplete(this.cwd));
     this.editor.onSubmit = (text) => void this.submit(text);
@@ -73,28 +73,21 @@ export class ChatShell {
   private notify(text: string): void { this.chat.addMessage(new Text(this.tui.ctx, text, 1)); }
   notifyExtension(text: string): void { this.notify(text); }
   areToolsExpanded(): boolean { return this.toolsExpanded; }
-  setToolsExpanded(expanded: boolean): void {
-    this.toolsExpanded = expanded;
-    for (const c of this.expandables) c.setExpanded(expanded);
-  }
+  mountHeader(component: Component | undefined): void { this.extensionMount.mountHeader(component); }
+  mountFooter(component: Component | undefined): void { this.extensionMount.mountFooter(component); }
+  mountWidget(key: string, component: Component | undefined, placement?: "aboveEditor" | "belowEditor"): void { this.extensionMount.mountWidget(key, component, placement); }
+  setWorkingMessage(message?: string): void { this.extensionMount.setWorkingMessage(message); }
+  setWorkingVisible(visible: boolean): void { this.extensionMount.setWorkingVisible(visible); }
+  setToolsExpanded(expanded: boolean): void { this.toolsExpanded = expanded; for (const c of this.expandables) c.setExpanded(expanded); }
   private exit(): void { this.stop(); process.exit(0); }
-  replaceSession(session: SessionGateway): void {
-    this.session?.dispose(); this.session = session; this.refreshFooter();
-    void bindShellExtensions(this, session, this.settingsStore);
-  }
+  replaceSession(session: SessionGateway): void { this.session?.dispose(); this.session = session; this.refreshFooter(); void bindShellExtensions(this, session, this.settingsStore); }
   runCommand(text: string): Promise<boolean> { return this.chrome.handle(text); }
   refreshFooter(): void { this.footer.update(this.cwd, this.session?.modelId ?? "no-model", this.session?.tokenUsage ?? emptyTokens()); }
-  applyTheme(themeName: ThemeName): void {
-    const theme = createTheme(themeName); this.editor.borderColor = getEditorTheme(theme).borderColor;
-    this.footer.applyTheme(theme); this.refreshFooter();
-  }
+  applyTheme(themeName: ThemeName): void { const theme = createTheme(themeName); this.editor.borderColor = getEditorTheme(theme).borderColor; this.footer.applyTheme(theme); this.refreshFooter(); }
   registerExpandable(component: Expandable): void { component.setExpanded(this.toolsExpanded); this.expandables.push(component); }
   private toggleTools(): void { this.setToolsExpanded(!this.toolsExpanded); }
-  private async submit(text: string): Promise<void> {
-    const trimmed = text.trim();
-    if (!trimmed || await this.chrome.handle(trimmed)) return;
-    if (!this.session) this.chat.addMessage(new Text(this.tui.ctx, `You: ${trimmed}`, 1));
-    await this.session?.prompt(trimmed, promptOptionsForStreaming(!!this.session?.isStreaming));
-  }
+  private async submit(text: string): Promise<void> { const trimmed = text.trim();
+    if (!trimmed || await this.chrome.handle(trimmed)) return; if (!this.session) this.chat.addMessage(new Text(this.tui.ctx, `You: ${trimmed}`, 1));
+    await this.session?.prompt(trimmed, promptOptionsForStreaming(!!this.session?.isStreaming)); }
   stop(): void { this.session?.dispose(); this.tui.stop(); }
 }

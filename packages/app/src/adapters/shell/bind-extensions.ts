@@ -18,6 +18,11 @@ export async function bindSessionExtensions(shell: ChatShell, session: BindableS
     getEditor: () => shell.editor,
     getToolsExpanded: () => shell.areToolsExpanded(),
     setToolsExpanded: (expanded) => shell.setToolsExpanded(expanded),
+    mountHeader: (component) => shell.mountHeader(component),
+    mountFooter: (component) => shell.mountFooter(component),
+    mountWidget: (key, component, placement) => shell.mountWidget(key, component, placement),
+    setWorkingMessage: (message) => shell.setWorkingMessage(message),
+    setWorkingVisible: (visible) => shell.setWorkingVisible(visible),
     theme,
   });
   await session.bindUI(ui);

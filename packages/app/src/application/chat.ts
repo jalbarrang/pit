@@ -44,8 +44,8 @@ export class ChatController {
   }
 
   private addAssistant(): void {
-    this.status = new StatusIndicator(this.shell.tui.ctx, this.theme);
-    this.shell.chat.addMessage(this.status);
+    this.status = this.shell.extensionMount.createStatusIndicator(this.shell.tui.ctx);
+    if (this.status) this.shell.chat.addMessage(this.status);
     this.assistant = new AssistantMessageComponent(this.shell.tui.ctx, "", this.theme);
     this.shell.chat.addMessage(this.assistant);
   }
@@ -53,12 +53,14 @@ export class ChatController {
   private updateAssistant(update: any): void {
     if (update?.type !== "text_delta") return;
     if (this.status) this.shell.chat.removeMessage(this.status);
+    this.shell.extensionMount.clearStatusIndicator(this.status);
     this.status = undefined;
     this.assistant?.append(update.delta ?? "");
   }
 
   private finishAssistant(content: unknown): void {
     if (this.status) this.shell.chat.removeMessage(this.status);
+    this.shell.extensionMount.clearStatusIndicator(this.status);
     this.status = undefined;
     this.assistant?.setText(textFromContent(content));
     this.assistant?.finalize();
