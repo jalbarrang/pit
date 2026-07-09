@@ -9,6 +9,7 @@ export interface ChromeContext {
   openSessionSelector(): void;
   openThemeSelector(): void;
   openSettingsSelector(): void;
+  openLoginSelector(): void;
 }
 
 export const createBuiltinRegistry = (): CommandRegistry<ChromeContext> => {
@@ -18,6 +19,7 @@ export const createBuiltinRegistry = (): CommandRegistry<ChromeContext> => {
   registry.register({ name: "resume", description: "Resume a different session", handler: (ctx) => ctx.openSessionSelector() });
   registry.register({ name: "theme", description: "Select color theme", handler: (ctx) => ctx.openThemeSelector() });
   registry.register({ name: "settings", description: "Open settings", handler: (ctx) => ctx.openSettingsSelector() });
+  registry.register({ name: "login", description: "Configure model credentials", handler: (ctx) => ctx.openLoginSelector() });
   registry.register({ name: "quit", description: "Quit pit", handler: (ctx) => ctx.exit() });
   return registry;
 };

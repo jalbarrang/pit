@@ -12,16 +12,16 @@ export class AppSession implements SessionGateway<AgentSessionEvent> {
     this.modelRegistry = modelRegistry;
   }
 
-  static create(cwd = process.cwd()): Promise<AppSession> {
-    return AppSession.make(cwd, SessionManager.create(cwd));
+  static create(cwd = process.cwd(), authPath?: string): Promise<AppSession> {
+    return AppSession.make(cwd, SessionManager.create(cwd), authPath);
   }
 
-  static resume(path: string, cwd = process.cwd()): Promise<AppSession> {
-    return AppSession.make(cwd, SessionManager.open(path));
+  static resume(path: string, cwd = process.cwd(), authPath?: string): Promise<AppSession> {
+    return AppSession.make(cwd, SessionManager.open(path), authPath);
   }
 
-  private static async make(cwd: string, sessionManager: SessionManager): Promise<AppSession> {
-    const authStorage = AuthStorage.create();
+  private static async make(cwd: string, sessionManager: SessionManager, authPath?: string): Promise<AppSession> {
+    const authStorage = AuthStorage.create(authPath);
     const modelRegistry = ModelRegistry.create(authStorage);
     if (modelRegistry.getAvailable().length === 0) throw new Error("No pi model credentials found. Run `pi` and complete login first.");
     const { session } = await createAgentSession({ cwd, authStorage, modelRegistry, sessionManager });

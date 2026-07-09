@@ -4,6 +4,7 @@ import { FooterComponent } from "../../components/footer.ts";
 import { emptyTokens } from "../../components/footer-format.ts";
 import { createTheme, getEditorTheme, type ThemeName } from "../../domain/theming/index.ts";
 import type { SessionGateway } from "../../domain/index.ts";
+import { AuthStore } from "../auth/index.ts";
 import { SettingsStore } from "../settings/index.ts";
 import { ShellChrome } from "./chrome.ts";
 import { DoubleCtrlCExit } from "./exit-keys.ts";
@@ -12,16 +13,16 @@ import { ScrollChat } from "./scroll-chat.ts";
 import type { ChatShellOptions, Expandable } from "./shell-types.ts";
 
 export type { ChatShellOptions } from "./shell-types.ts";
-
 export class ChatShell {
   private readonly exitKeys = new DoubleCtrlCExit();
-  private readonly chrome = new ShellChrome({ tui: () => this.tui, session: () => this.session, notify: (text) => this.notify(text), exit: () => this.exit(), refreshFooter: () => this.refreshFooter(), settings: () => this.settingsStore.get(), setSetting: (id, value) => this.settingsStore.set(id, value), applyTheme: (theme) => this.applyTheme(theme), listSessions: () => this.hooks.listSessions?.() ?? Promise.resolve([]), switchSession: (path) => this.hooks.switchSession?.(path) ?? Promise.resolve() });
+  private readonly chrome = new ShellChrome({ tui: () => this.tui, session: () => this.session, notify: (text) => this.notify(text), exit: () => this.exit(), refreshFooter: () => this.refreshFooter(), settings: () => this.settingsStore.get(), setSetting: (id, value) => this.settingsStore.set(id, value), applyTheme: (theme) => this.applyTheme(theme), auth: () => this.authStore, onAuthConfigured: () => this.hooks.onAuthConfigured?.() ?? Promise.resolve(), listSessions: () => this.hooks.listSessions?.() ?? Promise.resolve([]), switchSession: (path) => this.hooks.switchSession?.(path) ?? Promise.resolve() });
   private hooks: ChatShellOptions = {};
   private readonly expandables: Expandable[] = [];
   private session?: SessionGateway;
   private cwd = process.cwd();
   private toolsExpanded = false;
   private settingsStore = new SettingsStore();
+  private authStore?: AuthStore;
   readonly tui: TUI; readonly chat: ScrollChat; readonly editor: EditorComponent; readonly footer: FooterComponent; readonly root: Container;
 
   private constructor(tui: TUI, chat: ScrollChat, editor: EditorComponent, footer: FooterComponent, root: Container) {
@@ -37,10 +38,9 @@ export class ChatShell {
     const editor = new Editor(tui.ctx, getEditorTheme(theme), { maxHeight: 10, width: tui.renderer.width });
     const footer = new FooterComponent(tui.ctx, theme);
     const shell = new ChatShell(tui, chat, editor, footer, root);
-    shell.settingsStore = settingsStore; shell.mount(options);
+    shell.settingsStore = settingsStore; shell.authStore = options.authStore; shell.mount(options);
     return shell;
   }
-
   private mount(options: ChatShellOptions): void {
     this.hooks = options; this.session = options.session; this.cwd = options.cwd ?? process.cwd();
     this.root.addChild(this.chat);
@@ -53,8 +53,8 @@ export class ChatShell {
     this.tui.addChild(this.root);
     this.tui.setFocus(this.editor as never);
     this.tui.addInputListener((data) => this.handleGlobalInput(data));
+    if (options.firstRunSetup) void this.runCommand("/login");
   }
-
   private handleGlobalInput(data: string) {
     if (this.tui.hasOverlay()) return undefined;
     if (data === "\u001b[5~") { this.chat.page(-10); return { consume: true }; }

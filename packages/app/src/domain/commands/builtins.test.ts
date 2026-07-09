@@ -12,6 +12,7 @@ const makeContext = () => {
     openSessionSelector: () => void log.push("sessions"),
     openThemeSelector: () => void log.push("theme"),
     openSettingsSelector: () => void log.push("settings"),
+    openLoginSelector: () => void log.push("login"),
   };
   return { context, log };
 };
@@ -35,11 +36,12 @@ test("/thinking opens the thinking selector", async () => {
   assert.deepEqual(log, ["thinking"]);
 });
 
-test("/theme and /settings open chrome selectors", async () => {
+test("/theme, /settings, and /login open chrome selectors", async () => {
   const { context, log } = makeContext();
   await createBuiltinRegistry().dispatch("/theme", context);
   await createBuiltinRegistry().dispatch("/settings", context);
-  assert.deepEqual(log, ["theme", "settings"]);
+  await createBuiltinRegistry().dispatch("/login", context);
+  assert.deepEqual(log, ["theme", "settings", "login"]);
 });
 
 test("/quit exits via the context port", async () => {
