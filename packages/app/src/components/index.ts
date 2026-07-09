@@ -1,3 +1,4 @@
+export { DiffViewComponent } from "./diff-view.ts";
 export { FooterComponent } from "./footer.ts";
 export { formatCwd, formatFooter, formatTokens } from "./footer-format.ts";
 export { ToolExecutionComponent } from "./tool-execution.ts";

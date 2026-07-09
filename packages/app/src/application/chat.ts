@@ -89,6 +89,7 @@ const textFromContent = (content: any): string => {
 };
 
 const textFromResult = (result: any): string => {
+  if (typeof result?.details?.diff === "string") return result.details.diff;
   const text = textFromContent(result?.content);
   if (text) return text;
   if (result?.details === undefined) return "";
