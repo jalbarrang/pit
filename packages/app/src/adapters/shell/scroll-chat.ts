@@ -3,6 +3,7 @@ import { Component, Text } from "@pit/tui";
 
 type ScrollLike = Renderable & {
   add(child: Renderable): number;
+  remove(child: Renderable): void;
   scrollBy(delta: number | { x: number; y: number }, unit?: string): void;
   stickyScroll?: boolean;
   stickyStart?: "bottom" | "top" | "left" | "right";
@@ -33,6 +34,13 @@ export class ScrollChat extends Component {
     this.children.push(component);
     this.renderable.add(component.renderable as Renderable);
     this.renderable.stickyScroll = true;
+    this.invalidate();
+  }
+
+  removeMessage(component: Component): void {
+    const index = this.children.indexOf(component);
+    if (index >= 0) this.children.splice(index, 1);
+    this.renderable.remove(component.renderable as Renderable);
     this.invalidate();
   }
 

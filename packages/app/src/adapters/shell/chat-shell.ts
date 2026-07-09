@@ -65,7 +65,7 @@ export class ChatShell {
   private async submit(text: string, session?: SessionGateway): Promise<void> {
     const trimmed = text.trim();
     if (!trimmed) return;
-    this.chat.addMessage(new Text(this.tui.ctx, `You: ${trimmed}`, 1));
+    if (!session) this.chat.addMessage(new Text(this.tui.ctx, `You: ${trimmed}`, 1));
     await session?.prompt(trimmed);
   }
 
