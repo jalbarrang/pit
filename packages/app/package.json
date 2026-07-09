@@ -5,6 +5,9 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "bin": {
+    "pit": "./bin/pit"
+  },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.80.3",
     "@opentui/core": "^0.4.3",

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+need_major=26
+need_minor=4
+version=$(node -p 'process.versions.node' 2>/dev/null || true)
+if [ -z "$version" ]; then
+  echo "pit requires Node >=26.4.0 on PATH" >&2
+  exit 1
+fi
+major=${version%%.*}
+rest=${version#*.}
+minor=${rest%%.*}
+if [ "$major" -lt "$need_major" ] || { [ "$major" -eq "$need_major" ] && [ "$minor" -lt "$need_minor" ]; }; then
+  echo "pit requires Node >=26.4.0; found $version" >&2
+  exit 1
+fi
+root=$(cd "$(dirname "$0")/.." && pwd)
+exec node --experimental-ffi "$root/src/main.ts" "$@"

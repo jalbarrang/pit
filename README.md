@@ -9,12 +9,13 @@ Use Node 26.4.0 or newer with experimental FFI enabled. `scripts/dev.sh` intenti
 ## Running
 
 ```bash
-scripts/dev.sh packages/app/src/index.ts
-scripts/dev.sh packages/app/src/smoke.ts
+pnpm --filter @pit/app exec pit --cwd "$PWD"
+scripts/dev.sh packages/app/src/main.ts --cwd "$PWD"
+scripts/dev.sh packages/app/src/chat-smoke.ts
 pnpm test
 ```
 
-The smoke entrypoint starts an OpenTUI fullscreen renderer with a rounded bordered box, green `pit smoke test` text, and `Ctrl+C to exit`.
+The `pit` wrapper checks for Node >=26.4.0, launches `packages/app/src/main.ts` with `--experimental-ffi`, creates a real pi SDK session from the current credentials, and opens the fullscreen chat UI. Use `--cwd PATH` to choose the project directory; `--resume` is parsed as a placeholder for the later session-chrome plan.
 
 ## Working agreements
 
@@ -42,4 +43,4 @@ packages/app/src/components           app UI components
 
 ## Test harness
 
-`pnpm test` runs `scripts/check-file-size.sh` first, then Node's built-in test runner over `packages/*/src/**/*.test.ts`.
+`pnpm test` runs `scripts/check-file-size.sh` first, then strict typecheck for both workspace packages, then Node's built-in test runner over `packages/*/src/**/*.test.ts`. Live OpenTUI checks still need a TTY through `scripts/dev.sh` or the `pit` wrapper because native rendering requires `--experimental-ffi`.
