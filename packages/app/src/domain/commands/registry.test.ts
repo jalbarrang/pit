@@ -37,6 +37,23 @@ test("plain text and bare slash are not commands", async () => {
   assert.deepEqual(await registry.dispatch("/not a path/like this", undefined), { kind: "unknown", name: "not" });
 });
 
+test("a leading absolute path is a message, not a command", async () => {
+  const { registry, calls } = makeRegistry();
+  assert.deepEqual(await registry.dispatch("/Users/jalbarran/img.png describe this", undefined), { kind: "not-command" });
+  assert.deepEqual(await registry.dispatch("/Users/jalbarran/img.png", undefined), { kind: "not-command" });
+  assert.deepEqual(await registry.dispatch("/notes.txt", undefined), { kind: "not-command" });
+  assert.equal(calls.length, 0);
+});
+
+test("command names may contain a colon (skill commands)", async () => {
+  const calls: string[] = [];
+  const registry = new CommandRegistry<void>();
+  registry.register({ name: "skill:review", description: "", handler: () => void calls.push("ran") });
+  const result = await registry.dispatch("/skill:review the diff", undefined);
+  assert.deepEqual(result, { kind: "handled", name: "skill:review" });
+  assert.deepEqual(calls, ["ran"]);
+});
+
 test("lists commands with descriptions for autocomplete", () => {
   const { registry } = makeRegistry();
   assert.deepEqual(registry.list(), [

@@ -35,8 +35,11 @@ export class CommandRegistry<TContext> {
   }
 }
 
+// A command is "/name" or "/name args". The name excludes "/" and "." so that
+// leading file paths (e.g. "/Users/x/img.png") are treated as messages, not
+// commands; ":" stays allowed for skill commands like "/skill:review".
 const parseCommand = (text: string): { name: string; args: string } | null => {
-  const match = /^\/(\S+)(?:\s+(.*))?$/.exec(text.trim());
+  const match = /^\/([^\s/.]+)(?:\s+([\s\S]*))?$/.exec(text.trim());
   if (!match) return null;
   return { name: match[1]!, args: (match[2] ?? "").trim() };
 };
