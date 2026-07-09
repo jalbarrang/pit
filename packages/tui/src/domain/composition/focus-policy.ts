@@ -31,3 +31,18 @@ export function topVisibleCapturingOverlay<T>(entries: OverlayFocusEntry<T>[]): 
   }
   return best?.target ?? null;
 }
+
+export interface RestoreFocusEntry<T> extends OverlayFocusEntry<T> { preFocus: T | null }
+
+export function restoreFocusTarget<T>(preFocus: T | null, entries: RestoreFocusEntry<T>[]): T | null {
+  const seen = new Set<T>();
+  let target = preFocus;
+  while (target && !seen.has(target)) {
+    seen.add(target);
+    const entry = entries.find((item) => item.target === target);
+    if (!entry) return target;
+    if (!entry.hidden && entry.visible !== false && !entry.nonCapturing) return target;
+    target = entry.preFocus;
+  }
+  return null;
+}

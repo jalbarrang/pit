@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { applyFocusTransition, topVisibleCapturingOverlay, transitionFocus } from "./index.ts";
+import { applyFocusTransition, restoreFocusTarget, topVisibleCapturingOverlay, transitionFocus } from "./index.ts";
 
 describe("FocusPolicy", () => {
   it("does nothing when target is unchanged", () => {
@@ -31,5 +31,11 @@ describe("FocusPolicy", () => {
       { target: "top", hidden: false, visible: true, focusOrder: 2 },
     ]);
     assert.equal(result, "top");
+  });
+
+  it("walks past hidden overlay parents when restoring focus", () => {
+    assert.equal(restoreFocusTarget("a", [
+      { target: "a", hidden: true, focusOrder: 1, preFocus: "editor" },
+    ]), "editor");
   });
 });

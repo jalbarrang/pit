@@ -1,4 +1,4 @@
-import { resolveOverlayLayout, topVisibleCapturingOverlay, type OverlayHandle, type OverlayOptions } from "../domain/composition/index.ts";
+import { resolveOverlayLayout, restoreFocusTarget, topVisibleCapturingOverlay, type OverlayHandle, type OverlayOptions } from "../domain/composition/index.ts";
 import type { Component } from "../components/index.ts";
 import type { TuiRenderer } from "./types.ts";
 type Entry = { component: Component; options?: OverlayOptions; preFocus: Component | null; hidden: boolean; focusOrder: number };
@@ -64,8 +64,8 @@ export class OverlayManager {
     this.host.setFocus(entry.component);
   }
   private nextFocus(excluding: Entry): Component | null {
-    const candidates = this.entries.filter((entry) => entry !== excluding).map((entry) => ({ target: entry.component, hidden: entry.hidden, nonCapturing: entry.options?.nonCapturing, visible: this.isVisible(entry), focusOrder: entry.focusOrder }));
-    return topVisibleCapturingOverlay(candidates) ?? excluding.preFocus;
+    const entries = this.entries.filter((entry) => entry !== excluding).map((entry) => ({ target: entry.component, hidden: entry.hidden, nonCapturing: entry.options?.nonCapturing, visible: this.isVisible(entry), focusOrder: entry.focusOrder, preFocus: entry.preFocus }));
+    return topVisibleCapturingOverlay(entries) ?? restoreFocusTarget(excluding.preFocus, entries);
   }
   private isVisible(entry: Entry): boolean {
     if (entry.hidden) return false;
