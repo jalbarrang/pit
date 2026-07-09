@@ -48,6 +48,12 @@ describe("TUI", () => {
     assert.equal(second.focused, true);
   });
 
+  it("exposes renderer as render context for components", async () => {
+    const fake = fakeRenderer();
+    const tui = await TUI.create({ renderer: fake.renderer });
+    assert.equal(tui.ctx, fake.renderer);
+  });
+
   it("requests renders and destroys renderer on stop", async () => {
     const fake = fakeRenderer();
     const tui = await TUI.create({ renderer: fake.renderer });

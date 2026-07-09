@@ -1,4 +1,4 @@
-import { createCliRenderer } from "@opentui/core";
+import { createCliRenderer, type RenderContext } from "@opentui/core";
 import { applyFocusTransition, type FocusTarget, transitionFocus } from "../domain/composition/index.ts";
 import { type Component } from "../components/index.ts";
 import { KeyRouter } from "./key-routing.ts";
@@ -27,6 +27,10 @@ export class TUI {
     if (config.renderer) return new TUI(config.renderer, config.keySource);
     const renderer = await createCliRenderer({ exitOnCtrlC: false });
     return new TUI(renderer as TuiRenderer, config.keySource);
+  }
+
+  get ctx(): RenderContext {
+    return this.renderer as unknown as RenderContext;
   }
 
   addChild(component: Component): void {
