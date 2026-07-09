@@ -31,5 +31,5 @@ export const extractPathPrefix = (text: string, force = false): string | null =>
   const pathPrefix = text.slice(lastDelimiter(text) + 1);
   if (force) return pathPrefix;
   if (pathPrefix.includes("/") || pathPrefix.startsWith(".") || pathPrefix.startsWith("~/")) return pathPrefix;
-  return pathPrefix === "" && text.endsWith(" ") ? pathPrefix : null;
+  return null;
 };
