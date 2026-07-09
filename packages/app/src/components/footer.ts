@@ -9,6 +9,9 @@ type TextLike = Renderable & { content: TextContent; options?: Record<string, un
 export class FooterComponent extends Component {
   readonly renderable: TextLike;
   private readonly text: Text;
+  private lastCwd = "";
+  private lastModelId = "";
+  private lastTokens: TokenUsage | null = null;
 
   constructor(ctx: RenderContext, theme: PitTheme, renderable?: TextLike) {
     super();
@@ -17,7 +20,22 @@ export class FooterComponent extends Component {
   }
 
   update(cwd: string, modelId: string, tokens: TokenUsage): void {
+    this.lastCwd = cwd;
+    this.lastModelId = modelId;
+    this.lastTokens = tokens;
     this.text.setText(formatFooter(cwd, modelId, tokens));
+  }
+
+  notice(text: string): void {
+    this.text.setText(text);
+  }
+
+  clearNotice(): void {
+    if (this.lastTokens === null) {
+      this.text.setText("");
+      return;
+    }
+    this.text.setText(formatFooter(this.lastCwd, this.lastModelId, this.lastTokens));
   }
 
   applyTheme(theme: PitTheme): void {

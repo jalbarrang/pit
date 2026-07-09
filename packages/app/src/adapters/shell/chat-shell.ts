@@ -9,7 +9,7 @@ import { bindShellExtensions } from "./bind-shell.ts"; import { ShellChrome } fr
 import { DoubleCtrlCExit } from "./exit-keys.ts"; import { ExtensionMount } from "./extension-mount.ts";
 import { promptOptionsForStreaming, shouldAbortStream } from "./interrupt-keys.ts";
 import { MacOpenImageViewer, type ImageViewer } from "./images/index.ts";
-import { ScrollChat } from "./scroll-chat.ts";
+import { ScrollChat } from "./scroll-chat.ts"; import { bindSelectionCopy } from "./selection-copy.ts";
 import type { ChatShellOptions, Expandable } from "./shell-types.ts";
 
 export type { ChatShellOptions } from "./shell-types.ts";
@@ -56,7 +56,7 @@ export class ChatShell {
     this.editor.setAutocompleteProvider?.(this.chrome.autocomplete(this.cwd));
     this.editor.onSubmit = (text) => void this.submit(text);
     (this.editor.renderable as typeof this.editor.renderable & { onMouseDown?: () => void }).onMouseDown = () => this.tui.setFocus(this.editor as never);
-    this.tui.addChild(this.root); this.tui.setFocus(this.editor as never);
+    this.tui.addChild(this.root); this.tui.setFocus(this.editor as never); bindSelectionCopy(this.tui.renderer, this.footer);
     this.tui.addInputListener((data) => this.handleGlobalInput(data));
     if (options.trustPromptOnStart) void this.runCommand("/trust");
     if (options.firstRunSetup) void this.runCommand("/login");
