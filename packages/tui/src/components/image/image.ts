@@ -3,7 +3,7 @@ import { calculateImageCellSize, decodeImageData, getImageDimensions, rasterizeI
 import type { TerminalWrite } from "../../adapters/terminal-write.ts";
 import { Component } from "../component.ts";
 import { ImagePlaceholder } from "./image-placeholder.ts";
-import { canUseKittyGraphics, imageMaxWidth } from "./image-mode.ts";
+import { canUseKittyGraphics, imageCellLimits } from "./image-mode.ts";
 import { createKittyImage } from "./kitty-image.ts";
 
 export interface ImageOptions {
@@ -26,9 +26,8 @@ const drawRaster = (target: FrameLike, raster: ReturnType<typeof rasterizeImageD
 const createFrame = (ctx: RenderContext, options: ImageOptions): FrameLike | null => {
   const decoded = decodeImageData(options.data, options.mimeType);
   if (!decoded) return null;
-  const maxWidth = imageMaxWidth(ctx, options.maxWidthCells);
-  const defaultMaxHeight = Math.max(1, Math.ceil(maxWidth / 2));
-  const cells = calculateImageCellSize(decoded, maxWidth, options.maxHeightCells ?? defaultMaxHeight);
+  const limits = imageCellLimits(ctx, options);
+  const cells = calculateImageCellSize(decoded, limits.maxWidth, limits.maxHeight);
   const raster = rasterizeImageData(decoded, cells);
   const frame = new FrameBufferRenderable(ctx, {
     width: cells.columns,

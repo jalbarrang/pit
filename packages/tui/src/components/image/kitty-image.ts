@@ -1,7 +1,7 @@
 import { BoxRenderable, RGBA, StyledText, TextRenderable, type RenderContext, type Renderable, type TextChunk } from "@opentui/core";
 import { terminalWrite, type TerminalWrite } from "../../adapters/terminal-write.ts";
 import { allocateKittyImageId, buildKittyDeleteEscape, buildKittyPlacementEscape, buildKittyTransmissionEscapeChunks, calculateImageCellSize, kittyPlaceholderRows, prepareKittyImage } from "../../domain/styling/index.ts";
-import { imageMaxWidth } from "./image-mode.ts";
+import { imageCellLimits } from "./image-mode.ts";
 import type { ImageOptions } from "./image.ts";
 
 type KittyFrame = { renderable: Renderable; dispose: () => void };
@@ -23,9 +23,8 @@ const writeAll = (write: TerminalWrite, escapes: string[]): void => {
 export const createKittyImage = (ctx: RenderContext, options: ImageOptions, write: TerminalWrite = terminalWrite): KittyFrame | null => {
   const prepared = prepareKittyImage(options.data, options.mimeType);
   if (!prepared) return null;
-  const maxWidth = imageMaxWidth(ctx, options.maxWidthCells);
-  const maxHeight = options.maxHeightCells ?? Math.max(1, Math.ceil(maxWidth / 2));
-  const cells = calculateImageCellSize(prepared.dimensions, maxWidth, maxHeight);
+  const limits = imageCellLimits(ctx, options);
+  const cells = calculateImageCellSize(prepared.dimensions, limits.maxWidth, limits.maxHeight);
   const id = allocateKittyImageId();
   writeAll(write, [...buildKittyTransmissionEscapeChunks(prepared.source, id), buildKittyPlacementEscape(id, cells)]);
   const box = new BoxRenderable(ctx, { width: cells.columns, height: cells.rows, flexDirection: "column" }) as Destroyable;
