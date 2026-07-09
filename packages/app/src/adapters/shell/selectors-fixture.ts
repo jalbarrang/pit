@@ -4,6 +4,7 @@ import { ChromeSelectors, type SelectorHost } from "./selectors.ts";
 export class FakeOverlay {
   onSelect?: (item: SelectItem) => void;
   onCancel?: () => void;
+  onSelectionChange?: (item: SelectItem) => void;
   readonly options: { items: SelectItem[]; initialIndex?: number; searchable?: boolean; initialSearch?: string };
   constructor(options: { items: SelectItem[]; initialIndex?: number; searchable?: boolean; initialSearch?: string }) { this.options = options; }
   setWidth(): void {}
@@ -32,6 +33,9 @@ export const makeHost = () => {
     session: () => session as never,
     notify: (text) => void log.push(`notify:${text}`),
     refreshFooter: () => void log.push("footer"),
+    settings: () => ({ theme: "dark", showImages: false, autoResizeImages: true, blockImages: false, editorPaddingX: 0, autocompleteMaxVisible: 5 }),
+    setSetting: async (id, value) => { log.push(`setting:${id}:${value}`); return { theme: value === "light" ? "light" : "dark", showImages: false, autoResizeImages: true, blockImages: false, editorPaddingX: 0, autocompleteMaxVisible: 5 }; },
+    applyTheme: (theme) => void log.push(`theme:${theme}`),
     listSessions: async () => [
       { path: "/s/current.jsonl", id: "c", firstMessage: "current work", modified: new Date(2), messageCount: 5 },
       { path: "/s/other.jsonl", id: "o", firstMessage: "other work", modified: new Date(1), messageCount: 9 },

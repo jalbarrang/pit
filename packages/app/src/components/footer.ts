@@ -19,4 +19,8 @@ export class FooterComponent extends Component {
   update(cwd: string, modelId: string, tokens: TokenUsage): void {
     this.text.setText(formatFooter(cwd, modelId, tokens));
   }
+
+  applyTheme(theme: PitTheme): void {
+    this.renderable.options = { ...this.renderable.options, fg: theme.color("muted") };
+  }
 }

@@ -39,9 +39,18 @@ test("cancel hides without applying", () => {
   assert.deepEqual(log, []);
 });
 
+test("theme previews on highlight and restores on cancel", () => {
+  const { selectors, log, overlays, hidden } = makeHost();
+  selectors.openTheme();
+  overlays[0]!.onSelectionChange?.({ value: "light", label: "light" });
+  overlays[0]!.onCancel?.();
+  assert.equal(hidden(), 1);
+  assert.deepEqual(log, ["theme:light", "theme:dark"]);
+});
+
 test("no session notifies instead of opening", () => {
   const { log, overlays } = makeHost();
-  const selectors = new ChromeSelectors({ tui: () => ({}) as never, session: () => undefined, notify: (t) => void log.push(t), refreshFooter: () => {} });
+  const selectors = new ChromeSelectors({ tui: () => ({}) as never, session: () => undefined, notify: (t) => void log.push(t), refreshFooter: () => {}, settings: () => ({ theme: "dark", showImages: false, autoResizeImages: true, blockImages: false, editorPaddingX: 0, autocompleteMaxVisible: 5 }), setSetting: async () => ({ theme: "dark", showImages: false, autoResizeImages: true, blockImages: false, editorPaddingX: 0, autocompleteMaxVisible: 5 }), applyTheme: () => {} });
   selectors.openModel("");
   selectors.openThinking();
   assert.equal(overlays.length, 0);

@@ -22,6 +22,7 @@ export class SelectorOverlay extends Container implements Focusable {
   readonly list: SelectList;
   onSelect?: (item: SelectItem) => void;
   onCancel?: () => void;
+  onSelectionChange?: (item: SelectItem) => void;
   private readonly search?: Input;
   private _focused = false;
 
@@ -40,6 +41,7 @@ export class SelectorOverlay extends Container implements Focusable {
     }
     this.list.onSelect = (item) => this.onSelect?.(item);
     this.list.onCancel = () => this.onCancel?.();
+    this.list.onSelectionChange = (item) => this.onSelectionChange?.(item);
   }
 
   get focused(): boolean { return this._focused; }

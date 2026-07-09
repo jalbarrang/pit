@@ -2,8 +2,9 @@ import { BoxRenderable } from "@opentui/core";
 import { Container, Editor, TUI, Text, type EditorComponent } from "@pit/tui";
 import { FooterComponent } from "../../components/footer.ts";
 import { emptyTokens } from "../../components/footer-format.ts";
-import { createTheme, getEditorTheme } from "../../domain/theming/index.ts";
+import { createTheme, getEditorTheme, type ThemeName } from "../../domain/theming/index.ts";
 import type { SessionGateway } from "../../domain/index.ts";
+import { SettingsStore } from "../settings/index.ts";
 import { ShellChrome } from "./chrome.ts";
 import { DoubleCtrlCExit } from "./exit-keys.ts";
 import { promptOptionsForStreaming, shouldAbortStream } from "./interrupt-keys.ts";
@@ -14,12 +15,13 @@ export type { ChatShellOptions } from "./shell-types.ts";
 
 export class ChatShell {
   private readonly exitKeys = new DoubleCtrlCExit();
-  private readonly chrome = new ShellChrome({ tui: () => this.tui, session: () => this.session, notify: (text) => this.notify(text), exit: () => this.exit(), refreshFooter: () => this.refreshFooter(), listSessions: () => this.hooks.listSessions?.() ?? Promise.resolve([]), switchSession: (path) => this.hooks.switchSession?.(path) ?? Promise.resolve() });
+  private readonly chrome = new ShellChrome({ tui: () => this.tui, session: () => this.session, notify: (text) => this.notify(text), exit: () => this.exit(), refreshFooter: () => this.refreshFooter(), settings: () => this.settingsStore.get(), setSetting: (id, value) => this.settingsStore.set(id, value), applyTheme: (theme) => this.applyTheme(theme), listSessions: () => this.hooks.listSessions?.() ?? Promise.resolve([]), switchSession: (path) => this.hooks.switchSession?.(path) ?? Promise.resolve() });
   private hooks: ChatShellOptions = {};
   private readonly expandables: Expandable[] = [];
   private session?: SessionGateway;
   private cwd = process.cwd();
   private toolsExpanded = false;
+  private settingsStore = new SettingsStore();
   readonly tui: TUI; readonly chat: ScrollChat; readonly editor: EditorComponent; readonly footer: FooterComponent; readonly root: Container;
 
   private constructor(tui: TUI, chat: ScrollChat, editor: EditorComponent, footer: FooterComponent, root: Container) {
@@ -28,13 +30,14 @@ export class ChatShell {
 
   static async create(options: ChatShellOptions = {}): Promise<ChatShell> {
     const tui = await TUI.create();
-    const theme = createTheme("dark");
+    const settingsStore = options.settingsStore ?? new SettingsStore(options.cwd);
+    const theme = createTheme(settingsStore.get().theme);
     const root = new Container(tui.ctx, new BoxRenderable(tui.ctx, { flexDirection: "column", width: "100%", height: "100%" }));
     const chat = new ScrollChat(tui.ctx);
     const editor = new Editor(tui.ctx, getEditorTheme(theme), { maxHeight: 10, width: tui.renderer.width });
     const footer = new FooterComponent(tui.ctx, theme);
     const shell = new ChatShell(tui, chat, editor, footer, root);
-    shell.mount(options);
+    shell.settingsStore = settingsStore; shell.mount(options);
     return shell;
   }
 
@@ -71,14 +74,14 @@ export class ChatShell {
 
   runCommand(text: string): Promise<boolean> { return this.chrome.handle(text); }
 
-  refreshFooter(): void {
-    this.footer.update(this.cwd, this.session?.modelId ?? "no-model", this.session?.tokenUsage ?? emptyTokens());
+  refreshFooter(): void { this.footer.update(this.cwd, this.session?.modelId ?? "no-model", this.session?.tokenUsage ?? emptyTokens()); }
+
+  applyTheme(themeName: ThemeName): void {
+    const theme = createTheme(themeName); this.editor.borderColor = getEditorTheme(theme).borderColor;
+    this.footer.applyTheme(theme); this.refreshFooter();
   }
 
-  registerExpandable(component: Expandable): void {
-    component.setExpanded(this.toolsExpanded);
-    this.expandables.push(component);
-  }
+  registerExpandable(component: Expandable): void { component.setExpanded(this.toolsExpanded); this.expandables.push(component); }
 
   private toggleTools(): void {
     this.toolsExpanded = !this.toolsExpanded;
@@ -93,8 +96,5 @@ export class ChatShell {
     await this.session?.prompt(trimmed, promptOptionsForStreaming(!!this.session?.isStreaming));
   }
 
-  stop(): void {
-    this.session?.dispose();
-    this.tui.stop();
-  }
+  stop(): void { this.session?.dispose(); this.tui.stop(); }
 }

@@ -10,6 +10,9 @@ const makeChrome = () => {
     tui: () => ({}) as never,
     session: () => undefined,
     refreshFooter: () => {},
+    settings: () => ({ theme: "dark" as const, showImages: false, autoResizeImages: true, blockImages: false, editorPaddingX: 0, autocompleteMaxVisible: 5 }),
+    setSetting: async () => ({ theme: "dark" as const, showImages: false, autoResizeImages: true, blockImages: false, editorPaddingX: 0, autocompleteMaxVisible: 5 }),
+    applyTheme: () => {},
   };
   const chrome = new ShellChrome(host);
   return { chrome, log };

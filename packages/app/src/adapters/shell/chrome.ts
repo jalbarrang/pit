@@ -18,6 +18,8 @@ export class ShellChrome {
       openModelSelector: (search) => selectors.openModel(search),
       openThinkingSelector: () => selectors.openThinking(),
       openSessionSelector: () => void selectors.openSessions(),
+      openThemeSelector: () => selectors.openTheme(),
+      openSettingsSelector: () => selectors.openSettings(),
     };
   }
 

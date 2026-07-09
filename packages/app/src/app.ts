@@ -1,5 +1,6 @@
 import { ChatShell } from "./adapters/shell/index.ts";
 import { SessionStore } from "./adapters/session/index.ts";
+import { SettingsStore } from "./adapters/settings/index.ts";
 import { ChatController } from "./application/index.ts";
 import { replaySession } from "./application/replay.ts";
 import type { SessionGateway } from "./domain/index.ts";
@@ -9,6 +10,7 @@ export interface RunChatAppOptions {
   session?: SessionGateway<any>;
   dummyLines?: string[];
   store?: SessionStore;
+  settingsStore?: SettingsStore;
   resumeOnStart?: boolean;
 }
 
@@ -26,6 +28,7 @@ export const runChatApp = async (options: RunChatAppOptions = {}): Promise<ChatS
     session: options.session,
     dummyLines: options.dummyLines,
     listSessions: () => store.list(),
+    settingsStore: options.settingsStore,
     switchSession: async (path) => {
       const next = await store.resume(path);
       shell.replaceSession(next);
