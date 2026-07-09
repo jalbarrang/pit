@@ -1,3 +1,4 @@
+import { extractImages } from "../images/index.ts";
 import { textFromContent, thinkingFromContent } from "./event-text.ts";
 import { toolOutputText } from "./tool-output.ts";
 import { Transcript } from "./transcript.ts";
@@ -13,8 +14,8 @@ export class TranscriptProjector {
     if (event.type === "message_update") this.messageUpdate(event.assistantMessageEvent);
     if (event.type === "message_end") this.messageEnd(event.message);
     if (event.type === "tool_execution_start") this.transcript.startTool(event.toolCallId, event.toolName, event.args);
-    if (event.type === "tool_execution_update") this.transcript.updateTool(event.toolCallId, toolOutputText(event.partialResult));
-    if (event.type === "tool_execution_end") this.transcript.finishTool(event.toolCallId, toolOutputText(event.result), !!event.isError);
+    if (event.type === "tool_execution_update") this.transcript.updateTool(event.toolCallId, toolOutputText(event.partialResult), extractImages(event.partialResult));
+    if (event.type === "tool_execution_end") this.transcript.finishTool(event.toolCallId, toolOutputText(event.result), !!event.isError, extractImages(event.result));
     return this.transcript.snapshot();
   }
 

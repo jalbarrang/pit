@@ -15,6 +15,7 @@ export interface ToolRun {
   args: unknown;
   status: "running" | "succeeded" | "failed";
   output: string;
+  images?: import("../images/index.ts").ImagePart[];
 }
 
 export interface TranscriptSnapshot {

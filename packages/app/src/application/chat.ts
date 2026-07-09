@@ -3,6 +3,7 @@ import { AssistantMessageComponent, StatusIndicator, ToolExecutionComponent, Use
 import type { SessionGateway } from "../domain/index.ts";
 import { createTheme } from "../domain/theming/index.ts";
 import type { ChatShell } from "../adapters/shell/index.ts";
+import { imagesFromResult, textFromContent, textFromResult } from "./chat-parts.ts";
 
 type MessageEvent = AgentSessionEvent & { message?: any; assistantMessageEvent?: any };
 
@@ -78,20 +79,8 @@ export class ChatController {
     const component = this.tools.get(event.toolCallId);
     if (!component) return;
     const result = event.partialResult ?? event.result;
-    component.update({ id: event.toolCallId, name: event.toolName, args: event.args, status, output: textFromResult(result) });
+    const images = imagesFromResult(result);
+    this.shell.rememberImages(images);
+    component.update({ id: event.toolCallId, name: event.toolName, args: event.args, status, output: textFromResult(result), images });
   }
 }
-
-const textFromContent = (content: any): string => {
-  if (typeof content === "string") return content;
-  if (!Array.isArray(content)) return "";
-  return content.filter((part) => part.type === "text").map((part) => part.text ?? "").join("");
-};
-
-const textFromResult = (result: any): string => {
-  if (typeof result?.details?.diff === "string") return result.details.diff;
-  const text = textFromContent(result?.content);
-  if (text) return text;
-  if (result?.details === undefined) return "";
-  return typeof result.details === "string" ? result.details : JSON.stringify(result.details, null, 2);
-};

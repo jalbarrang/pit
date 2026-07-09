@@ -41,14 +41,14 @@ export class Transcript {
     return tool;
   }
 
-  updateTool(id: string, output: string): ToolRun | undefined {
+  updateTool(id: string, output: string, images: ToolRun["images"] = []): ToolRun | undefined {
     const tool = this.tools.find((candidate) => candidate.id === id);
-    if (tool) tool.output = output;
+    if (tool) { tool.output = output; tool.images = images; }
     return tool;
   }
 
-  finishTool(id: string, output: string, isError: boolean): ToolRun | undefined {
-    const tool = this.updateTool(id, output);
+  finishTool(id: string, output: string, isError: boolean, images: ToolRun["images"] = []): ToolRun | undefined {
+    const tool = this.updateTool(id, output, images);
     if (tool) tool.status = isError ? "failed" : "succeeded";
     return tool;
   }

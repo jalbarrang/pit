@@ -3,11 +3,12 @@ import { Container, Editor, TUI, Text, type Component, type EditorComponent } fr
 import { FooterComponent } from "../../components/footer.ts";
 import { emptyTokens } from "../../components/footer-format.ts";
 import { createTheme, getEditorTheme, type ThemeName } from "../../domain/theming/index.ts";
-import type { SessionGateway } from "../../domain/index.ts";
+import type { ImagePart, OpenableImage, SessionGateway } from "../../domain/index.ts";
 import { AuthStore } from "../auth/index.ts"; import { SettingsStore } from "../settings/index.ts"; import { TrustStore } from "../trust/index.ts";
 import { bindShellExtensions } from "./bind-shell.ts"; import { ShellChrome } from "./chrome.ts";
 import { DoubleCtrlCExit } from "./exit-keys.ts"; import { ExtensionMount } from "./extension-mount.ts";
 import { promptOptionsForStreaming, shouldAbortStream } from "./interrupt-keys.ts";
+import { MacOpenImageViewer, type ImageViewer } from "./images/index.ts";
 import { ScrollChat } from "./scroll-chat.ts";
 import type { ChatShellOptions, Expandable } from "./shell-types.ts";
 
@@ -24,6 +25,8 @@ export class ChatShell {
   private settingsStore = new SettingsStore();
   private authStore?: AuthStore;
   private trustStore?: TrustStore;
+  private imageViewer: ImageViewer = new MacOpenImageViewer();
+  private images: OpenableImage[] = [];
   readonly tui: TUI; readonly chat: ScrollChat; readonly editor: EditorComponent; readonly footer: FooterComponent; readonly root: Container; readonly extensionMount: ExtensionMount;
 
   private constructor(tui: TUI, chat: ScrollChat, editor: EditorComponent, footer: FooterComponent, root: Container) {
@@ -45,13 +48,14 @@ export class ChatShell {
   }
 
   private mount(options: ChatShellOptions): void {
-    this.hooks = options; this.session = options.session; this.cwd = options.cwd ?? process.cwd();
+    this.hooks = options; this.session = options.session; this.cwd = options.cwd ?? process.cwd(); this.imageViewer = options.imageViewer ?? this.imageViewer;
     this.root.addChild(this.extensionMount.headerSlot); this.root.addChild(this.chat);
     this.root.addChild(this.extensionMount.widgetAboveSlot); this.root.addChild(this.editor as never);
     this.root.addChild(this.extensionMount.widgetBelowSlot); this.root.addChild(this.extensionMount.footerSlot);
     this.chat.addDummyLines(this.tui.ctx, options.dummyLines ?? []); this.refreshFooter();
     this.editor.setAutocompleteProvider?.(this.chrome.autocomplete(this.cwd));
     this.editor.onSubmit = (text) => void this.submit(text);
+    (this.editor.renderable as typeof this.editor.renderable & { onMouseDown?: () => void }).onMouseDown = () => this.tui.setFocus(this.editor as never);
     this.tui.addChild(this.root); this.tui.setFocus(this.editor as never);
     this.tui.addInputListener((data) => this.handleGlobalInput(data));
     if (options.trustPromptOnStart) void this.runCommand("/trust");
@@ -64,6 +68,7 @@ export class ChatShell {
     if (data === "\u001b[5~") { this.chat.page(-10); return { consume: true }; }
     if (data === "\u001b[6~") { this.chat.page(10); return { consume: true }; }
     if (data === "\u000f") { this.toggleTools(); return { consume: true }; }
+    if (data === "\u0019") { void this.openLastImage(); return { consume: true }; }
     if (shouldAbortStream(data, this.session !== undefined)) { void this.session?.abort(); return { consume: true }; }
     const exit = this.exitKeys.input(data);
     if (exit === "exit") this.exit();
@@ -78,6 +83,8 @@ export class ChatShell {
   mountWidget(key: string, component: Component | undefined, placement?: "aboveEditor" | "belowEditor"): void { this.extensionMount.mountWidget(key, component, placement); }
   setWorkingMessage(message?: string): void { this.extensionMount.setWorkingMessage(message); }
   setWorkingVisible(visible: boolean): void { this.extensionMount.setWorkingVisible(visible); }
+  rememberImages(images: ImagePart[]): void { this.images.push(...images.map((image, i) => ({ ...image, id: `image-${this.images.length + i + 1}` }))); }
+  private async openLastImage(): Promise<void> { const image = this.images.at(-1); if (!image) { this.notify("No image available to open"); return; } const file = await this.imageViewer.open(image); this.notify(`Opened image: ${file}`); }
   setToolsExpanded(expanded: boolean): void { this.toolsExpanded = expanded; for (const c of this.expandables) c.setExpanded(expanded); }
   private exit(): void { this.stop(); process.exit(0); }
   replaceSession(session: SessionGateway): void { this.session?.dispose(); this.session = session; this.refreshFooter(); void bindShellExtensions(this, session, this.settingsStore); }

@@ -24,6 +24,13 @@ describe("TranscriptProjector", () => {
     projector.project({ type: "tool_execution_start", toolCallId: "1", toolName: "read", args: { file: "package.json" } });
     projector.project({ type: "tool_execution_update", toolCallId: "1", partialResult: { content: [{ type: "text", text: "partial" }] } });
     projector.project({ type: "tool_execution_end", toolCallId: "1", result: { content: [{ type: "text", text: "done" }] }, isError: false });
-    assert.deepEqual(projector.transcript.snapshot().tools[0], { id: "1", name: "read", args: { file: "package.json" }, status: "succeeded", output: "done" });
+    assert.deepEqual(projector.transcript.snapshot().tools[0], { id: "1", name: "read", args: { file: "package.json" }, status: "succeeded", output: "done", images: [] });
+  });
+
+  it("tracks image parts in tool results", () => {
+    const projector = new TranscriptProjector();
+    projector.project({ type: "tool_execution_start", toolCallId: "1", toolName: "read", args: {} });
+    projector.project({ type: "tool_execution_end", toolCallId: "1", result: { content: [{ type: "image", data: "abc", mimeType: "image/png" }] }, isError: false });
+    assert.deepEqual(projector.transcript.snapshot().tools[0]?.images, [{ data: "abc", mimeType: "image/png", filename: undefined }]);
   });
 });
