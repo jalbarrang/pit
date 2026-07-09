@@ -7,7 +7,7 @@ const unsubscribe = session.subscribe((event) => {
   if (event.type === "agent_end") setTimeout(done, 300);
 });
 
-for (const char of "say hi") shell.tui.routeKeyEvent({ raw: char });
+for (const char of process.env.PIT_SMOKE_PROMPT ?? "say hi") shell.tui.routeKeyEvent({ raw: char });
 shell.tui.routeKeyEvent({ raw: "\r" });
 setTimeout(done, 20_000);
 

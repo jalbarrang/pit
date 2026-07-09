@@ -35,6 +35,24 @@ export class Transcript {
     return turn;
   }
 
+  startTool(id: string, name: string, args: unknown): ToolRun {
+    const tool = { id, name, args, status: "running" as const, output: "" };
+    this.tools.push(tool);
+    return tool;
+  }
+
+  updateTool(id: string, output: string): ToolRun | undefined {
+    const tool = this.tools.find((candidate) => candidate.id === id);
+    if (tool) tool.output = output;
+    return tool;
+  }
+
+  finishTool(id: string, output: string, isError: boolean): ToolRun | undefined {
+    const tool = this.updateTool(id, output);
+    if (tool) tool.status = isError ? "failed" : "succeeded";
+    return tool;
+  }
+
   snapshot(): TranscriptSnapshot {
     return { turns: this.turns.map((turn) => ({ ...turn })), tools: this.tools.map((tool) => ({ ...tool })) };
   }

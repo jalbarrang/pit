@@ -13,8 +13,12 @@ export interface ChatShellOptions {
   dummyLines?: string[];
 }
 
+interface Expandable { setExpanded(expanded: boolean): void }
+
 export class ChatShell {
   private readonly exitKeys = new DoubleCtrlCExit();
+  private readonly expandables: Expandable[] = [];
+  private toolsExpanded = false;
   readonly root: Container;
   readonly tui: TUI;
   readonly chat: ScrollChat;
@@ -57,9 +61,20 @@ export class ChatShell {
   private handleGlobalInput(data: string) {
     if (data === "\u001b[5~") { this.chat.page(-10); return { consume: true }; }
     if (data === "\u001b[6~") { this.chat.page(10); return { consume: true }; }
+    if (data === "\u000f") { this.toggleTools(); return { consume: true }; }
     const exit = this.exitKeys.input(data);
     if (exit === "exit") { this.stop(); process.exitCode = 0; return { consume: true }; }
     return exit === "armed" ? { consume: true } : undefined;
+  }
+
+  registerExpandable(component: Expandable): void {
+    component.setExpanded(this.toolsExpanded);
+    this.expandables.push(component);
+  }
+
+  private toggleTools(): void {
+    this.toolsExpanded = !this.toolsExpanded;
+    for (const component of this.expandables) component.setExpanded(this.toolsExpanded);
   }
 
   private async submit(text: string, session?: SessionGateway): Promise<void> {

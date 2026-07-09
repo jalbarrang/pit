@@ -18,4 +18,12 @@ describe("TranscriptProjector", () => {
     assert.match(snapshot.turns[1]?.text ?? "", /Hi/);
     assert.equal(snapshot.turns[1]?.streaming, "complete");
   });
+
+  it("tracks tool execution status and output", () => {
+    const projector = new TranscriptProjector();
+    projector.project({ type: "tool_execution_start", toolCallId: "1", toolName: "read", args: { file: "package.json" } });
+    projector.project({ type: "tool_execution_update", toolCallId: "1", partialResult: { content: [{ type: "text", text: "partial" }] } });
+    projector.project({ type: "tool_execution_end", toolCallId: "1", result: { content: [{ type: "text", text: "done" }] }, isError: false });
+    assert.deepEqual(projector.transcript.snapshot().tools[0], { id: "1", name: "read", args: { file: "package.json" }, status: "succeeded", output: "done" });
+  });
 });
