@@ -3,6 +3,20 @@ export interface ModelRef {
   id: string;
 }
 
+export interface SessionSummary {
+  path: string;
+  id: string;
+  name?: string;
+  firstMessage?: string;
+  modified: Date;
+  messageCount: number;
+}
+
+export interface HistoryMessage {
+  role: "user" | "assistant";
+  text: string;
+}
+
 export interface SessionGateway<TEvent = unknown> {
   subscribe(handler: (event: TEvent) => void): () => void;
   prompt(text: string, options?: { streamingBehavior?: "steer" | "followUp" }): Promise<void>;
@@ -17,6 +31,8 @@ export interface SessionGateway<TEvent = unknown> {
   readonly thinkingLevel?: string;
   availableThinkingLevels?(): string[];
   setThinkingLevel?(level: string): void;
+  readonly sessionPath?: string;
+  history?(): HistoryMessage[];
 }
 
 export interface TokenUsage {

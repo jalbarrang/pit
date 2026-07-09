@@ -1,6 +1,7 @@
 import type { AgentSession, AgentSessionEvent } from "@earendil-works/pi-coding-agent";
 import { AuthStorage, createAgentSession, ModelRegistry, SessionManager } from "@earendil-works/pi-coding-agent";
-import type { ModelRef, SessionGateway, TokenUsage } from "../../domain/ports.ts";
+import { textFromContent } from "../../domain/conversation/event-text.ts";
+import type { HistoryMessage, ModelRef, SessionGateway, TokenUsage } from "../../domain/ports.ts";
 
 export class AppSession implements SessionGateway<AgentSessionEvent> {
   private readonly session: AgentSession;
@@ -11,13 +12,31 @@ export class AppSession implements SessionGateway<AgentSessionEvent> {
     this.modelRegistry = modelRegistry;
   }
 
-  static async create(cwd = process.cwd()): Promise<AppSession> {
+  static create(cwd = process.cwd()): Promise<AppSession> {
+    return AppSession.make(cwd, SessionManager.create(cwd));
+  }
+
+  static resume(path: string, cwd = process.cwd()): Promise<AppSession> {
+    return AppSession.make(cwd, SessionManager.open(path));
+  }
+
+  private static async make(cwd: string, sessionManager: SessionManager): Promise<AppSession> {
     const authStorage = AuthStorage.create();
     const modelRegistry = ModelRegistry.create(authStorage);
     if (modelRegistry.getAvailable().length === 0) throw new Error("No pi model credentials found. Run `pi` and complete login first.");
-    const sessionManager = SessionManager.create(cwd);
     const { session } = await createAgentSession({ cwd, authStorage, modelRegistry, sessionManager });
     return new AppSession(session, modelRegistry);
+  }
+
+  get sessionPath(): string | undefined {
+    return this.session.sessionManager.getSessionFile();
+  }
+
+  history(): HistoryMessage[] {
+    return this.session.messages
+      .filter((message) => message.role === "user" || message.role === "assistant")
+      .map((message) => ({ role: message.role as "user" | "assistant", text: textFromContent(message.content as never) }))
+      .filter((message) => message.text.trim().length > 0);
   }
 
   listModels(): ModelRef[] {

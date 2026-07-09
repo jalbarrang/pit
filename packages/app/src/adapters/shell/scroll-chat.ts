@@ -44,6 +44,10 @@ export class ScrollChat extends Component {
     this.invalidate();
   }
 
+  clear(): void {
+    for (const child of [...this.children]) this.removeMessage(child);
+  }
+
   addDummyLines(ctx: RenderContext, lines: string[]): void {
     for (const line of lines) this.addMessage(new Text(ctx, line));
   }

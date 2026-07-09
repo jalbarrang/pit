@@ -9,9 +9,16 @@ const makeContext = () => {
     exit: () => void log.push("exit"),
     openModelSelector: (search) => void log.push(`model:${search}`),
     openThinkingSelector: () => void log.push("thinking"),
+    openSessionSelector: () => void log.push("sessions"),
   };
   return { context, log };
 };
+
+test("/resume opens the session selector", async () => {
+  const { context, log } = makeContext();
+  await createBuiltinRegistry().dispatch("/resume", context);
+  assert.deepEqual(log, ["sessions"]);
+});
 
 test("/model opens the model selector passing the search term", async () => {
   const { context, log } = makeContext();

@@ -17,6 +17,7 @@ export class ShellChrome {
       exit: () => host.exit(),
       openModelSelector: (search) => selectors.openModel(search),
       openThinkingSelector: () => selectors.openThinking(),
+      openSessionSelector: () => void selectors.openSessions(),
     };
   }
 

@@ -14,7 +14,8 @@ export type { ChatShellOptions } from "./shell-types.ts";
 
 export class ChatShell {
   private readonly exitKeys = new DoubleCtrlCExit();
-  private readonly chrome = new ShellChrome({ tui: () => this.tui, session: () => this.session, notify: (text) => this.notify(text), exit: () => this.exit(), refreshFooter: () => this.refreshFooter() });
+  private readonly chrome = new ShellChrome({ tui: () => this.tui, session: () => this.session, notify: (text) => this.notify(text), exit: () => this.exit(), refreshFooter: () => this.refreshFooter(), listSessions: () => this.hooks.listSessions?.() ?? Promise.resolve([]), switchSession: (path) => this.hooks.switchSession?.(path) ?? Promise.resolve() });
+  private hooks: ChatShellOptions = {};
   private readonly expandables: Expandable[] = [];
   private session?: SessionGateway;
   private cwd = process.cwd();
@@ -38,15 +39,14 @@ export class ChatShell {
   }
 
   private mount(options: ChatShellOptions): void {
-    this.session = options.session;
-    this.cwd = options.cwd ?? process.cwd();
+    this.hooks = options; this.session = options.session; this.cwd = options.cwd ?? process.cwd();
     this.root.addChild(this.chat);
     this.root.addChild(this.editor as never);
     this.root.addChild(this.footer);
     this.chat.addDummyLines(this.tui.ctx, options.dummyLines ?? []);
     this.refreshFooter();
     this.editor.setAutocompleteProvider?.(this.chrome.autocomplete(this.cwd));
-    this.editor.onSubmit = (text) => void this.submit(text, options.session);
+    this.editor.onSubmit = (text) => void this.submit(text);
     this.tui.addChild(this.root);
     this.tui.setFocus(this.editor as never);
     this.tui.addInputListener((data) => this.handleGlobalInput(data));
@@ -67,6 +67,10 @@ export class ChatShell {
 
   private exit(): void { this.stop(); process.exit(0); }
 
+  replaceSession(session: SessionGateway): void { this.session?.dispose(); this.session = session; this.refreshFooter(); }
+
+  runCommand(text: string): Promise<boolean> { return this.chrome.handle(text); }
+
   refreshFooter(): void {
     this.footer.update(this.cwd, this.session?.modelId ?? "no-model", this.session?.tokenUsage ?? emptyTokens());
   }
@@ -81,12 +85,12 @@ export class ChatShell {
     for (const component of this.expandables) component.setExpanded(this.toolsExpanded);
   }
 
-  private async submit(text: string, session?: SessionGateway): Promise<void> {
+  private async submit(text: string): Promise<void> {
     const trimmed = text.trim();
     if (!trimmed) return;
     if (await this.chrome.handle(trimmed)) return;
-    if (!session) this.chat.addMessage(new Text(this.tui.ctx, `You: ${trimmed}`, 1));
-    await session?.prompt(trimmed, promptOptionsForStreaming(!!session?.isStreaming));
+    if (!this.session) this.chat.addMessage(new Text(this.tui.ctx, `You: ${trimmed}`, 1));
+    await this.session?.prompt(trimmed, promptOptionsForStreaming(!!this.session?.isStreaming));
   }
 
   stop(): void {

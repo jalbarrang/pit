@@ -6,12 +6,14 @@ export interface ChromeContext {
   exit(): void;
   openModelSelector(search: string): void;
   openThinkingSelector(): void;
+  openSessionSelector(): void;
 }
 
 export const createBuiltinRegistry = (): CommandRegistry<ChromeContext> => {
   const registry = new CommandRegistry<ChromeContext>();
   registry.register({ name: "model", description: "Select model (opens selector UI)", handler: (ctx, args) => ctx.openModelSelector(args) });
   registry.register({ name: "thinking", description: "Select thinking level", handler: (ctx) => ctx.openThinkingSelector() });
+  registry.register({ name: "resume", description: "Resume a different session", handler: (ctx) => ctx.openSessionSelector() });
   registry.register({ name: "quit", description: "Quit pit", handler: (ctx) => ctx.exit() });
   return registry;
 };
