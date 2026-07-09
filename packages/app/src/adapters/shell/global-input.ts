@@ -13,6 +13,7 @@ export interface GlobalInputDeps {
   cycleThinking(): void;
   suspend(): void;
   externalEditor(): void;
+  pasteImage(): void;
   exitKeysInput(data: string): "exit" | "armed" | "ignored";
 }
 
@@ -28,6 +29,7 @@ export function routeGlobalInput(deps: GlobalInputDeps, data: string): { consume
   if (action === "thinking-cycle") { deps.cycleThinking(); return { consume: true }; }
   if (action === "suspend") { deps.suspend(); return { consume: true }; }
   if (action === "external-editor") { deps.externalEditor(); return { consume: true }; }
+  if (action === "paste-image") { deps.pasteImage(); return { consume: true }; }
   if (action === "interrupt" && deps.abortIfStreaming(data)) return { consume: true };
   const exit = deps.exitKeysInput(data); if (exit === "exit") deps.exit();
   return exit === "armed" ? { consume: true } : undefined;

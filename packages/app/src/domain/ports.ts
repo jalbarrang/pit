@@ -1,3 +1,5 @@
+import type { ImagePart } from "./images/types.ts";
+
 export interface ModelRef {
   provider: string;
   id: string;
@@ -19,7 +21,7 @@ export interface HistoryMessage {
 
 export interface SessionGateway<TEvent = unknown> {
   subscribe(handler: (event: TEvent) => void): () => void;
-  prompt(text: string, options?: { streamingBehavior?: "steer" | "followUp" }): Promise<void>;
+  prompt(text: string, options?: { streamingBehavior?: "steer" | "followUp"; images?: ImagePart[] }): Promise<void>;
   abort(): Promise<void>;
   steer?(text: string): Promise<void>;
   dispose(): void;

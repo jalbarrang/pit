@@ -57,6 +57,10 @@ describe("resolveGlobalAction", () => {
     assertAction("\u0007", [["\u0007", "app.editor.external"]], false, "external-editor");
   });
 
+  it("returns paste-image when app.clipboard.pasteImage matches", () => {
+    assertAction("\u0016", [["\u0016", "app.clipboard.pasteImage"]], false, "paste-image");
+  });
+
   it("returns none when nothing matches", () => {
     assertAction("x", [], false, "none");
   });

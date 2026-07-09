@@ -3,6 +3,7 @@ import {
   AuthStorage, createAgentSession, DefaultResourceLoader, getAgentDir,
   ModelRegistry, SessionManager, SettingsManager,
 } from "@earendil-works/pi-coding-agent";
+import type { ImagePart } from "../../domain/images/types.ts";
 import type { SessionGateway } from "../../domain/ports.ts";
 import { SessionFacade } from "./session-facade.ts";
 
@@ -59,7 +60,7 @@ export class AppSession implements SessionGateway {
   availableThinkingLevels() { return this.facade.availableThinkingLevels(); }
   setThinkingLevel(level: string) { this.facade.setThinkingLevel(level); }
   subscribe(handler: Parameters<SessionFacade["subscribe"]>[0]) { return this.facade.subscribe(handler); }
-  prompt(text: string, options?: { streamingBehavior?: "steer" | "followUp" }) { return this.facade.prompt(text, options); }
+  prompt(text: string, options?: { streamingBehavior?: "steer" | "followUp"; images?: ImagePart[] }) { return this.facade.prompt(text, options); }
   abort() { return this.facade.abort(); }
   steer(text: string) { return this.facade.steer(text); }
   dispose() { this.facade.dispose(); }

@@ -1,5 +1,7 @@
 import type { AgentSession, AgentSessionEvent, ExtensionUIContext, LoadExtensionsResult, ModelRegistry } from "@earendil-works/pi-coding-agent";
 import { textFromContent } from "../../domain/conversation/event-text.ts";
+import { toImageContent } from "../../domain/images/to-image-content.ts";
+import type { ImagePart } from "../../domain/images/types.ts";
 import type { HistoryMessage, ModelRef, TokenUsage } from "../../domain/ports.ts";
 
 /** SessionGateway methods delegated onto the SDK AgentSession. */
@@ -42,8 +44,10 @@ export class SessionFacade {
   availableThinkingLevels(): string[] { return this.session.getAvailableThinkingLevels(); }
   setThinkingLevel(level: string): void { this.session.setThinkingLevel(level as never); }
   subscribe(handler: (event: AgentSessionEvent) => void): () => void { return this.session.subscribe(handler); }
-  prompt(text: string, options?: { streamingBehavior?: "steer" | "followUp" }): Promise<void> {
-    return this.session.prompt(text, options);
+  prompt(text: string, options?: { streamingBehavior?: "steer" | "followUp"; images?: ImagePart[] }): Promise<void> {
+    if (!options?.images) return this.session.prompt(text, options as never);
+    const { images, ...rest } = options;
+    return this.session.prompt(text, { ...rest, images: images.map(toImageContent) });
   }
   abort(): Promise<void> { return this.session.abort(); }
   steer(text: string): Promise<void> { return this.session.steer(text); }

@@ -8,8 +8,8 @@ import type { ImagePart, OpenableImage, SessionGateway } from "../../domain/inde
 import { AuthStore } from "../auth/index.ts"; import { SettingsStore } from "../settings/index.ts"; import { TrustStore } from "../trust/index.ts";
 import { bindShellExtensions } from "./bind-shell.ts"; import { ShellChrome } from "./chrome.ts";
 import { DoubleCtrlCExit } from "./exit-keys.ts"; import { ExtensionMount } from "./extension-mount.ts";
-import { openInExternalEditor } from "./external-editor.ts"; import { routeGlobalInput } from "./global-input.ts"; import { promptOptionsForStreaming, shouldAbortStream } from "./interrupt-keys.ts";
-import { MacOpenImageViewer, type ImageViewer } from "./images/index.ts";
+import { createClipboardImageDeps, readClipboardImage } from "./clipboard-image.ts"; import { openInExternalEditor } from "./external-editor.ts"; import { routeGlobalInput } from "./global-input.ts";
+import { promptOptionsForStreaming, shouldAbortStream } from "./interrupt-keys.ts"; import { MacOpenImageViewer, type ImageViewer } from "./images/index.ts"; import { PendingImages } from "./pending-images.ts";
 import { ScrollChat } from "./scroll-chat.ts"; import { bindSelectionCopy } from "./selection-copy.ts";
 import type { ChatShellOptions, Expandable } from "./shell-types.ts";
 import { suspendToBackground } from "./suspend.ts";
@@ -19,7 +19,7 @@ export class ChatShell {
   private readonly chrome = new ShellChrome({ tui: () => this.tui, session: () => this.session, notify: (text) => this.notify(text), exit: () => this.exit(), refreshFooter: () => this.refreshFooter(), settings: () => this.settingsStore.get(), setSetting: (id, value) => this.settingsStore.set(id, value), applyTheme: (theme) => this.applyTheme(theme), auth: () => this.authStore, trust: () => this.trustStore, onAuthConfigured: () => this.hooks.onAuthConfigured?.() ?? Promise.resolve(), listSessions: () => this.hooks.listSessions?.() ?? Promise.resolve([]), switchSession: (path) => this.hooks.switchSession?.(path) ?? Promise.resolve(), reloadKeybindings: () => { this.hooks.reloadKeybindings?.(); this.notify("Keybindings reloaded"); } });
   private hooks: ChatShellOptions = {}; private readonly expandables: Expandable[] = []; private session?: SessionGateway;
   private cwd = process.cwd(); private toolsExpanded = false; private settingsStore = new SettingsStore();
-  private authStore?: AuthStore; private trustStore?: TrustStore; private imageViewer: ImageViewer = new MacOpenImageViewer(); private images: OpenableImage[] = [];
+  private authStore?: AuthStore; private trustStore?: TrustStore; private imageViewer: ImageViewer = new MacOpenImageViewer(); private images: OpenableImage[] = []; private readonly pendingImages = new PendingImages();
   readonly tui: TUI; readonly chat: ScrollChat; readonly editor: EditorComponent; readonly footer: FooterComponent; readonly root: Container; readonly extensionMount: ExtensionMount;
   private constructor(tui: TUI, chat: ScrollChat, editor: EditorComponent, footer: FooterComponent, root: Container) {
     this.tui = tui; this.chat = chat; this.editor = editor; this.footer = footer; this.root = root;
@@ -57,7 +57,7 @@ export class ChatShell {
       openLastImage: () => void this.openLastImage(), page: (d) => this.chat.page(d), toggleTools: () => this.toggleTools(), exit: () => this.exit(),
       abortIfStreaming: (d) => { if (shouldAbortStream(d, this.session !== undefined)) { void this.session?.abort(); return true; } return false; },
       cycleModel: (dir) => this.cycleModel(dir), cycleThinking: () => this.cycleThinking(), suspend: () => this.suspendApp(),
-      externalEditor: () => this.openExternalEditor(), exitKeysInput: (d) => this.exitKeys.input(d) }, data);
+      externalEditor: () => this.openExternalEditor(), pasteImage: () => this.pasteImage(), exitKeysInput: (d) => this.exitKeys.input(d) }, data);
   }
   private cycleModel(dir: 1 | -1): void {
     const s = this.session, models = s?.listModels?.() ?? [], i = s?.modelId.indexOf("/") ?? -1;
@@ -77,8 +77,8 @@ export class ChatShell {
       writeFile: (p, d) => writeFileSync(p, d, "utf8"), readFile: (p) => readFileSync(p, "utf8"), removeFile: (p) => { try { unlinkSync(p); } catch { /* ignore */ } },
       spawn: (c, a) => { spawnSync(c, a, { stdio: "inherit" }); }, suspend: () => r.suspend(), resume: () => r.resume(), setText: (t) => this.editor.setText(t) });
   }
-  private notify(text: string): void { this.chat.addMessage(new Text(this.tui.ctx, text, 1)); }
-  notifyExtension(text: string): void { this.notify(text); } areToolsExpanded(): boolean { return this.toolsExpanded; }
+  private pasteImage(): void { const img = readClipboardImage(createClipboardImageDeps()); if (!img) return this.notify(process.platform === "darwin" ? "No image in clipboard" : "Paste image not supported on this platform"); this.pendingImages.push(img); this.rememberImages([img]); this.notify(`Image attached (${this.pendingImages.count})`); }
+  private notify(text: string): void { this.chat.addMessage(new Text(this.tui.ctx, text, 1)); } notifyExtension(text: string): void { this.notify(text); } areToolsExpanded(): boolean { return this.toolsExpanded; }
   mountHeader(component: Component | undefined): void { this.extensionMount.mountHeader(component); }
   mountFooter(component: Component | undefined): void { this.extensionMount.mountFooter(component); }
   mountWidget(key: string, component: Component | undefined, placement?: "aboveEditor" | "belowEditor"): void { this.extensionMount.mountWidget(key, component, placement); }
@@ -95,6 +95,6 @@ export class ChatShell {
   private toggleTools(): void { this.setToolsExpanded(!this.toolsExpanded); }
   private async submit(text: string): Promise<void> { const trimmed = text.trim();
     if (!trimmed || await this.chrome.handle(trimmed)) return; if (!this.session) this.chat.addMessage(new Text(this.tui.ctx, `You: ${trimmed}`, 1));
-    await this.session?.prompt(trimmed, promptOptionsForStreaming(!!this.session?.isStreaming)); }
+    const imgs = this.pendingImages.takeAll(); await this.session?.prompt(trimmed, { ...promptOptionsForStreaming(!!this.session?.isStreaming), images: imgs }); }
   stop(): void { this.session?.dispose(); this.tui.stop(); }
 }

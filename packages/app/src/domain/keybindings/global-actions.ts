@@ -9,6 +9,7 @@ export type GlobalAction =
   | "thinking-cycle"
   | "suspend"
   | "external-editor"
+  | "paste-image"
   | "none";
 
 interface KbMatcher {
@@ -28,6 +29,7 @@ export function resolveGlobalAction(
   if (kb.matches(data, "app.thinking.cycle")) return "thinking-cycle";
   if (kb.matches(data, "app.suspend")) return "suspend";
   if (kb.matches(data, "app.editor.external")) return "external-editor";
+  if (kb.matches(data, "app.clipboard.pasteImage")) return "paste-image";
   if (data === "\u001b[5~") return "page-up";
   if (data === "\u001b[6~") return "page-down";
   return "none";

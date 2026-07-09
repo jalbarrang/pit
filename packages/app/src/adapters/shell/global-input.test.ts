@@ -12,6 +12,7 @@ const fakeDeps = (overrides: Partial<GlobalInputDeps> = {}): { deps: GlobalInput
     abortIfStreaming: (data) => { calls.push(`abort:${data}`); return false; },
     cycleModel: (dir) => void calls.push(`cycleModel:${dir}`), cycleThinking: () => void calls.push("cycleThinking"),
     suspend: () => void calls.push("suspend"), externalEditor: () => void calls.push("externalEditor"),
+    pasteImage: () => void calls.push("pasteImage"),
     exitKeysInput: () => "ignored", ...overrides,
   };
   return { deps, calls };
@@ -64,6 +65,11 @@ describe("routeGlobalInput", () => {
     const { deps, calls } = fakeDeps({ matches: { matches: (data, id) => data === "g" && id === "app.editor.external" } });
     assert.deepEqual(routeGlobalInput(deps, "g"), { consume: true });
     assert.deepEqual(calls, ["externalEditor"]);
+  });
+  it("pastes image on app.clipboard.pasteImage", () => {
+    const { deps, calls } = fakeDeps({ matches: { matches: (data, id) => data === "v" && id === "app.clipboard.pasteImage" } });
+    assert.deepEqual(routeGlobalInput(deps, "v"), { consume: true });
+    assert.deepEqual(calls, ["pasteImage"]);
   });
   it("aborts stream on interrupt when abortIfStreaming returns true", () => {
     const { deps, calls } = fakeDeps({
