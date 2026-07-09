@@ -25,7 +25,7 @@ pit runs pi extensions through `ExtensionUIContext` + an ANSI bridge for legacy 
 
 ## Image support decision
 
-OpenTUI 0.4.3 detects Kitty graphics and sixel capabilities in Zig (`terminal.zig`, `ansi.zig`) and exposes `capabilities.kitty_graphics` / `capabilities.sixel` in `.d.ts`, but the installed public API has no Image renderable and no region-safe graphics passthrough for content inside the native cell-buffer frame. Raw Kitty/iTerm2 sequences would race or be overwritten by frame rendering. pit 0.1.0 therefore renders image tool-result parts as bordered placeholders with filename/MIME/dimensions from pure header parsers and opens the latest image externally with `Ctrl-Y` through the macOS `open` adapter.
+OpenTUI 0.4.3 has no region-safe Kitty/iTerm2 graphics passthrough for content inside the native cell-buffer frame, so pit does not emit raw graphics escapes. pit decodes PNG/JPEG bytes with pure-JS decoders, sizes them with pi-tui-compatible cell math, and renders inline through `FrameBufferRenderable` + `OptimizedBuffer.drawSuperSampleBuffer` quadrant rasterization. Unsupported formats or corrupt image data fall back to the bordered placeholder with filename/MIME/dimensions, and `Ctrl-Y` still opens the latest image externally through the macOS `open` adapter.
 
 ## Mouse / clipboard decision
 

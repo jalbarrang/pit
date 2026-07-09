@@ -1,5 +1,5 @@
 import type { Renderable, RenderContext } from "@opentui/core";
-import { Box, Component, Text, ansiTextToStyledText, formatImagePlaceholder, getImageDimensions, type TextContent } from "@pit/tui";
+import { Box, Component, Image, Text, ansiTextToStyledText, formatImagePlaceholder, getImageDimensions, type TextContent } from "@pit/tui";
 import { isDiffText, type ToolRun } from "../domain/index.ts";
 import type { PitTheme } from "../domain/theming/index.ts";
 import { DiffViewComponent, type DiffLineFactory } from "./diff-view.ts";
@@ -67,8 +67,13 @@ export class ToolExecutionComponent extends Component {
 
   private renderImages(ctx: RenderContext): void {
     for (const image of this.run.images ?? []) {
-      const lines = formatImagePlaceholder({ mimeType: image.mimeType, filename: image.filename, dimensions: getImageDimensions(image.data, image.mimeType) ?? undefined });
-      this.shell.addChild(new Text(ctx, lines.join("\n"), 0, 0, { fg: this.theme.color("toolOutput") }, this.diffInject?.imageText?.()));
+      const dimensions = getImageDimensions(image.data, image.mimeType) ?? undefined;
+      if (!this.diffInject?.imageText) {
+        this.shell.addChild(new Image(ctx, { ...image, dimensions }));
+        continue;
+      }
+      const lines = formatImagePlaceholder({ mimeType: image.mimeType, filename: image.filename, dimensions });
+      this.shell.addChild(new Text(ctx, lines.join("\n"), 0, 0, { fg: this.theme.color("toolOutput") }, this.diffInject.imageText()));
     }
   }
 

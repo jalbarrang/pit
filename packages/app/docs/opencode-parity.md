@@ -6,7 +6,7 @@ Principle: prefer opentui-native APIs, then opencode's production pattern, then 
 
 | pi-tui feature | Source | pit approach | Grounding |
 |---|---|---|---|
-| Inline images (Kitty/iTerm2 raw bytes) | `pi-mono/packages/tui/src/terminal-image.ts#renderImage`, `components/image.ts#Image` | Use opentui cell rasterization, not raw graphics passthrough; decode bytes to RGBA, size to cells, draw into `FrameBufferRenderable`; fallback only on decode/unsupported data. | `packages/tui/node_modules/@opentui/core/renderables/FrameBuffer.d.ts#FrameBufferRenderable`; `buffer.d.ts#OptimizedBuffer.drawSuperSampleBuffer`; `opencode/packages/tui/src/component/bg-pulse.tsx#GoUpsellArtRenderable`; `component/bg-pulse-render.ts#GoUpsellArtPainter.render` |
+| Inline images (Kitty/iTerm2 raw bytes) | `pi-mono/packages/tui/src/terminal-image.ts#renderImage`, `components/image.ts#Image` | opentui cell rasterization, not raw graphics passthrough; `@pit/tui` decodes PNG/JPEG to RGBA, sizes to cells, draws with `FrameBufferRenderable`; placeholder only on decode/unsupported data. | `packages/tui/src/components/image/image.ts#Image`; `packages/tui/node_modules/@opentui/core/renderables/FrameBuffer.d.ts#FrameBufferRenderable`; `buffer.d.ts#OptimizedBuffer.drawSuperSampleBuffer`; `opencode/packages/tui/src/component/bg-pulse.tsx#GoUpsellArtRenderable`; `component/bg-pulse-render.ts#GoUpsellArtPainter.render` |
 | Image sizing/dimensions | `pi-mono/packages/tui/src/terminal-image.ts#calculateImageCellSize`, `#getPngDimensions`, `#getJpegDimensions`, `#getGifDimensions`, `#getWebpDimensions` | Port sizing math into pure `@pit/tui` styling domain; decoder owns real dimensions for PNG/JPEG. | `packages/tui/src/domain/styling/image/*`; `pi-mono/packages/tui/src/terminal-image.ts#calculateImageRows` |
 | Hyperlinks (OSC 8) | `pi-mono/packages/tui/src/terminal-image.ts#hyperlink`, `detectCapabilities` | Fallback to markdown/plain URL text unless opentui linkification is explicitly sufficient for content; do not emit OSC 8 into renderables. | `packages/tui/node_modules/@opentui/core/lib/detect-links.d.ts#detectLinks`; `renderables/Markdown.d.ts#MarkdownRenderable`; `packages/tui/src/components/markdown/create-renderables.ts` |
 | Kitty keyboard / modified keys | `pi-mono/packages/tui/src/keys.ts#parseKey`, `terminal.ts#queryAndEnableKittyProtocol` | opentui-native keyboard parser/renderer config. | `packages/tui/node_modules/@opentui/core/renderer.d.ts#KittyKeyboardOptions`; `#CliRendererConfig.useKittyKeyboard`; `lib/parse.keypress-kitty.d.ts#parseKittyKeyboard`; `opencode/packages/tui/src/app.tsx#createCliRenderer` |
@@ -21,7 +21,7 @@ Principle: prefer opentui-native APIs, then opencode's production pattern, then 
 
 ## Decoder choice
 
-Pending t-002 spike. Candidate constraint: pure JS only, no native postinstall. `upng-js` + `jpeg-js` is favored over `jimp` if it keeps the runtime surface small and licensing simple.
+Chosen: `upng-js` (MIT, one `pako` dependency) + `jpeg-js` (BSD-3-Clause, no dependencies). `jimp` was rejected because `pnpm view` showed a ~3.3MB unpacked package with many plugins/transitive packages for formats pit does not need now. The chosen pair is pure JS, has no native postinstall, and matches the current deliverable: PNG/JPEG bytes to RGBA for `OptimizedBuffer.drawSuperSampleBuffer`.
 
 ## Split-footer/passthrough spike
 
