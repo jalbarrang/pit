@@ -66,7 +66,7 @@ export class ChatShell {
     if (data === "\u000f") { this.toggleTools(); return { consume: true }; }
     if (shouldAbortStream(data, this.session !== undefined)) { void this.session?.abort(); return { consume: true }; }
     const exit = this.exitKeys.input(data);
-    if (exit === "exit") { this.stop(); process.exitCode = 0; return { consume: true }; }
+    if (exit === "exit") { this.stop(); process.exit(0); }
     return exit === "armed" ? { consume: true } : undefined;
   }
 
@@ -92,6 +92,7 @@ export class ChatShell {
   }
 
   stop(): void {
+    this.session?.dispose();
     this.tui.stop();
   }
 }

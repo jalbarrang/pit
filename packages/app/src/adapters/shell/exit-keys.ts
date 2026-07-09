@@ -1,3 +1,5 @@
+import { matchesKey } from "@pit/tui";
+
 export class DoubleCtrlCExit {
   private last = 0;
   private readonly now: () => number;
@@ -9,7 +11,7 @@ export class DoubleCtrlCExit {
   }
 
   input(data: string): "exit" | "armed" | "ignored" {
-    if (data !== "\u0003") return "ignored";
+    if (!matchesKey(data, "ctrl+c")) return "ignored";
     const current = this.now();
     const result = this.last > 0 && current - this.last <= this.windowMs ? "exit" : "armed";
     this.last = current;
