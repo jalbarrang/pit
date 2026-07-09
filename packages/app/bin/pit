@@ -14,5 +14,14 @@ if [ "$major" -lt "$need_major" ] || { [ "$major" -eq "$need_major" ] && [ "$min
   echo "pit requires Node >=26.4.0; found $version" >&2
   exit 1
 fi
-root=$(cd "$(dirname "$0")/.." && pwd)
+source_path=${BASH_SOURCE[0]}
+while [ -L "$source_path" ]; do
+  dir=$(cd -P "$(dirname "$source_path")" && pwd)
+  target=$(readlink "$source_path")
+  case "$target" in
+    /*) source_path=$target ;;
+    *) source_path=$dir/$target ;;
+  esac
+done
+root=$(cd -P "$(dirname "$source_path")/.." && pwd)
 exec node --experimental-ffi "$root/src/main.ts" "$@"
