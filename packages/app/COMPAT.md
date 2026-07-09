@@ -25,7 +25,7 @@ pit runs pi extensions through `ExtensionUIContext` + an ANSI bridge for legacy 
 
 ## Image support decision
 
-On terminals where OpenTUI reports `TerminalCapabilities.kitty_graphics`, pit transmits PNG bytes (or JPEG decoded to raw RGBA) with quiet kitty graphics escapes, creates a virtual Unicode placement, and renders U+10EEEE placeholder cells with truecolor image-ID foregrounds so images scroll/diff with normal text. Terminals without kitty graphics capability use the pure-JS PNG/JPEG decoder plus `FrameBufferRenderable` + `OptimizedBuffer.drawSuperSampleBuffer` quadrant rasterization. Unsupported formats or corrupt image data fall back to the bordered placeholder with filename/MIME/dimensions, and `Ctrl-Y` still opens the latest image externally through the macOS `open` adapter.
+On terminals where OpenTUI reports `TerminalCapabilities.kitty_graphics`, pit transmits PNG bytes (or JPEG/GIF/lossless WebP decoded to raw RGBA) with quiet kitty graphics escapes, creates a virtual Unicode placement, and renders U+10EEEE placeholder cells with truecolor image-ID foregrounds so images scroll/diff with normal text. Terminals without kitty graphics capability use the pure-JS PNG/JPEG/GIF/lossless WebP decoder plus `FrameBufferRenderable` + `OptimizedBuffer.drawSuperSampleBuffer` quadrant rasterization. GIF rendering decodes the first frame only; unsupported WebP variants, unsupported formats, or corrupt image data fall back to the bordered placeholder with filename/MIME/dimensions, and `Ctrl-Y` still opens the latest image externally through the macOS `open` adapter.
 
 ## Mouse / clipboard decision
 

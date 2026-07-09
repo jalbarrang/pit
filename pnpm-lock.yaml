@@ -29,12 +29,18 @@ importers:
 
   packages/tui:
     dependencies:
+      '@nktkas/webp':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@opentui/core':
         specifier: ^0.4.3
         version: 0.4.3(typescript@6.0.3)(web-tree-sitter@0.25.10)
       jpeg-js:
         specifier: ^0.4.4
         version: 0.4.4
+      omggif:
+        specifier: ^1.0.10
+        version: 1.0.10
       upng-js:
         specifier: ^2.1.0
         version: 2.1.0
@@ -257,6 +263,10 @@ packages:
     peerDependenciesMeta:
       '@opentelemetry/api':
         optional: true
+
+  '@nktkas/webp@1.0.0':
+    resolution: {integrity: sha512-EfHAkc/JTA6F5ingqrz6OVbhSAs5BUzUiEo+QvlFsZsZ7wdUEUliLPtiWGiNzCEpjkYOPU3VllicchSnrkDHuw==}
+    engines: {node: '>=20.19.0'}
 
   '@opentelemetry/api@1.9.0':
     resolution: {integrity: sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg==}
@@ -573,6 +583,9 @@ packages:
   node-fetch@3.3.2:
     resolution: {integrity: sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+
+  omggif@1.0.10:
+    resolution: {integrity: sha512-LMJTtvgc/nugXj0Vcrrs68Mn2D1r0zf630VNtqtpI1FEO7e+O9FP4gqs9AcnBaSEeoHIPm28u6qgPR0oyEpGSw==}
 
   openai@6.26.0:
     resolution: {integrity: sha512-zd23dbWTjiJ6sSAX6s0HrCZi41JwTA1bQVs0wLQPZ2/5o2gxOJA5wh7yOAUgwYybfhDXyhwlpeQf7Mlgx8EOCA==}
@@ -1073,6 +1086,8 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  '@nktkas/webp@1.0.0': {}
+
   '@opentelemetry/api@1.9.0': {}
 
   '@opentelemetry/semantic-conventions@1.42.0': {}
@@ -1369,6 +1384,8 @@ snapshots:
       data-uri-to-buffer: 4.0.1
       fetch-blob: 3.2.0
       formdata-polyfill: 4.0.10
+
+  omggif@1.0.10: {}
 
   openai@6.26.0(ws@8.21.0)(zod@4.4.3):
     optionalDependencies:

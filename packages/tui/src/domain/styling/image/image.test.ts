@@ -9,6 +9,14 @@ const png = Buffer.concat([
 ]).toString("base64");
 
 const gif = Buffer.from([...Buffer.from("GIF89a"), 5, 0, 7, 0]).toString("base64");
+const gif4x4 = "R0lGODlhBAAEAPIEAAAAAP8AAAD/AAAA/////wAAAAAAAAAAACH5BAAAAAAALAAAAAAEAAQAAAMGGDIE/tAlADs=";
+const webp4x4 = "UklGRjIAAABXRUJQVlA4TCYAAAAvA8AAACcgEEjaH3qN+RcQFPk/2vwHsqVsEAgQXpT43xIR0f80Bg==";
+const firstRow = [
+  255, 0, 0, 255,
+  0, 255, 0, 255,
+  0, 0, 255, 255,
+  255, 255, 255, 255,
+];
 
 describe("image domain", () => {
   it("reads PNG and GIF header dimensions", () => {
@@ -26,6 +34,20 @@ describe("image domain", () => {
     const encoded = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=";
     const decoded = decodeImageData(encoded, "image/png");
     assert.deepEqual(decoded, { widthPx: 1, heightPx: 1, rgba: new Uint8Array([255, 255, 255, 255]) });
+  });
+
+  it("decodes the first GIF frame to RGBA", () => {
+    const decoded = decodeImageData(gif4x4, "image/gif");
+    assert.equal(decoded?.widthPx, 4);
+    assert.equal(decoded?.heightPx, 4);
+    assert.deepEqual([...(decoded?.rgba.slice(0, 16) ?? [])], firstRow);
+  });
+
+  it("decodes lossless WebP bytes to RGBA", () => {
+    const decoded = decodeImageData(webp4x4, "image/webp");
+    assert.equal(decoded?.widthPx, 4);
+    assert.equal(decoded?.heightPx, 4);
+    assert.deepEqual([...(decoded?.rgba.slice(0, 16) ?? [])], firstRow);
   });
 
   it("maps decoded pixels to supersampled cell pixels", () => {

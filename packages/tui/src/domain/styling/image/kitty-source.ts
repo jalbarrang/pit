@@ -13,7 +13,6 @@ export const prepareKittyImage = (base64Data: string, mimeType: string): KittyPr
     const dimensions = getPngDimensions(base64Data);
     return dimensions ? { source: { format: "png", data: bytes }, dimensions } : null;
   }
-  if (mimeType !== "image/jpeg") return null;
   const decoded = decodeImageData(base64Data, mimeType);
   if (!decoded) return null;
   return { source: { format: "rgba", widthPx: decoded.widthPx, heightPx: decoded.heightPx, data: decoded.rgba }, dimensions: decoded };

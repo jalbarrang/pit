@@ -1,5 +1,7 @@
 import { createRequire } from "node:module";
+import { decodeGifFirstFrame } from "./gif.ts";
 import type { DecodedImageData } from "./types.ts";
+import { decodeWebp } from "./webp.ts";
 
 type Upng = {
   decode(data: ArrayBuffer): { width: number; height: number };
@@ -38,5 +40,7 @@ export const decodeImageData = (base64Data: string, mimeType: string): DecodedIm
   const bytes = toBytes(base64Data);
   if (mimeType === "image/png") return decodePng(bytes);
   if (mimeType === "image/jpeg") return decodeJpeg(bytes);
+  if (mimeType === "image/gif") return decodeGifFirstFrame(bytes);
+  if (mimeType === "image/webp") return decodeWebp(bytes);
   return null;
 };

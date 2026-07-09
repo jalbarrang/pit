@@ -1,4 +1,5 @@
-import type { ImageDimensions } from "./types.ts";
+import { decode as decodeLosslessWebp } from "@nktkas/webp";
+import type { DecodedImageData, ImageDimensions } from "./types.ts";
 
 export const getWebpDimensions = (base64Data: string): ImageDimensions | null => {
   try {
@@ -12,6 +13,15 @@ export const getWebpDimensions = (base64Data: string): ImageDimensions | null =>
     }
     if (chunk === "VP8X") return { widthPx: (b[24] | (b[25] << 8) | (b[26] << 16)) + 1, heightPx: (b[27] | (b[28] << 8) | (b[29] << 16)) + 1 };
     return null;
+  } catch {
+    return null;
+  }
+};
+
+export const decodeWebp = (bytes: Uint8Array): DecodedImageData | null => {
+  try {
+    const image = decodeLosslessWebp(bytes);
+    return { widthPx: image.width, heightPx: image.height, rgba: new Uint8Array(image.data) };
   } catch {
     return null;
   }

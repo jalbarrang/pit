@@ -6,8 +6,10 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@nktkas/webp": "^1.0.0",
     "@opentui/core": "^0.4.3",
     "jpeg-js": "^0.4.4",
+    "omggif": "^1.0.10",
     "upng-js": "^2.1.0"
   },
   "devDependencies": {
