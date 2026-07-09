@@ -18,6 +18,7 @@ export class ToolExecutionComponent extends Component {
   private readonly ctx: RenderContext;
   private expanded = false;
   private run: ToolRun;
+  private imageComponents: Image[] = [];
   private readonly diffInject?: DiffInject;
 
   constructor(ctx: RenderContext, run: ToolRun, theme: PitTheme, box?: BoxLike, textRenderable?: TextLike, diffInject?: DiffInject) {
@@ -55,6 +56,8 @@ export class ToolExecutionComponent extends Component {
   }
 
   private renderBody(ctx: RenderContext): void {
+    for (const image of this.imageComponents) image.dispose();
+    this.imageComponents = [];
     this.shell.clear();
     const diffText = this.diffText();
     if (!diffText) { this.text.setText(this.display(formatToolRun(this.run, this.expanded))); this.shell.addChild(this.text); this.renderImages(ctx); return; }
@@ -69,7 +72,9 @@ export class ToolExecutionComponent extends Component {
     for (const image of this.run.images ?? []) {
       const dimensions = getImageDimensions(image.data, image.mimeType) ?? undefined;
       if (!this.diffInject?.imageText) {
-        this.shell.addChild(new Image(ctx, { ...image, dimensions }));
+        const component = new Image(ctx, { ...image, dimensions });
+        this.imageComponents.push(component);
+        this.shell.addChild(component);
         continue;
       }
       const lines = formatImagePlaceholder({ mimeType: image.mimeType, filename: image.filename, dimensions });
