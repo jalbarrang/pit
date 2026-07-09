@@ -1,6 +1,7 @@
 import { findWordBackward, findWordForward } from "../input/index.ts";
 import { nextGrapheme, previousGrapheme } from "./text.ts";
 import { visualIndex, visualLines } from "./line-wrap.ts";
+import { cellsBetween, colAtCells } from "./wrap-measure.ts";
 import type { EditorState } from "./types.ts";
 
 export function moveHorizontal(state: EditorState, delta: -1 | 1): void {
@@ -17,9 +18,12 @@ export function moveVertical(state: EditorState, delta: -1 | 1, width: number): 
   const target = lines[current + delta];
   const source = lines[current];
   if (!target || !source) return;
-  const col = Math.min(state.cursor.col - source.start, target.length);
+  const sourceText = state.lines[source.line] ?? "";
+  const targetText = state.lines[target.line] ?? "";
+  const desired = cellsBetween(sourceText, source.start, state.cursor.col);
+  const targetCells = cellsBetween(targetText, target.start, target.start + target.length);
   state.cursor.line = target.line;
-  state.cursor.col = target.start + col;
+  state.cursor.col = colAtCells(targetText, target.start, Math.min(desired, targetCells));
 }
 
 export const moveLineStart = (state: EditorState): void => { state.cursor.col = 0; };

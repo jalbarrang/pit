@@ -7,8 +7,17 @@ const isWide = (point: number): boolean =>
   (point >= 0xfe30 && point <= 0xfe6f) || (point >= 0xff00 && point <= 0xff60) ||
   (point >= 0xffe0 && point <= 0xffe6) || (point >= 0x1f300 && point <= 0x1faff));
 
-const segmentWidth = (segment: string): number => {
+const isEmojiCluster = (segment: string): boolean => {
+  const points = [...segment].map((char) => char.codePointAt(0) ?? 0);
+  if (points.some((point) => point >= 0x1f1e6 && point <= 0x1f1ff)) return true;
+  if (segment.includes("\u200d") || segment.includes("\ufe0f")) return true;
+  if (points.some((point) => point >= 0x1f3fb && point <= 0x1f3ff)) return true;
+  return points.some((point) => (point >= 0x1f000 && point <= 0x1faff) || (point >= 0x2600 && point <= 0x27bf));
+};
+
+export const segmentWidth = (segment: string): number => {
   if (segment === "\t") return 4;
+  if (isEmojiCluster(segment)) return 2;
   let width = 0;
   for (const char of segment) {
     const point = char.codePointAt(0) ?? 0;

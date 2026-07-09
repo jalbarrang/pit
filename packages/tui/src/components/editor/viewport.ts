@@ -1,4 +1,5 @@
 import { visualLines } from "../../domain/editing/index.ts";
+import { cellsBetween } from "../../domain/editing/wrap-measure.ts";
 import type { EditorCursor, EditorState } from "../../domain/editing/index.ts";
 
 export interface Viewport { lines: string[]; cursorRow: number; cursorCol: number; offset: number }
@@ -15,7 +16,8 @@ export function renderViewport(state: EditorState, width: number, maxHeight: num
   if (cursorRow < 0) cursorRow = 0;
   const vl = visuals[cursorRow] ?? { start: 0 };
   const offset = Math.max(0, Math.min(cursorRow, rows.length - maxHeight));
-  return { lines: rows.slice(offset, offset + maxHeight), cursorRow: cursorRow - offset, cursorCol: cursor.col - vl.start, offset };
+  const cursorLine = state.lines[cursor.line] ?? "";
+  return { lines: rows.slice(offset, offset + maxHeight), cursorRow: cursorRow - offset, cursorCol: cellsBetween(cursorLine, vl.start, cursor.col), offset };
 }
 
 export interface CursorSegments { before: string; at: string; after: string }

@@ -1,12 +1,11 @@
+import { wrapChunks } from "./wrap-measure.ts";
 import type { EditorState, VisualLine } from "./types.ts";
 
 export function visualLines(state: EditorState, width: number): VisualLine[] {
   const out: VisualLine[] = [];
-  const w = Math.max(1, width);
   for (let line = 0; line < state.lines.length; line++) {
     const text = state.lines[line] ?? "";
-    if (text.length === 0) out.push({ line, start: 0, length: 0 });
-    else for (let start = 0; start < text.length; start += w) out.push({ line, start, length: Math.min(w, text.length - start) });
+    for (const chunk of wrapChunks(text, width)) out.push({ line, start: chunk.start, length: chunk.end - chunk.start });
   }
   return out;
 }
