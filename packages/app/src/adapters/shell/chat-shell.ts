@@ -5,6 +5,7 @@ import { createTheme, getEditorTheme } from "../../domain/theming/index.ts";
 import type { SessionGateway } from "../../domain/index.ts";
 import { emptyAutocompleteProvider } from "./empty-autocomplete.ts";
 import { DoubleCtrlCExit } from "./exit-keys.ts";
+import { promptOptionsForStreaming, shouldAbortStream } from "./interrupt-keys.ts";
 import { ScrollChat } from "./scroll-chat.ts";
 
 export interface ChatShellOptions {
@@ -18,6 +19,7 @@ interface Expandable { setExpanded(expanded: boolean): void }
 export class ChatShell {
   private readonly exitKeys = new DoubleCtrlCExit();
   private readonly expandables: Expandable[] = [];
+  private session?: SessionGateway;
   private toolsExpanded = false;
   readonly root: Container;
   readonly tui: TUI;
@@ -46,6 +48,7 @@ export class ChatShell {
   }
 
   private mount(options: ChatShellOptions): void {
+    this.session = options.session;
     this.root.addChild(this.chat);
     this.root.addChild(this.editor as never);
     this.root.addChild(this.footer);
@@ -62,6 +65,7 @@ export class ChatShell {
     if (data === "\u001b[5~") { this.chat.page(-10); return { consume: true }; }
     if (data === "\u001b[6~") { this.chat.page(10); return { consume: true }; }
     if (data === "\u000f") { this.toggleTools(); return { consume: true }; }
+    if (shouldAbortStream(data, this.session !== undefined)) { void this.session?.abort(); return { consume: true }; }
     const exit = this.exitKeys.input(data);
     if (exit === "exit") { this.stop(); process.exitCode = 0; return { consume: true }; }
     return exit === "armed" ? { consume: true } : undefined;
@@ -81,7 +85,7 @@ export class ChatShell {
     const trimmed = text.trim();
     if (!trimmed) return;
     if (!session) this.chat.addMessage(new Text(this.tui.ctx, `You: ${trimmed}`, 1));
-    await session?.prompt(trimmed);
+    await session?.prompt(trimmed, promptOptionsForStreaming(!!session?.isStreaming));
   }
 
   stop(): void {
