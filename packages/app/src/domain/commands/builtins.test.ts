@@ -15,6 +15,7 @@ const makeContext = () => {
     openLoginSelector: () => void log.push("login"),
     openHelpSelector: () => void log.push("help"),
     openTrustSelector: () => void log.push("trust"),
+    reloadKeybindings: () => void log.push("reload"),
   };
   return { context, log };
 };
@@ -49,6 +50,15 @@ test("/quit exits via the context port", async () => {
   const result = await createBuiltinRegistry().dispatch("/quit", context);
   assert.deepEqual(result, { kind: "handled", name: "quit" });
   assert.deepEqual(log, ["exit"]);
+});
+
+test("/reload reloads keybindings via the context port", async () => {
+  const { context, log } = makeContext();
+  const registry = createBuiltinRegistry();
+  assert.ok(registry.list().some((command) => command.name === "reload"));
+  const result = await registry.dispatch("/reload", context);
+  assert.deepEqual(result, { kind: "handled", name: "reload" });
+  assert.deepEqual(log, ["reload"]);
 });
 
 test("every builtin has a description for autocomplete", () => {

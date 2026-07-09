@@ -15,6 +15,7 @@ const makeChrome = () => {
     applyTheme: () => {},
     auth: () => undefined,
     trust: () => undefined,
+    reloadKeybindings: () => void log.push("reload"),
   };
   const chrome = new ShellChrome(host);
   return { chrome, log };
@@ -24,6 +25,12 @@ test("handles builtin commands and reports consumption", async () => {
   const { chrome, log } = makeChrome();
   assert.equal(await chrome.handle("/quit"), true);
   assert.deepEqual(log, ["exit"]);
+});
+
+test("/reload invokes host.reloadKeybindings", async () => {
+  const { chrome, log } = makeChrome();
+  assert.equal(await chrome.handle("/reload"), true);
+  assert.deepEqual(log, ["reload"]);
 });
 
 test("unknown slash command notifies with a friendly error and consumes", async () => {

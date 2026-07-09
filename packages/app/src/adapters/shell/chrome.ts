@@ -4,7 +4,7 @@ import { AuthSelectors, type AuthSelectorHost } from "./auth-selectors.ts";
 import { MiscSelectors, type MiscSelectorHost } from "./misc-selectors.ts";
 import { ChromeSelectors, type SelectorHost } from "./selectors.ts";
 
-export interface ChromeHost extends SelectorHost, AuthSelectorHost, MiscSelectorHost { exit(): void }
+export interface ChromeHost extends SelectorHost, AuthSelectorHost, MiscSelectorHost { exit(): void; reloadKeybindings(): void }
 
 /** Bridges the pure command registry to the shell: autocomplete + submit dispatch. */
 export class ShellChrome {
@@ -23,6 +23,7 @@ export class ShellChrome {
       openLoginSelector: () => authSelectors.openLogin(),
       openHelpSelector: () => miscSelectors.openHelp(),
       openTrustSelector: () => miscSelectors.openTrust(),
+      reloadKeybindings: () => host.reloadKeybindings(),
     };
   }
 

@@ -1,7 +1,8 @@
 import type { RenderContext } from "@opentui/core";
-import type { TUI } from "@pit/tui";
+import { getKeybindings, type TUI } from "@pit/tui";
 import { SelectorOverlay, type SelectorOverlayOptions } from "../../components/chrome/selector-overlay.ts";
 import { findTrustChoice, keybindingHelpItems, trustItems } from "../../domain/chrome/index.ts";
+import { APP_KEYBINDINGS } from "../../domain/keybindings/index.ts";
 import type { TrustStore } from "../trust/index.ts";
 
 export interface MiscSelectorHost {
@@ -19,7 +20,9 @@ export class MiscSelectors {
   constructor(host: MiscSelectorHost, make = factory) { this.host = host; this.make = make; }
 
   openHelp(): void {
-    this.open({ items: keybindingHelpItems() }, () => this.host.notify("Help is informational; press Esc to close."));
+    const kb = getKeybindings();
+    const entries = Object.keys(APP_KEYBINDINGS).map((id) => ({ id, keys: kb.getKeys(id as never), description: kb.getDefinition(id as never)?.description }));
+    this.open({ items: keybindingHelpItems(entries) }, () => this.host.notify("Help is informational; press Esc to close."));
   }
 
   openTrust(): void {

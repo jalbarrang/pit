@@ -17,6 +17,7 @@ export interface ChatShellOptions {
   trustStore?: TrustStore;
   trustPromptOnStart?: boolean;
   imageViewer?: ImageViewer;
+  reloadKeybindings?(): void;
 }
 
 export interface Expandable { setExpanded(expanded: boolean): void }

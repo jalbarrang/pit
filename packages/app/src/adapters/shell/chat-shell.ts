@@ -1,8 +1,8 @@
 import { BoxRenderable } from "@opentui/core";
-import { Container, Editor, TUI, Text, type Component, type EditorComponent } from "@pit/tui";
+import { Container, Editor, TUI, Text, getKeybindings, type Component, type EditorComponent } from "@pit/tui";
 import { FooterComponent } from "../../components/footer.ts";
 import { emptyTokens } from "../../components/footer-format.ts";
-import { createTheme, getEditorTheme, type ThemeName } from "../../domain/theming/index.ts";
+import { resolveGlobalAction } from "../../domain/keybindings/global-actions.ts"; import { createTheme, getEditorTheme, type ThemeName } from "../../domain/theming/index.ts";
 import type { ImagePart, OpenableImage, SessionGateway } from "../../domain/index.ts";
 import { AuthStore } from "../auth/index.ts"; import { SettingsStore } from "../settings/index.ts"; import { TrustStore } from "../trust/index.ts";
 import { bindShellExtensions } from "./bind-shell.ts"; import { ShellChrome } from "./chrome.ts";
@@ -16,7 +16,7 @@ export type { ChatShellOptions } from "./shell-types.ts";
 
 export class ChatShell {
   private readonly exitKeys = new DoubleCtrlCExit();
-  private readonly chrome = new ShellChrome({ tui: () => this.tui, session: () => this.session, notify: (text) => this.notify(text), exit: () => this.exit(), refreshFooter: () => this.refreshFooter(), settings: () => this.settingsStore.get(), setSetting: (id, value) => this.settingsStore.set(id, value), applyTheme: (theme) => this.applyTheme(theme), auth: () => this.authStore, trust: () => this.trustStore, onAuthConfigured: () => this.hooks.onAuthConfigured?.() ?? Promise.resolve(), listSessions: () => this.hooks.listSessions?.() ?? Promise.resolve([]), switchSession: (path) => this.hooks.switchSession?.(path) ?? Promise.resolve() });
+  private readonly chrome = new ShellChrome({ tui: () => this.tui, session: () => this.session, notify: (text) => this.notify(text), exit: () => this.exit(), refreshFooter: () => this.refreshFooter(), settings: () => this.settingsStore.get(), setSetting: (id, value) => this.settingsStore.set(id, value), applyTheme: (theme) => this.applyTheme(theme), auth: () => this.authStore, trust: () => this.trustStore, onAuthConfigured: () => this.hooks.onAuthConfigured?.() ?? Promise.resolve(), listSessions: () => this.hooks.listSessions?.() ?? Promise.resolve([]), switchSession: (path) => this.hooks.switchSession?.(path) ?? Promise.resolve(), reloadKeybindings: () => { this.hooks.reloadKeybindings?.(); this.notify("Keybindings reloaded"); } });
   private hooks: ChatShellOptions = {};
   private readonly expandables: Expandable[] = [];
   private session?: SessionGateway;
@@ -65,13 +65,13 @@ export class ChatShell {
 
   private handleGlobalInput(data: string) {
     if (this.tui.hasOverlay()) return undefined;
-    if (data === "\u001b[5~") { this.chat.page(-10); return { consume: true }; }
-    if (data === "\u001b[6~") { this.chat.page(10); return { consume: true }; }
-    if (data === "\u000f") { this.toggleTools(); return { consume: true }; }
     if (data === "\u0019") { void this.openLastImage(); return { consume: true }; }
-    if (shouldAbortStream(data, this.session !== undefined)) { void this.session?.abort(); return { consume: true }; }
-    const exit = this.exitKeys.input(data);
-    if (exit === "exit") this.exit();
+    const action = resolveGlobalAction(data, getKeybindings(), { editorEmpty: this.editor.getText().length === 0 });
+    if (action === "page-up" || action === "page-down") { this.chat.page(action === "page-up" ? -10 : 10); return { consume: true }; }
+    if (action === "tools-expand") { this.toggleTools(); return { consume: true }; }
+    if (action === "exit-if-empty") { this.exit(); return { consume: true }; }
+    if (action === "interrupt" && shouldAbortStream(data, this.session !== undefined)) { void this.session?.abort(); return { consume: true }; }
+    const exit = this.exitKeys.input(data); if (exit === "exit") this.exit();
     return exit === "armed" ? { consume: true } : undefined;
   }
 

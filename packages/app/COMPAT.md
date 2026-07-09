@@ -44,6 +44,18 @@ Manual smoke (run `scripts/dev.sh`, needs an OSC52-capable terminal):
 2. Drag across multiple chat messages → pasted text preserves reading order and line breaks.
 3. On a terminal without OSC52 → footer shows "Clipboard unavailable", no crash.
 
+## Keybindings
+
+pit installs an app-aware `KeybindingsManager` (`getKeybindings()`) built from `{ ...TUI_KEYBINDINGS, ...APP_KEYBINDINGS }` — the full `tui.*` set (already ported 1:1 from pi-tui) plus all 41 `app.*` ids ported verbatim from `pi-mono/packages/coding-agent/src/core/keybindings.ts` (`packages/app/src/domain/keybindings/`). User overrides load from the **shared `~/.pi/agent/keybindings.json`** (same file as pi) with legacy pre-namespaced ids auto-migrated (`expandTools` → `app.tools.expand`, etc.); `/reload` re-reads the file live. `/help` is generated from the manager, listing every binding's resolved keys (or `(unbound)`).
+
+Global shortcuts route through the pure `resolveGlobalAction` (`domain/keybindings/global-actions.ts`): `app.interrupt` (escape) aborts a stream, `app.tools.expand` (ctrl+o) toggles tool output, PageUp/PageDown scroll chat.
+
+Divergences / notes:
+- **ctrl+c / ctrl+d**: pit keeps its existing double-`ctrl+c` → exit; it ADDS upstream's `app.exit` = `ctrl+d` → exit **when the editor is empty**. `app.clear` (upstream ctrl+c = clear editor) is defined-but-inert to avoid breaking pit's exit UX. Whether a focused editor swallows `ctrl+d` (deleteCharForward) before the global handler sees it is key-routing-order dependent — verify on a real TTY.
+- **ctrl+y**: stays pit's global open-last-image when the editor is unfocused; editor-focused `ctrl+y` remains `tui.editor.yank`.
+- **Defined-but-inert** (registry + `/help` only, behaviors land in later `pit-keybinding-parity` plans): `app.model.cycleForward/Backward`, `app.model.select`, `app.thinking.cycle`, `app.thinking.toggle`, `app.suspend`, `app.editor.external`, `app.clipboard.pasteImage`, `app.message.followUp/dequeue`, all `app.session.*` (except the ctrl+d exit path), all `app.tree.*`, all `app.models.*`.
+- **Known editor collisions** deferred to their feature plans: `alt+enter` (editor newline vs `app.message.followUp`), `ctrl+t` (editor transpose vs `app.thinking.toggle`).
+
 ## Perf snapshot
 
 Stress fixture: `packages/app/src/perf-stress.ts`, 500 alternating user/assistant messages with markdown/tool-box text plus 20s streaming at ~60 token updates/s under a pseudo-TTY. Measured on 2026-07-09: 1,080 tokens, 1,091 frames, average frame 0.99ms, worst frame 3.00ms, RSS 162MB, `/usr/bin/time` user+sys CPU 1.52s over 20.39s (~7.5%). No hotspot fix was needed; OpenTUI's `objects-in-viewport.ts` provides viewport culling for ScrollBox child selection.
