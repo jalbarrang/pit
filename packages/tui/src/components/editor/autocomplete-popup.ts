@@ -19,6 +19,7 @@ export class EditorAutocomplete {
   setProvider(provider: AutocompleteProvider): void { this.provider = provider; this.dismiss(); }
   setMaxVisible(value: number): void { this.maxVisible = Math.max(3, Math.min(20, Math.floor(value))); }
   get active(): boolean { return this.list !== undefined; }
+  currentPrefix(): string { return this.prefix; }
   get items(): AutocompleteItem[] { return this.list?.items ?? []; }
   selected(): AutocompleteItem | null { return this.list?.getSelectedItem() ?? null; }
   dismiss(): void { this.list = undefined; this.prefix = ""; this.requestId++; }

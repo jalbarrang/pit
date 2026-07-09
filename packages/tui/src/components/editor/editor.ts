@@ -4,6 +4,7 @@ import type { AutocompleteProvider } from "../../domain/input/index.ts";
 import { Component, type Focusable } from "../component.ts";
 import { textOptions } from "../component-style.ts";
 import { EditorAutocomplete } from "./autocomplete-popup.ts";
+import { type AutocompleteHost, routeAutocompleteKey } from "./autocomplete-keys.ts";
 import { buildEditorContent } from "./content.ts";
 import { applyEditorCommand } from "./command-dispatch.ts";
 import { editorKey, printableInput } from "./keymap.ts";
@@ -45,7 +46,7 @@ export class Editor extends Component implements Focusable, EditorComponent {
   setAutocompleteProvider(provider: AutocompleteProvider): void { this.autocomplete.setProvider(provider); }
   setText(text: string): void { this.model.setText(text); this.changed(); }
   addToHistory(text: string): void { this.model.addToHistory(text); }
-  insertTextAtCursor(text: string): void { this.model.insert(text, true); this.changed(); }
+  insertTextAtCursor(t: string): void { this.model.insert(t, true); this.changed(); }
   setPaddingX(padding: number): void { this.paddingX = Math.max(0, Math.floor(padding)); this.update(); }
   setAutocompleteMaxVisible(maxVisible: number): void { this.autocomplete.setMaxVisible(maxVisible); }
   handleInput(data: string): void {
@@ -69,13 +70,10 @@ export class Editor extends Component implements Focusable, EditorComponent {
     if (parsed.remaining) this.handleInput(parsed.remaining);
     return true;
   }
-  private handleAutocompleteKey(key: string, data: string): boolean {
-    if (key === "escape" && this.autocomplete.active) { this.autocomplete.dismiss(); this.update(); return true; }
-    if ((key === "up" || key === "down") && this.autocomplete.active) { this.autocomplete.move(data); this.update(); return true; }
-    if ((key === "tab" || key === "submit") && this.autocomplete.active) return this.acceptAutocomplete();
-    if (key === "tab") { void this.requestAutocomplete(true); return true; }
-    return false;
+  private get acHost(): AutocompleteHost {
+    return { autocomplete: () => this.autocomplete, update: () => this.update(), accept: () => this.acceptAutocomplete(), request: (f) => void this.requestAutocomplete(f) };
   }
+  private handleAutocompleteKey(key: string, data: string): boolean { return routeAutocompleteKey(this.acHost, key, data); }
   private acceptAutocomplete(): boolean {
     const cursor = this.model.getCursor();
     const result = this.autocomplete.accept(this.model.getLines(), cursor.line, cursor.col);

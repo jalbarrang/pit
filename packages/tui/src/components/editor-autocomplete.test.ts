@@ -49,6 +49,21 @@ describe("Editor autocomplete", () => {
     assert.equal(e.getText(), "./package.json");
   });
 
+  it("accepts and submits a slash command on enter", async () => {
+    const submitted: string[] = [];
+    const e = editor();
+    e.onSubmit = (t: string) => void submitted.push(t);
+    e.setAutocompleteProvider(new CombinedAutocompleteProvider([{ name: "quit", description: "Quit" }], dir, new NodeFileSearchPort()));
+    e.handleInput("/");
+    e.handleInput("q");
+    await tick();
+    assert.deepEqual(e.getAutocompleteItems().map((item) => item.value), ["quit"]);
+    e.handleInput("\r");
+    assert.equal(submitted.length, 1);
+    assert.equal(submitted[0]!.trim(), "/quit");
+    assert.equal(e.getText(), "");
+  });
+
   it("dismisses autocomplete with escape", async () => {
     const e = editor();
     e.setAutocompleteProvider(new CombinedAutocompleteProvider([{ name: "help" }], dir, new NodeFileSearchPort()));
