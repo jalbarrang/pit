@@ -1,5 +1,5 @@
 import type { Renderable, RenderContext } from "@opentui/core";
-import { Box, Component, Text, formatImagePlaceholder, getImageDimensions, type TextContent } from "@pit/tui";
+import { Box, Component, Text, ansiTextToStyledText, formatImagePlaceholder, getImageDimensions, type TextContent } from "@pit/tui";
 import { isDiffText, type ToolRun } from "../domain/index.ts";
 import type { PitTheme } from "../domain/theming/index.ts";
 import { DiffViewComponent, type DiffLineFactory } from "./diff-view.ts";
@@ -48,11 +48,17 @@ export class ToolExecutionComponent extends Component {
     return this.text.getText();
   }
 
+  // opentui renders escape bytes literally, so parse ANSI (and drop kitty/OSC
+  // sequences) when tool output contains escapes; plain output stays a string.
+  private display(text: string): TextContent {
+    return text.includes("\x1b") ? ansiTextToStyledText(text) : text;
+  }
+
   private renderBody(ctx: RenderContext): void {
     this.shell.clear();
     const diffText = this.diffText();
-    if (!diffText) { this.text.setText(formatToolRun(this.run, this.expanded)); this.shell.addChild(this.text); this.renderImages(ctx); return; }
-    this.text.setText(formatToolRun({ ...this.run, output: "" }, this.expanded));
+    if (!diffText) { this.text.setText(this.display(formatToolRun(this.run, this.expanded))); this.shell.addChild(this.text); this.renderImages(ctx); return; }
+    this.text.setText(this.display(formatToolRun({ ...this.run, output: "" }, this.expanded)));
     this.shell.addChild(this.text);
     this.diff = new DiffViewComponent(ctx, diffText, this.theme, this.diffInject?.box, this.diffInject?.line);
     this.shell.addChild(this.diff);

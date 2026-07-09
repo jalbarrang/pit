@@ -21,6 +21,20 @@ describe("ToolExecutionComponent", () => {
     assert.match(String(component.getText()), /line 1/);
   });
 
+  it("parses ANSI in tool output into styled chunks (no raw escape bytes)", () => {
+    const output = `plain\n\x1b[31mred\x1b[0m line\n\x1b_Gkittygraphics\x1b\\trailing`;
+    const run = { id: "a", name: "bash", args: {}, status: "succeeded" as const, output };
+    const component = new ToolExecutionComponent({} as never, run, createTheme("dark"), fakeBox(), fakeText());
+    component.setExpanded(true);
+    const content = component.getText() as { chunks: { text: string }[] };
+    assert.ok(Array.isArray(content.chunks), "expected StyledText with chunks");
+    const joined = content.chunks.map((c) => c.text).join("");
+    assert.ok(!joined.includes("\x1b"), "no raw escape bytes should remain");
+    assert.ok(!joined.includes("kittygraphics"), "kitty graphics payload should be dropped");
+    assert.match(joined, /red line/);
+    assert.match(joined, /trailing/);
+  });
+
   it("renders image placeholders after text output", () => {
     const shellBox = new FakeBox();
     const run = { id: "img", name: "read", args: {}, status: "succeeded" as const, output: "Read image", images: [{ data: "bad", mimeType: "image/png", filename: "cat.png" }] };

@@ -21,6 +21,6 @@ export type {
   MarkdownStyle,
   MarkdownTheme,
 } from "./markdown/index.ts";
-export { AnsiBridge, ansiChunksToStyledText, hasRenderable, isLegacyComponent } from "./bridge/index.ts";
+export { AnsiBridge, ansiChunksToStyledText, ansiTextToStyledText, hasRenderable, isLegacyComponent } from "./bridge/index.ts";
 export type { LegacyComponent } from "./bridge/index.ts";
 export { ImagePlaceholder, type ImagePlaceholderOptions } from "./image/index.ts";
