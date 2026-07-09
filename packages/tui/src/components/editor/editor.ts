@@ -37,7 +37,7 @@ export class Editor extends Component implements Focusable, EditorComponent {
   get focused(): boolean { return this._focused; }
   set focused(value: boolean) { this._focused = value; this.update(); }
   getText(): string { return this.model.getText(); }
-  getExpandedText(): string { return this.getText(); }
+  getExpandedText(): string { return this.model.getExpandedText(); }
   getCursor() { return this.model.getCursor(); }
   getLines(): string[] { return this.model.getLines(); }
   getAutocompleteItems() { return this.autocomplete.items; }
@@ -64,7 +64,7 @@ export class Editor extends Component implements Focusable, EditorComponent {
   private handlePaste(data: string): boolean {
     const parsed = parseBracketedPaste(data);
     if (!parsed) return false;
-    this.model.insert(cleanPaste(parsed.paste ?? ""), true);
+    this.model.insertPaste(cleanPaste(parsed.paste ?? ""));
     this.changed();
     if (parsed.remaining) this.handleInput(parsed.remaining);
     return true;

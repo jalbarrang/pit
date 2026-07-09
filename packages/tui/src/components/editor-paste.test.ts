@@ -23,12 +23,12 @@ describe("Editor bracketed paste", () => {
     assert.equal(e.getText(), "before ");
   });
 
-  it("handles a 5000-line paste without per-character input", () => {
+  it("ports pi paste marker: collapses a 5000-line paste and expands it on demand", () => {
     const e = editor();
     const paste = Array.from({ length: 5000 }, (_, i) => `line${i}`).join("\n");
     e.handleInput(`\x1b[200~${paste}\x1b[201~`);
-    assert.equal(e.getLines().length, 5000);
-    assert.equal(e.getText().startsWith("line0\nline1"), true);
+    assert.equal(e.getText(), "[paste #1 +5000 lines]");
+    assert.equal(e.getExpandedText(), paste);
     e.handleInput("\x1f");
     assert.equal(e.getText(), "");
   });
