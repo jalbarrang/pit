@@ -4,7 +4,14 @@ import { ShellChrome } from "./chrome.ts";
 
 const makeChrome = () => {
   const log: string[] = [];
-  const chrome = new ShellChrome({ notify: (text) => void log.push(`notify:${text}`), exit: () => void log.push("exit") });
+  const host = {
+    notify: (text: string) => void log.push(`notify:${text}`),
+    exit: () => void log.push("exit"),
+    tui: () => ({}) as never,
+    session: () => undefined,
+    refreshFooter: () => {},
+  };
+  const chrome = new ShellChrome(host);
   return { chrome, log };
 };
 

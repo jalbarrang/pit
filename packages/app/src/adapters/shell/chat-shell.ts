@@ -8,25 +8,22 @@ import { ShellChrome } from "./chrome.ts";
 import { DoubleCtrlCExit } from "./exit-keys.ts";
 import { promptOptionsForStreaming, shouldAbortStream } from "./interrupt-keys.ts";
 import { ScrollChat } from "./scroll-chat.ts";
+import type { ChatShellOptions, Expandable } from "./shell-types.ts";
 
-export interface ChatShellOptions { cwd?: string; session?: SessionGateway; dummyLines?: string[] }
-
-interface Expandable { setExpanded(expanded: boolean): void }
+export type { ChatShellOptions } from "./shell-types.ts";
 
 export class ChatShell {
   private readonly exitKeys = new DoubleCtrlCExit();
-  private readonly chrome = new ShellChrome({ notify: (text) => this.notify(text), exit: () => this.exit() });
+  private readonly chrome = new ShellChrome({ tui: () => this.tui, session: () => this.session, notify: (text) => this.notify(text), exit: () => this.exit(), refreshFooter: () => this.refreshFooter() });
   private readonly expandables: Expandable[] = [];
   private session?: SessionGateway;
   private cwd = process.cwd();
   private toolsExpanded = false;
-  private constructor(
-    readonly tui: TUI,
-    readonly chat: ScrollChat,
-    readonly editor: EditorComponent,
-    readonly footer: FooterComponent,
-    readonly root: Container,
-  ) {}
+  readonly tui: TUI; readonly chat: ScrollChat; readonly editor: EditorComponent; readonly footer: FooterComponent; readonly root: Container;
+
+  private constructor(tui: TUI, chat: ScrollChat, editor: EditorComponent, footer: FooterComponent, root: Container) {
+    this.tui = tui; this.chat = chat; this.editor = editor; this.footer = footer; this.root = root;
+  }
 
   static async create(options: ChatShellOptions = {}): Promise<ChatShell> {
     const tui = await TUI.create();
@@ -56,6 +53,7 @@ export class ChatShell {
   }
 
   private handleGlobalInput(data: string) {
+    if (this.tui.hasOverlay()) return undefined;
     if (data === "\u001b[5~") { this.chat.page(-10); return { consume: true }; }
     if (data === "\u001b[6~") { this.chat.page(10); return { consume: true }; }
     if (data === "\u000f") { this.toggleTools(); return { consume: true }; }
