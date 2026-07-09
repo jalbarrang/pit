@@ -1,5 +1,6 @@
 import type { AuthStore } from "../auth/index.ts";
 import type { SettingsStore } from "../settings/index.ts";
+import type { TrustStore } from "../trust/index.ts";
 import type { SessionGateway, SessionSummary } from "../../domain/index.ts";
 
 export interface ChatShellOptions {
@@ -12,6 +13,8 @@ export interface ChatShellOptions {
   authStore?: AuthStore;
   onAuthConfigured?(): Promise<void>;
   firstRunSetup?: boolean;
+  trustStore?: TrustStore;
+  trustPromptOnStart?: boolean;
 }
 
 export interface Expandable { setExpanded(expanded: boolean): void }

@@ -14,6 +14,7 @@ const makeChrome = () => {
     setSetting: async () => ({ theme: "dark" as const, showImages: false, autoResizeImages: true, blockImages: false, editorPaddingX: 0, autocompleteMaxVisible: 5 }),
     applyTheme: () => {},
     auth: () => undefined,
+    trust: () => undefined,
   };
   const chrome = new ShellChrome(host);
   return { chrome, log };

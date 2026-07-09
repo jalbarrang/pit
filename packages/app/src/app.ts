@@ -2,6 +2,7 @@ import { AuthStore } from "./adapters/auth/index.ts";
 import { ChatShell } from "./adapters/shell/index.ts";
 import { SessionStore } from "./adapters/session/index.ts";
 import { SettingsStore } from "./adapters/settings/index.ts";
+import { TrustStore } from "./adapters/trust/index.ts";
 import { ChatController } from "./application/index.ts";
 import { replaySession } from "./application/replay.ts";
 import type { SessionGateway } from "./domain/index.ts";
@@ -15,6 +16,8 @@ export interface RunChatAppOptions {
   authStore?: AuthStore;
   firstRunSetup?: boolean;
   createSession?(): Promise<SessionGateway<any>>;
+  trustStore?: TrustStore;
+  trustPromptOnStart?: boolean;
   resumeOnStart?: boolean;
 }
 
@@ -35,6 +38,8 @@ export const runChatApp = async (options: RunChatAppOptions = {}): Promise<ChatS
     listSessions: () => store.list(),
     settingsStore: options.settingsStore,
     authStore: options.authStore,
+    trustStore: options.trustStore,
+    trustPromptOnStart: options.trustPromptOnStart,
     firstRunSetup: options.firstRunSetup,
     onAuthConfigured: createSession ? async () => { const session = await createSession(); shell.replaceSession(session); attach(session); } : undefined,
     switchSession: async (path) => {

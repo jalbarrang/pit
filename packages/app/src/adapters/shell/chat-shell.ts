@@ -6,6 +6,7 @@ import { createTheme, getEditorTheme, type ThemeName } from "../../domain/themin
 import type { SessionGateway } from "../../domain/index.ts";
 import { AuthStore } from "../auth/index.ts";
 import { SettingsStore } from "../settings/index.ts";
+import { TrustStore } from "../trust/index.ts";
 import { ShellChrome } from "./chrome.ts";
 import { DoubleCtrlCExit } from "./exit-keys.ts";
 import { promptOptionsForStreaming, shouldAbortStream } from "./interrupt-keys.ts";
@@ -15,7 +16,7 @@ import type { ChatShellOptions, Expandable } from "./shell-types.ts";
 export type { ChatShellOptions } from "./shell-types.ts";
 export class ChatShell {
   private readonly exitKeys = new DoubleCtrlCExit();
-  private readonly chrome = new ShellChrome({ tui: () => this.tui, session: () => this.session, notify: (text) => this.notify(text), exit: () => this.exit(), refreshFooter: () => this.refreshFooter(), settings: () => this.settingsStore.get(), setSetting: (id, value) => this.settingsStore.set(id, value), applyTheme: (theme) => this.applyTheme(theme), auth: () => this.authStore, onAuthConfigured: () => this.hooks.onAuthConfigured?.() ?? Promise.resolve(), listSessions: () => this.hooks.listSessions?.() ?? Promise.resolve([]), switchSession: (path) => this.hooks.switchSession?.(path) ?? Promise.resolve() });
+  private readonly chrome = new ShellChrome({ tui: () => this.tui, session: () => this.session, notify: (text) => this.notify(text), exit: () => this.exit(), refreshFooter: () => this.refreshFooter(), settings: () => this.settingsStore.get(), setSetting: (id, value) => this.settingsStore.set(id, value), applyTheme: (theme) => this.applyTheme(theme), auth: () => this.authStore, trust: () => this.trustStore, onAuthConfigured: () => this.hooks.onAuthConfigured?.() ?? Promise.resolve(), listSessions: () => this.hooks.listSessions?.() ?? Promise.resolve([]), switchSession: (path) => this.hooks.switchSession?.(path) ?? Promise.resolve() });
   private hooks: ChatShellOptions = {};
   private readonly expandables: Expandable[] = [];
   private session?: SessionGateway;
@@ -23,6 +24,7 @@ export class ChatShell {
   private toolsExpanded = false;
   private settingsStore = new SettingsStore();
   private authStore?: AuthStore;
+  private trustStore?: TrustStore;
   readonly tui: TUI; readonly chat: ScrollChat; readonly editor: EditorComponent; readonly footer: FooterComponent; readonly root: Container;
 
   private constructor(tui: TUI, chat: ScrollChat, editor: EditorComponent, footer: FooterComponent, root: Container) {
@@ -38,7 +40,7 @@ export class ChatShell {
     const editor = new Editor(tui.ctx, getEditorTheme(theme), { maxHeight: 10, width: tui.renderer.width });
     const footer = new FooterComponent(tui.ctx, theme);
     const shell = new ChatShell(tui, chat, editor, footer, root);
-    shell.settingsStore = settingsStore; shell.authStore = options.authStore; shell.mount(options);
+    shell.settingsStore = settingsStore; shell.authStore = options.authStore; shell.trustStore = options.trustStore; shell.mount(options);
     return shell;
   }
   private mount(options: ChatShellOptions): void {
@@ -53,6 +55,7 @@ export class ChatShell {
     this.tui.addChild(this.root);
     this.tui.setFocus(this.editor as never);
     this.tui.addInputListener((data) => this.handleGlobalInput(data));
+    if (options.trustPromptOnStart) void this.runCommand("/trust");
     if (options.firstRunSetup) void this.runCommand("/login");
   }
   private handleGlobalInput(data: string) {
@@ -67,13 +70,9 @@ export class ChatShell {
   }
 
   private notify(text: string): void { this.chat.addMessage(new Text(this.tui.ctx, text, 1)); }
-
   private exit(): void { this.stop(); process.exit(0); }
-
   replaceSession(session: SessionGateway): void { this.session?.dispose(); this.session = session; this.refreshFooter(); }
-
   runCommand(text: string): Promise<boolean> { return this.chrome.handle(text); }
-
   refreshFooter(): void { this.footer.update(this.cwd, this.session?.modelId ?? "no-model", this.session?.tokenUsage ?? emptyTokens()); }
 
   applyTheme(themeName: ThemeName): void {
