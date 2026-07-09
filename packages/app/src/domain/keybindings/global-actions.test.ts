@@ -37,6 +37,26 @@ describe("resolveGlobalAction", () => {
     assertAction("\u001b[6~", [], false, "page-down");
   });
 
+  it("returns model-next when app.model.cycleForward matches", () => {
+    assertAction("\u0010", [["\u0010", "app.model.cycleForward"]], false, "model-next");
+  });
+
+  it("returns model-prev when app.model.cycleBackward matches", () => {
+    assertAction("\u0010", [["\u0010", "app.model.cycleBackward"]], false, "model-prev");
+  });
+
+  it("returns thinking-cycle when app.thinking.cycle matches", () => {
+    assertAction("\u001b[Z", [["\u001b[Z", "app.thinking.cycle"]], false, "thinking-cycle");
+  });
+
+  it("returns suspend when app.suspend matches", () => {
+    assertAction("\u001a", [["\u001a", "app.suspend"]], false, "suspend");
+  });
+
+  it("returns external-editor when app.editor.external matches", () => {
+    assertAction("\u0007", [["\u0007", "app.editor.external"]], false, "external-editor");
+  });
+
   it("returns none when nothing matches", () => {
     assertAction("x", [], false, "none");
   });
