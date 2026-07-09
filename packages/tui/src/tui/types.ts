@@ -7,6 +7,6 @@ export interface TuiConfig {
   keySource?: KeyEventSource;
 }
 
-export type TuiRenderer = Pick<CliRenderer, "root" | "requestRender" | "destroy" | "keyInput" | "width" | "height" | "resize" | "on" | "off">;
+export type TuiRenderer = Pick<CliRenderer, "root" | "requestRender" | "destroy" | "keyInput" | "width" | "height" | "resize" | "on" | "off" | "useMouse">;
 export type DebugHandler = () => void;
 export type TuiComponent = Component;

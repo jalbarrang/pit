@@ -1,6 +1,7 @@
 export * from "./auth-select.ts";
 export * from "./help-items.ts";
 export * from "./model-select.ts";
+export * from "./mouse-routing.ts";
 export * from "./oauth-flow.ts";
 export * from "./thinking-select.ts";
 export * from "./session-select.ts";

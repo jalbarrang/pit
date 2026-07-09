@@ -25,7 +25,7 @@ export class TUI {
 
   static async create(config: TuiConfig = {}): Promise<TUI> {
     if (config.renderer) return new TUI(config.renderer, config.keySource);
-    const renderer = await createCliRenderer({ exitOnCtrlC: false });
+    const renderer = await createCliRenderer({ exitOnCtrlC: false, useMouse: true, enableMouseMovement: true });
     return new TUI(renderer as TuiRenderer, config.keySource);
   }
 
