@@ -9,7 +9,7 @@ const ph = String.fromCodePoint(0x10eeee);
 describe("kitty image Unicode placeholders", () => {
   it("assembles exact PNG transmission escape bytes", () => {
     const data = new Uint8Array(Buffer.from("hi"));
-    assert.equal(buildKittyTransmissionEscapes({ format: "png", data }, 42), `${esc}_Ga=T,f=100,i=42,q=2,m=0;aGk=${st}`);
+    assert.equal(buildKittyTransmissionEscapes({ format: "png", data }, 42), `${esc}_Ga=t,f=100,i=42,q=2,m=0;aGk=${st}`);
   });
 
   it("chunks base64 payloads at the protocol 4096-byte boundary", () => {
@@ -17,7 +17,7 @@ describe("kitty image Unicode placeholders", () => {
     const output = buildKittyTransmissionEscapes({ format: "png", data }, 7);
     const chunks = output.split(st).filter(Boolean);
     assert.equal(chunks.length, 2);
-    assert.match(chunks[0]!, /^\x1b_Ga=T,f=100,i=7,q=2,m=1;[A-Za-z0-9+/]{4096}$/);
+    assert.match(chunks[0]!, /^\x1b_Ga=t,f=100,i=7,q=2,m=1;[A-Za-z0-9+/]{4096}$/);
     assert.match(chunks[1]!, /^\x1b_Gq=2,m=0;[A-Za-z0-9+/=]{4}$/);
   });
 
@@ -35,7 +35,7 @@ describe("kitty image Unicode placeholders", () => {
 
   it("uses raw RGBA controls for decoded non-PNG input", () => {
     const data = new Uint8Array([1, 2, 3, 4]);
-    assert.equal(buildKittyTransmissionEscapes({ format: "rgba", widthPx: 1, heightPx: 1, data }, 9), `${esc}_Ga=T,f=32,s=1,v=1,i=9,q=2,m=0;AQIDBA==${st}`);
+    assert.equal(buildKittyTransmissionEscapes({ format: "rgba", widthPx: 1, heightPx: 1, data }, 9), `${esc}_Ga=t,f=32,s=1,v=1,i=9,q=2,m=0;AQIDBA==${st}`);
   });
 
   it("encodes row/column diacritics and 24-bit image id in fg color", () => {

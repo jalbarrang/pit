@@ -16,10 +16,10 @@ export interface KittyTextChunk { text: string; fg: KittyColor }
 export interface KittyPlaceholderRow { chunks: KittyTextChunk[] }
 
 const sourceControls = (source: KittyImageSource): string[] => {
-  if (source.format === "png") return ["a=T", "f=100"];
+  if (source.format === "png") return ["a=t", "f=100"];
   // JPEG and other decoded sources use raw 32-bit RGBA because the kitty protocol
-  // only accepts PNG, RGB, or RGBA; this avoids adding a PNG encoder dependency.
-  return ["a=T", "f=32", `s=${source.widthPx}`, `v=${source.heightPx}`];
+  // only accepts PNG, RGB, or RGBA; a=t stores data without a physical placement.
+  return ["a=t", "f=32", `s=${source.widthPx}`, `v=${source.heightPx}`];
 };
 
 const colorForId = (id: number): KittyColor => ({ r: (id >> 16) & 255, g: (id >> 8) & 255, b: id & 255, a: 255 });
