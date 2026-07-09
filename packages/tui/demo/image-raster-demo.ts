@@ -1,31 +1,38 @@
-import { BoxRenderable, FrameBufferRenderable, RGBA, TextRenderable, createCliRenderer } from "@opentui/core";
+import { BoxRenderable, TextRenderable, createCliRenderer, type RenderContext, type TerminalCapabilities } from "@opentui/core";
 import { Image } from "../src/components/image/index.ts";
 
 const png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=";
-const rgba = new Uint8Array([
-  255, 0, 0, 255, 0, 255, 0, 255,
-  0, 0, 255, 255, 255, 255, 0, 255,
-]);
+const forceKitty = process.argv.includes("--kitty");
+
+const withKitty = (ctx: RenderContext, kitty_graphics: boolean): RenderContext => new Proxy(ctx, {
+  get(target, prop) {
+    if (prop !== "capabilities") return Reflect.get(target, prop, target);
+    return { ...(target.capabilities ?? {}), kitty_graphics } as TerminalCapabilities;
+  },
+}) as RenderContext;
 
 const renderer = await createCliRenderer({ exitOnCtrlC: true, targetFps: 10 });
 renderer.start();
 
-const box = new BoxRenderable(renderer, {
-  id: "image-raster-demo-box",
+const root = new BoxRenderable(renderer, {
+  id: "image-parity-demo-box",
   border: true,
-  width: 28,
-  height: 8,
+  width: 48,
+  height: 9,
   padding: 1,
   flexDirection: "column",
 });
-renderer.root.add(box);
+renderer.root.add(root);
+root.add(new TextRenderable(renderer, { content: `Image parity demo (${forceKitty ? "forced kitty" : "detected kitty"})` }));
 
-box.add(new TextRenderable(renderer, { content: "RGBA quadrant demo" }));
-const frame = new FrameBufferRenderable(renderer, { width: 1, height: 1, respectAlpha: false });
-frame.frameBuffer.drawSuperSampleBuffer(0, 0, rgba, rgba.byteLength, "rgba8unorm", 8);
-box.add(frame);
-box.add(new TextRenderable(renderer, { content: "Expect one quadrant cell" }));
-box.add(new Image(renderer, { data: png, mimeType: "image/png", maxWidthCells: 1 }).renderable);
+const row = new BoxRenderable(renderer, { width: 44, height: 5, flexDirection: "row" });
+root.add(row);
+for (const [label, ctx] of [["quadrant", withKitty(renderer, false)], ["kitty", withKitty(renderer, forceKitty || renderer.capabilities?.kitty_graphics === true)]] as const) {
+  const cell = new BoxRenderable(renderer, { width: 20, height: 5, flexDirection: "column", marginRight: 2 });
+  cell.add(new TextRenderable(renderer, { content: label }));
+  cell.add(new Image(ctx, { data: png, mimeType: "image/png", maxWidthCells: 4, terminalWrite: (data) => process.stdout.write(data) }).renderable);
+  row.add(cell);
+}
 
 setInterval(() => renderer.requestRender(), 250);
 const stop = () => {

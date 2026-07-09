@@ -25,7 +25,7 @@ pit runs pi extensions through `ExtensionUIContext` + an ANSI bridge for legacy 
 
 ## Image support decision
 
-OpenTUI 0.4.3 has no region-safe Kitty/iTerm2 graphics passthrough for content inside the native cell-buffer frame, so pit does not emit raw graphics escapes. pit decodes PNG/JPEG bytes with pure-JS decoders, sizes them with pi-tui-compatible cell math, and renders inline through `FrameBufferRenderable` + `OptimizedBuffer.drawSuperSampleBuffer` quadrant rasterization. Unsupported formats or corrupt image data fall back to the bordered placeholder with filename/MIME/dimensions, and `Ctrl-Y` still opens the latest image externally through the macOS `open` adapter.
+On terminals where OpenTUI reports `TerminalCapabilities.kitty_graphics`, pit transmits PNG bytes (or JPEG decoded to raw RGBA) with quiet kitty graphics escapes, creates a virtual Unicode placement, and renders U+10EEEE placeholder cells with truecolor image-ID foregrounds so images scroll/diff with normal text. Terminals without kitty graphics capability use the pure-JS PNG/JPEG decoder plus `FrameBufferRenderable` + `OptimizedBuffer.drawSuperSampleBuffer` quadrant rasterization. Unsupported formats or corrupt image data fall back to the bordered placeholder with filename/MIME/dimensions, and `Ctrl-Y` still opens the latest image externally through the macOS `open` adapter.
 
 ## Mouse / clipboard decision
 
