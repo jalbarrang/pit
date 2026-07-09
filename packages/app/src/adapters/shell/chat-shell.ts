@@ -4,7 +4,7 @@ import { FooterComponent } from "../../components/footer.ts";
 import { emptyTokens } from "../../components/footer-format.ts";
 import { createTheme, getEditorTheme } from "../../domain/theming/index.ts";
 import type { SessionGateway } from "../../domain/index.ts";
-import { emptyAutocompleteProvider } from "./empty-autocomplete.ts";
+import { ShellChrome } from "./chrome.ts";
 import { DoubleCtrlCExit } from "./exit-keys.ts";
 import { promptOptionsForStreaming, shouldAbortStream } from "./interrupt-keys.ts";
 import { ScrollChat } from "./scroll-chat.ts";
@@ -15,23 +15,18 @@ interface Expandable { setExpanded(expanded: boolean): void }
 
 export class ChatShell {
   private readonly exitKeys = new DoubleCtrlCExit();
+  private readonly chrome = new ShellChrome({ notify: (text) => this.notify(text), exit: () => this.exit() });
   private readonly expandables: Expandable[] = [];
   private session?: SessionGateway;
   private cwd = process.cwd();
   private toolsExpanded = false;
-  readonly root: Container;
-  readonly tui: TUI;
-  readonly chat: ScrollChat;
-  readonly editor: EditorComponent;
-  readonly footer: FooterComponent;
-
-  private constructor(tui: TUI, chat: ScrollChat, editor: EditorComponent, footer: FooterComponent, root: Container) {
-    this.tui = tui;
-    this.chat = chat;
-    this.editor = editor;
-    this.footer = footer;
-    this.root = root;
-  }
+  private constructor(
+    readonly tui: TUI,
+    readonly chat: ScrollChat,
+    readonly editor: EditorComponent,
+    readonly footer: FooterComponent,
+    readonly root: Container,
+  ) {}
 
   static async create(options: ChatShellOptions = {}): Promise<ChatShell> {
     const tui = await TUI.create();
@@ -53,7 +48,7 @@ export class ChatShell {
     this.root.addChild(this.footer);
     this.chat.addDummyLines(this.tui.ctx, options.dummyLines ?? []);
     this.refreshFooter();
-    this.editor.setAutocompleteProvider?.(emptyAutocompleteProvider);
+    this.editor.setAutocompleteProvider?.(this.chrome.autocomplete(this.cwd));
     this.editor.onSubmit = (text) => void this.submit(text, options.session);
     this.tui.addChild(this.root);
     this.tui.setFocus(this.editor as never);
@@ -66,9 +61,13 @@ export class ChatShell {
     if (data === "\u000f") { this.toggleTools(); return { consume: true }; }
     if (shouldAbortStream(data, this.session !== undefined)) { void this.session?.abort(); return { consume: true }; }
     const exit = this.exitKeys.input(data);
-    if (exit === "exit") { this.stop(); process.exit(0); }
+    if (exit === "exit") this.exit();
     return exit === "armed" ? { consume: true } : undefined;
   }
+
+  private notify(text: string): void { this.chat.addMessage(new Text(this.tui.ctx, text, 1)); }
+
+  private exit(): void { this.stop(); process.exit(0); }
 
   refreshFooter(): void {
     this.footer.update(this.cwd, this.session?.modelId ?? "no-model", this.session?.tokenUsage ?? emptyTokens());
@@ -87,6 +86,7 @@ export class ChatShell {
   private async submit(text: string, session?: SessionGateway): Promise<void> {
     const trimmed = text.trim();
     if (!trimmed) return;
+    if (await this.chrome.handle(trimmed)) return;
     if (!session) this.chat.addMessage(new Text(this.tui.ctx, `You: ${trimmed}`, 1));
     await session?.prompt(trimmed, promptOptionsForStreaming(!!session?.isStreaming));
   }
