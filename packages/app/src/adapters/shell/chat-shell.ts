@@ -1,6 +1,7 @@
 import { BoxRenderable } from "@opentui/core";
 import { Container, Editor, TUI, Text, type EditorComponent } from "@pit/tui";
 import { FooterComponent } from "../../components/footer.ts";
+import { emptyTokens } from "../../components/footer-format.ts";
 import { createTheme, getEditorTheme } from "../../domain/theming/index.ts";
 import type { SessionGateway } from "../../domain/index.ts";
 import { emptyAutocompleteProvider } from "./empty-autocomplete.ts";
@@ -8,11 +9,7 @@ import { DoubleCtrlCExit } from "./exit-keys.ts";
 import { promptOptionsForStreaming, shouldAbortStream } from "./interrupt-keys.ts";
 import { ScrollChat } from "./scroll-chat.ts";
 
-export interface ChatShellOptions {
-  cwd?: string;
-  session?: SessionGateway;
-  dummyLines?: string[];
-}
+export interface ChatShellOptions { cwd?: string; session?: SessionGateway; dummyLines?: string[] }
 
 interface Expandable { setExpanded(expanded: boolean): void }
 
@@ -20,6 +17,7 @@ export class ChatShell {
   private readonly exitKeys = new DoubleCtrlCExit();
   private readonly expandables: Expandable[] = [];
   private session?: SessionGateway;
+  private cwd = process.cwd();
   private toolsExpanded = false;
   readonly root: Container;
   readonly tui: TUI;
@@ -49,11 +47,12 @@ export class ChatShell {
 
   private mount(options: ChatShellOptions): void {
     this.session = options.session;
+    this.cwd = options.cwd ?? process.cwd();
     this.root.addChild(this.chat);
     this.root.addChild(this.editor as never);
     this.root.addChild(this.footer);
     this.chat.addDummyLines(this.tui.ctx, options.dummyLines ?? []);
-    this.footer.update(options.cwd ?? process.cwd(), options.session?.modelId ?? "no-model", options.session?.tokenUsage ?? emptyTokens());
+    this.refreshFooter();
     this.editor.setAutocompleteProvider?.(emptyAutocompleteProvider);
     this.editor.onSubmit = (text) => void this.submit(text, options.session);
     this.tui.addChild(this.root);
@@ -69,6 +68,10 @@ export class ChatShell {
     const exit = this.exitKeys.input(data);
     if (exit === "exit") { this.stop(); process.exitCode = 0; return { consume: true }; }
     return exit === "armed" ? { consume: true } : undefined;
+  }
+
+  refreshFooter(): void {
+    this.footer.update(this.cwd, this.session?.modelId ?? "no-model", this.session?.tokenUsage ?? emptyTokens());
   }
 
   registerExpandable(component: Expandable): void {
@@ -92,5 +95,3 @@ export class ChatShell {
     this.tui.stop();
   }
 }
-
-const emptyTokens = () => ({ input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 });

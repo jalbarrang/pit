@@ -1,5 +1,7 @@
 import type { TokenUsage } from "../domain/index.ts";
 
+export const emptyTokens = (): TokenUsage => ({ input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 });
+
 export const formatCwd = (cwd: string, home = process.env.HOME ?? ""): string =>
   home && cwd.startsWith(home) ? `~${cwd.slice(home.length)}` : cwd;
 
