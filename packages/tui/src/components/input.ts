@@ -1,9 +1,13 @@
-import { TextRenderable, type RenderContext, type Renderable } from "@opentui/core";
-import { TextFieldModel } from "../domain/input/index.ts";
+import { StyledText, TextAttributes, TextRenderable, type RenderContext, type Renderable, type TextChunk } from "@opentui/core";
+import { TextFieldModel, type FieldWindow } from "../domain/input/index.ts";
 import { Component, type Focusable } from "./component.ts";
 import { textOptions, type PitStyle } from "./component-style.ts";
 
-type InputLike = Renderable & { content: string; width?: number; options?: Record<string, unknown> };
+type InputLike = Renderable & { content: string | StyledText; width?: number; options?: Record<string, unknown> };
+const chunk = (text: string, attributes?: number): TextChunk => ({ __isChunk: true, text, attributes });
+const toStyledText = (win: FieldWindow): StyledText => win.focused
+  ? new StyledText([chunk(win.prompt + win.before), chunk(win.at, TextAttributes.INVERSE), chunk(win.after)])
+  : new StyledText([chunk(win.prompt + win.before + win.at + win.after)]);
 const createRenderable = (ctx: RenderContext, style?: PitStyle): InputLike =>
   new TextRenderable(ctx, { content: "> ", height: 1, wrapMode: "none", truncate: true, ...textOptions(style) }) as unknown as InputLike;
 
@@ -40,7 +44,7 @@ export class Input extends Component implements Focusable {
   }
 
   private update(): void {
-    this.renderable.content = this.model.window(this.width, this.focused);
+    this.renderable.content = toStyledText(this.model.window(this.width, this.focused));
     this.invalidate();
   }
 }

@@ -12,13 +12,13 @@ export interface EditorComponent extends Component {
   insertTextAtCursor?(text: string): void;
   getExpandedText?(): string;
   setAutocompleteProvider?(provider: AutocompleteProvider): void;
-  borderColor?: (str: string) => string;
+  borderColor?: string;
   setPaddingX?(padding: number): void;
   setAutocompleteMaxVisible?(maxVisible: number): void;
 }
 
 export interface EditorTheme {
-  borderColor?: (str: string) => string;
+  borderColor?: string;
   selectList?: SelectListTheme;
   textColor?: string;
   focusedTextColor?: string;

@@ -3,6 +3,7 @@ import { decodeKittyPrintable } from "./keys/printable.ts";
 import { sliceByCells, visibleWidth } from "../styling/index.ts";
 
 export type TextFieldAction = "changed" | "submit" | "escape" | "none";
+export interface FieldWindow { prompt: string; before: string; at: string; after: string; focused: boolean }
 const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
 const parts = (text: string): string[] => [...segmenter.segment(text)].map((part) => part.segment);
 const prevIndex = (text: string, cursor: number): number => {
@@ -42,7 +43,7 @@ export class TextFieldModel {
     return isPrintable(data) ? this.insert(data) : "none";
   }
 
-  window(width: number, focused: boolean, prompt = "> "): string {
+  window(width: number, focused: boolean, prompt = "> "): FieldWindow {
     const available = Math.max(0, width - prompt.length);
     const cursorCol = visibleWidth(this.value.slice(0, this.cursor));
     const start = Math.max(0, Math.min(cursorCol, visibleWidth(this.value)) - Math.max(1, available - 1));
@@ -51,8 +52,7 @@ export class TextFieldModel {
     const before = text.slice(0, localCursor);
     const at = parts(text.slice(localCursor))[0] ?? " ";
     const after = text.slice(localCursor + at.length);
-    const shown = focused ? `${before}\x1b[7m${at}\x1b[27m${after}` : text;
-    return `${prompt}${shown}`.slice(0, width + 8);
+    return { prompt, before, at, after, focused };
   }
 
   private moveTo(cursor: number): TextFieldAction { this.cursor = cursor; return "changed"; }

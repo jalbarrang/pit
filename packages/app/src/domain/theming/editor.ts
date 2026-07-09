@@ -2,7 +2,7 @@ import type { EditorTheme } from "@pit/tui";
 import type { PitTheme } from "./types.ts";
 
 export const getEditorTheme = (theme: PitTheme): EditorTheme => ({
-  borderColor: (text) => text,
+  borderColor: theme.color("border"),
   textColor: theme.color("text"),
   focusedTextColor: theme.color("text"),
   selectList: {

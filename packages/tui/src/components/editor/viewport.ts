@@ -18,7 +18,8 @@ export function renderViewport(state: EditorState, width: number, maxHeight: num
   return { lines: rows.slice(offset, offset + maxHeight), cursorRow: cursorRow - offset, cursorCol: cursor.col - vl.start, offset };
 }
 
-export function withCursor(lines: string[], row: number, col: number, focused: boolean): string[] {
-  if (!focused) return lines;
-  return lines.map((line, i) => i !== row ? line : line.slice(0, col) + "\x1b[7m" + (line[col] ?? " ") + "\x1b[0m" + line.slice(col + 1));
+export interface CursorSegments { before: string; at: string; after: string }
+
+export function splitAtCursor(line: string, col: number): CursorSegments {
+  return { before: line.slice(0, col), at: line[col] ?? " ", after: line.slice(col + 1) };
 }

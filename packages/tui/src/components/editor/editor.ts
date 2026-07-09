@@ -1,23 +1,24 @@
-import { TextRenderable, type RenderContext, type Renderable } from "@opentui/core";
+import { TextRenderable, type RenderContext, type Renderable, type StyledText } from "@opentui/core";
 import { EditorModel } from "../../domain/editing/index.ts";
 import type { AutocompleteProvider } from "../../domain/input/index.ts";
 import { Component, type Focusable } from "../component.ts";
 import { textOptions } from "../component-style.ts";
 import { EditorAutocomplete } from "./autocomplete-popup.ts";
+import { buildEditorContent } from "./content.ts";
 import { applyEditorCommand } from "./command-dispatch.ts";
 import { editorKey, printableInput } from "./keymap.ts";
 import { cleanPaste, parseBracketedPaste } from "./paste.ts";
 import { defaultEditorTheme } from "./theme.ts";
 import type { EditorComponent, EditorOptions, EditorTheme } from "./types.ts";
-import { renderViewport, withCursor } from "./viewport.ts";
-type TextLike = Renderable & { content: string; width?: number; height?: number | string; options?: Record<string, unknown> };
+import { renderViewport } from "./viewport.ts";
+type TextLike = Renderable & { content: string | StyledText; width?: number; height?: number | string; options?: Record<string, unknown> };
 const makeRenderable = (ctx: RenderContext, theme: EditorTheme): TextLike => new TextRenderable(ctx, { content: "", height: "auto", wrapMode: "none", ...textOptions({ fg: theme.textColor }) }) as unknown as TextLike;
 export class Editor extends Component implements Focusable, EditorComponent {
   readonly renderable: TextLike;
   readonly model = new EditorModel();
   onSubmit?: (text: string) => void;
   onChange?: (text: string) => void;
-  borderColor: (str: string) => string;
+  borderColor?: string;
   private paddingX: number;
   private maxHeight: number;
   private _focused = false;
@@ -28,7 +29,7 @@ export class Editor extends Component implements Focusable, EditorComponent {
     this.paddingX = Math.max(0, Math.floor(options.paddingX ?? 0));
     this.maxHeight = Math.max(1, Math.floor(options.maxHeight ?? 8));
     this.model.width = Math.max(1, Math.floor(options.width ?? 80) - this.paddingX * 2);
-    this.borderColor = merged.borderColor ?? ((text) => text);
+    this.borderColor = merged.borderColor;
     this.autocomplete = new EditorAutocomplete(ctx, merged.selectList, options.autocompleteMaxVisible ?? 5);
     this.renderable = renderable ?? makeRenderable(ctx, merged);
     this.update();
@@ -92,8 +93,7 @@ export class Editor extends Component implements Focusable, EditorComponent {
   private update(): void {
     const width = this.model.width;
     const view = renderViewport(this.model.getState(), width, this.maxHeight, this.model.getCursor());
-    const body = withCursor(view.lines, view.cursorRow, view.cursorCol, this.focused).map((line) => " ".repeat(this.paddingX) + line);
-    const bar = this.borderColor("─".repeat(width)); this.renderable.content = [bar, ...body, bar, ...this.autocomplete.render(width)].join("\n");
+    this.renderable.content = buildEditorContent(view, { width, paddingX: this.paddingX, focused: this.focused, borderColor: this.borderColor, extraLines: this.autocomplete.render(width) });
     this.renderable.width = width + this.paddingX * 2;
     this.invalidate();
   }

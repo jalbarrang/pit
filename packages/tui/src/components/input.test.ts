@@ -50,7 +50,10 @@ describe("Input", () => {
     input.setWidth(8);
     input.setValue("abcdefghijklmnop");
     input.focused = true;
-    assert.equal(visibleWidth(renderable.content.replace(/\x1b\[[0-9;]*m/g, "")) <= 8, true);
-    assert.match(renderable.content, /\x1b\[7m/);
+    const styled = renderable.content as unknown as { chunks: { text: string; attributes?: number }[] };
+    const text = styled.chunks.map((part) => part.text).join("");
+    assert.equal(visibleWidth(text) <= 8, true);
+    assert.equal(text.includes("\x1b"), false);
+    assert.equal(styled.chunks.some((part) => ((part.attributes ?? 0) & 32) !== 0), true);
   });
 });
