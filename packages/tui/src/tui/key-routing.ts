@@ -1,6 +1,6 @@
 import { isKeyRelease, matchesKey } from "../domain/input/index.ts";
 import type { Component } from "../components/index.ts";
-import type { InputListener, KeyEventLike, KeyEventSource } from "./key-source.ts";
+import type { InputListener, KeyEventLike, KeyEventSource, PasteEventLike } from "./key-source.ts";
 
 type RoutingHost = {
   focusedComponent: Component | null;
@@ -11,6 +11,7 @@ type RoutingHost = {
 export class KeyRouter {
   private listeners = new Set<InputListener>();
   private handler = (event: KeyEventLike) => this.handleKeyEvent(event);
+  private pasteHandler = (event: PasteEventLike) => this.handlePasteEvent(event);
   private host: RoutingHost;
   constructor(host: RoutingHost) {
     this.host = host;
@@ -18,10 +19,12 @@ export class KeyRouter {
 
   bind(source: KeyEventSource): void {
     source.on("keypress", this.handler);
+    source.on("paste", this.pasteHandler);
   }
 
   unbind(source: KeyEventSource): void {
     source.off("keypress", this.handler);
+    source.off("paste", this.pasteHandler);
   }
 
   addInputListener(listener: InputListener): () => void {
@@ -36,6 +39,12 @@ export class KeyRouter {
   handleKeyEvent(event: KeyEventLike): void {
     const data = event.raw ?? event.sequence ?? "";
     this.handleInput(data);
+  }
+
+  handlePasteEvent(event: PasteEventLike): void {
+    const text = event.text ?? (event.bytes ? new TextDecoder().decode(event.bytes) : "");
+    if (text.length === 0) return;
+    this.handleInput(`\x1b[200~${text}\x1b[201~`);
   }
 
   handleInput(input: string): void {

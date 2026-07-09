@@ -2,13 +2,21 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { Renderable } from "@opentui/core";
 import { Component } from "../components/index.ts";
-import { TUI, type KeyEventHandler, type KeyEventSource, type TuiRenderer } from "./index.ts";
+import { TUI, type KeyEventHandler, type KeyEventSource, type PasteEventHandler, type PasteEventLike, type TuiRenderer } from "./index.ts";
 
 class Source implements KeyEventSource {
   handler: KeyEventHandler | null = null;
-  on(_event: "keypress", handler: KeyEventHandler): void { this.handler = handler; }
-  off(_event: "keypress", handler: KeyEventHandler): void { if (this.handler === handler) this.handler = null; }
+  pasteHandler: PasteEventHandler | null = null;
+  on(event: "keypress" | "paste", handler: KeyEventHandler | PasteEventHandler): void {
+    if (event === "paste") this.pasteHandler = handler as PasteEventHandler;
+    else this.handler = handler as KeyEventHandler;
+  }
+  off(event: "keypress" | "paste", handler: KeyEventHandler | PasteEventHandler): void {
+    if (event === "paste" && this.pasteHandler === handler) this.pasteHandler = null;
+    if (event === "keypress" && this.handler === handler) this.handler = null;
+  }
   emit(raw: string, sequence = "fallback"): void { this.handler?.({ raw, sequence, source: "raw" }); }
+  emitPaste(event: PasteEventLike): void { this.pasteHandler?.(event); }
 }
 class Receiver extends Component {
   readonly renderable = { requestRender() {} } as unknown as Renderable;
@@ -56,6 +64,25 @@ describe("TUI key routing", () => {
     tui.addInputListener((data) => ({ data: `${data}b` }));
     source.emit("x");
     assert.deepEqual(receiver.received, ["ab"]);
+  });
+
+  it("re-wraps paste events as bracketed paste input", async () => {
+    const source = new Source();
+    const tui = await TUI.create({ renderer: renderer(), keySource: source });
+    const receiver = new Receiver();
+    tui.setFocus(receiver);
+    source.emitPaste({ bytes: new TextEncoder().encode("hello\nworld") });
+    assert.deepEqual(receiver.received, ["\x1b[200~hello\nworld\x1b[201~"]);
+  });
+
+  it("prefers paste event text and ignores empty pastes", async () => {
+    const source = new Source();
+    const tui = await TUI.create({ renderer: renderer(), keySource: source });
+    const receiver = new Receiver();
+    tui.setFocus(receiver);
+    source.emitPaste({ text: "plain" });
+    source.emitPaste({});
+    assert.deepEqual(receiver.received, ["\x1b[200~plain\x1b[201~"]);
   });
 
   it("filters release events unless the receiver opts in", async () => {
