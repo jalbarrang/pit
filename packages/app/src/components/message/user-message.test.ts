@@ -16,4 +16,9 @@ describe("UserMessageComponent", () => {
     const component = new UserMessageComponent({} as never, "hello", createTheme("dark"), fakeBox(), fakeMarkdown());
     assert.equal(component.getText(), "hello");
   });
+
+  it("drops raw escapes before user markdown", () => {
+    const component = new UserMessageComponent({} as never, "\x1b[32mok\x1b[0m \x1b_Gbad\x1b\\done", createTheme("dark"), fakeBox(), fakeMarkdown());
+    assert.equal(component.getText(), "ok done");
+  });
 });

@@ -27,4 +27,13 @@ describe("AssistantMessageComponent", () => {
     component.finalize();
     assert.equal(markdown.streaming, false);
   });
+
+  it("sanitizes raw ANSI and kitty payloads before markdown", () => {
+    const markdown = fakeMarkdown();
+    const component = new AssistantMessageComponent({} as never, "plain ", createTheme("dark"), markdown);
+    component.append("\x1b[31mred\x1b[0m \x1b_Gkitty\x1b\\tail");
+    assert.equal(component.getText(), "plain red tail");
+    assert.ok(!component.getText().includes("\x1b"));
+    assert.ok(!component.getText().includes("kitty"));
+  });
 });
