@@ -20,10 +20,11 @@ import type { ShellExtensionPort } from "./shell-port.ts";
 /** ExtensionUIContext backed by pit overlays + shell port. */
 export class PitExtensionUIContext implements ExtensionUIContext {
   private readonly dialogs: ReturnType<typeof createDialogFlows>;
-  constructor(
-    private readonly dialogPort: OverlayDialogPort,
-    private readonly shell: ShellExtensionPort,
-  ) {
+  private readonly dialogPort: OverlayDialogPort;
+  private readonly shell: ShellExtensionPort;
+  constructor(dialogPort: OverlayDialogPort, shell: ShellExtensionPort) {
+    this.dialogPort = dialogPort;
+    this.shell = shell;
     this.dialogs = createDialogFlows(dialogPort);
   }
 

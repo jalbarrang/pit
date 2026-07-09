@@ -31,7 +31,8 @@ export class ShellExtensionPort implements ExtensionShellPort {
   private widgets = new Map<string, Component>();
   theme: Theme;
 
-  constructor(private readonly host: ShellUiHost) { this.theme = host.theme; }
+  private readonly host: ShellUiHost;
+  constructor(host: ShellUiHost) { this.host = host; this.theme = host.theme; }
 
   onTerminalInput(handler: TerminalInputHandler): () => void {
     this.terminalHandlers.push(handler);

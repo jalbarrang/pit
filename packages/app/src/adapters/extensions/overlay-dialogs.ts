@@ -32,7 +32,8 @@ export function withDialogAbort<T>(
 }
 
 export class OverlayDialogPort implements ExtensionDialogPort {
-  constructor(readonly host: OverlayDialogHost) {}
+  readonly host: OverlayDialogHost;
+  constructor(host: OverlayDialogHost) { this.host = host; }
 
   select(title: string, options: string[], opts?: ExtensionUIDialogOptions): Promise<string | undefined> {
     return withDialogAbort(opts, (done) => {
