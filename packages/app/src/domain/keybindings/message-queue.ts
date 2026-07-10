@@ -14,9 +14,10 @@ function truncate(text: string): string {
   return text.length > 60 ? `${text.slice(0, 60)}…` : text;
 }
 
-export function formatPending(queued: QueuedMessages): string[] {
-  return [
+export function formatPending(queued: QueuedMessages, dequeueKey = "alt+up"): string[] {
+  const lines = [
     ...queued.steering.map((text) => `Steering: ${truncate(text)}`),
     ...queued.followUp.map((text) => `Follow-up: ${truncate(text)}`),
   ];
+  return lines.length ? [...lines, `↳ ${dequeueKey} to edit all queued messages`] : [];
 }

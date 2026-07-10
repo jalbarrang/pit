@@ -24,17 +24,22 @@ describe("combineDequeued", () => {
 });
 
 describe("formatPending", () => {
-  it("prefixes steering then follow-up entries", () => {
+  it("prefixes steering then follow-up entries and appends the dequeue hint", () => {
     assert.deepEqual(
       formatPending({ steering: ["steer"], followUp: ["follow"] }),
-      ["Steering: steer", "Follow-up: follow"],
+      ["Steering: steer", "Follow-up: follow", "↳ alt+up to edit all queued messages"],
     );
+  });
+
+  it("uses the resolved dequeue key in the hint", () => {
+    assert.equal(formatPending({ steering: ["s"], followUp: [] }, "alt+j").at(-1), "↳ alt+j to edit all queued messages");
   });
 
   it("truncates text longer than 60 chars with … suffix", () => {
     const long = "x".repeat(61);
     assert.deepEqual(formatPending({ steering: [long], followUp: [] }), [
       `Steering: ${"x".repeat(60)}…`,
+      "↳ alt+up to edit all queued messages",
     ]);
   });
 

@@ -15,7 +15,7 @@ const main = async () => {
     return;
   }
   const session = await AppSession.create(args.cwd);
-  await runChatApp({ cwd: args.cwd, session, authStore, trustStore, trustPromptOnStart: trustStore.needsPrompt(), resumeOnStart: args.resume });
+  await runChatApp({ cwd: args.cwd, session, authStore, trustStore, trustPromptOnStart: trustStore.needsPrompt(), resumeOnStart: args.resume, createSession: () => AppSession.create(args.cwd) });
 };
 
 main().catch((error: unknown) => {

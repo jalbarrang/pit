@@ -47,13 +47,23 @@ Run `scripts/dev.sh` in an OSC52-capable terminal (kitty/iTerm2/WezTerm), inside
 
 All round-1 findings addressed — re-check just these:
 
-- **#4** — collapsed bash output now ends with `… N more lines (ctrl+o expands)`.
-- **#5** — `cancelled` / `exit N` render in the error color.
+- [x] **#4** — collapsed bash output now ends with `… N more lines (ctrl+o expands)`.
+- [x] **#5** — `cancelled` / `exit N` render in the error color.
 - **#8** — the pending line now tracks the SDK queue exactly (appears on alt+enter, disappears when the queue flushes after the run); **alt+up** restores queued text into the editor. Root cause was display desync, not the key.
+  - Doing `!sleep 30` and sending two texts does queue them, but, ux is doesn't properly show as `queue` or `steers` check how pi-tui does it.
 - **#10** — `/scoped-models` is now a bordered, windowed picker (12 rows, `↑/↓ N more` markers, hint line) — no more overflow.
+  - Works, but window has transparent background instead of a solid background, deferred when we actually start making design changes.
 - **#11** — `/tree` is bordered+windowed; linear runs render FLAT (indent only at real branch points); no orphan `▾` rows.
-- **ctrl+c** — with text in the editor it now CLEARS it (one press); empty-editor double-ctrl+c exit unchanged (so 3 presses exit from a dirty editor).
+  - Works, same transparent issue as before.
+- [x] **ctrl+c** — with text in the editor it now CLEARS it (one press); empty-editor double-ctrl+c exit unchanged (so 3 presses exit from a dirty editor).
 - **#12** — still unverified from round 1: `/fork` switches session, `/session` shows stats, `/new` starts clean.
+  - Says that `New session unavailable`
+
+## Retest round 3 (after round-2 fixes)
+
+- **#8 UX** — pending lines now match pi-tui: dim `Steering:`/`Follow-up:` entries plus a `↳ alt+up to edit all queued messages` hint (key resolved from your bindings).
+- **#12 /new** — fixed: "New session unavailable" was a wiring gap (the session factory was only passed on the first-run path). `/new` now works in normal runs; also re-check `/fork` and `/session` while there.
+- **Deferred (design pass backlog)**: overlay solid background for /scoped-models and /tree — noted, untouched.
 
 ## If something fails
 

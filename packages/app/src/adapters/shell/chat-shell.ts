@@ -59,7 +59,7 @@ export class ChatShell {
       cycleModel: (dir) => this.cycleModel(dir), cycleThinking: () => this.cycleThinking(), toggleThinking: () => this.setThinkingVisible(!this.isThinkingVisible()), suspend: () => this.suspendApp(),
       externalEditor: () => this.openExternalEditor(), pasteImage: () => this.pasteImage(), followUp: () => this.followUpCtl.followUp(), dequeue: () => this.followUpCtl.dequeue(), openModelSelector: () => void this.runCommand("/model"), clearEditor: () => this.editor.setText(""), exitKeysInput: (d) => this.exitKeys.input(d) }, data);
   }
-  private showPendingWidget(lines: string[]): void { this.mountWidget("pending-queue", lines.length ? new Text(this.tui.ctx, lines.join("\n"), 1, 0, { fg: createTheme(this.settingsStore.get().theme).color("muted") }) : undefined, "aboveEditor"); } showPendingFromQueue(q: { steering: string[]; followUp: string[] }): void { this.showPendingWidget(formatPending(q)); }
+  private showPendingWidget(lines: string[]): void { this.mountWidget("pending-queue", lines.length ? new Text(this.tui.ctx, lines.join("\n"), 1, 0, { fg: createTheme(this.settingsStore.get().theme).color("muted") }) : undefined, "aboveEditor"); } showPendingFromQueue(q: { steering: string[]; followUp: string[] }): void { this.showPendingWidget(formatPending(q, getKeybindings().getKeys("app.message.dequeue")[0] ?? "alt+up")); }
   private cycleModel(dir: 1 | -1): void {
     const s = this.session; if (s?.cycleModel) { void s.cycleModel(dir > 0 ? "forward" : "backward").then((id) => { if (!id) return this.notify("Model cycling unavailable"); this.refreshFooter(); this.notify(`Model: ${id}`); }); return; }
     const models = s?.listModels?.() ?? [], i = s?.modelId.indexOf("/") ?? -1;
