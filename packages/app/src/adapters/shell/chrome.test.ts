@@ -17,6 +17,7 @@ const makeChrome = () => {
     trust: () => undefined,
     reloadKeybindings: () => void log.push("reload"),
     setEnabledModels: async () => {},
+    replay: () => void log.push("replay"),
   };
   const chrome = new ShellChrome(host);
   return { chrome, log };

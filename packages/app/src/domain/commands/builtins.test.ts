@@ -16,6 +16,8 @@ const makeContext = () => {
     openHelpSelector: () => void log.push("help"),
     openTrustSelector: () => void log.push("trust"),
     openScopedModels: () => void log.push("scoped-models"),
+    openTree: () => void log.push("tree"),
+    forkSession: () => void log.push("fork"),
     reloadKeybindings: () => void log.push("reload"),
   };
   return { context, log };
@@ -69,6 +71,16 @@ test("/scoped-models opens the scoped models overlay", async () => {
   const result = await registry.dispatch("/scoped-models", context);
   assert.deepEqual(result, { kind: "handled", name: "scoped-models" });
   assert.deepEqual(log, ["scoped-models"]);
+});
+
+test("/tree and /fork open tree navigator and fork session", async () => {
+  const { context, log } = makeContext();
+  const registry = createBuiltinRegistry();
+  assert.ok(registry.list().some((c) => c.name === "tree"));
+  assert.ok(registry.list().some((c) => c.name === "fork"));
+  assert.deepEqual(await registry.dispatch("/tree", context), { kind: "handled", name: "tree" });
+  assert.deepEqual(await registry.dispatch("/fork", context), { kind: "handled", name: "fork" });
+  assert.deepEqual(log, ["tree", "fork"]);
 });
 
 test("every builtin has a description for autocomplete", () => {

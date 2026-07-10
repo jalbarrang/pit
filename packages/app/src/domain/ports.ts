@@ -1,4 +1,5 @@
 import type { ImagePart } from "./images/types.ts";
+import type { TreeNode } from "./tree/types.ts";
 
 export interface ModelRef {
   provider: string;
@@ -40,6 +41,11 @@ export interface SessionGateway<TEvent = unknown> {
   history?(): HistoryMessage[];
   queuedMessages?(): { steering: string[]; followUp: string[] };
   clearQueue?(): { steering: string[]; followUp: string[] };
+  tree?(): TreeNode[];
+  leafId?(): string | undefined;
+  branchTo?(id: string): Promise<string | undefined>;
+  setLabel?(id: string, label: string): void;
+  forkSession?(): string | undefined;
 }
 
 export interface TokenUsage {

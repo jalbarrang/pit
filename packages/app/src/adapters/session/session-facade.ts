@@ -1,8 +1,11 @@
 import type { AgentSession, AgentSessionEvent, ExtensionUIContext, LoadExtensionsResult, ModelRegistry } from "@earendil-works/pi-coding-agent";
+import { SessionManager } from "@earendil-works/pi-coding-agent";
 import { textFromContent } from "../../domain/conversation/event-text.ts";
 import { toImageContent } from "../../domain/images/to-image-content.ts";
 import type { ImagePart } from "../../domain/images/types.ts";
 import type { HistoryMessage, ModelRef, TokenUsage } from "../../domain/ports.ts";
+import type { TreeNode } from "../../domain/tree/types.ts";
+import { mapTree } from "./tree-mapper.ts";
 
 /** SessionGateway methods delegated onto the SDK AgentSession. */
 export class SessionFacade {
@@ -22,6 +25,7 @@ export class SessionFacade {
 
   get extensionRunner() { return this.session.extensionRunner; }
   get sessionPath(): string | undefined { return this.session.sessionManager.getSessionFile(); }
+  private get manager() { return this.session.sessionManager; }
 
   history(): HistoryMessage[] {
     return this.session.messages
@@ -70,14 +74,9 @@ export class SessionFacade {
   abort(): Promise<void> { return this.session.abort(); }
   steer(text: string): Promise<void> { return this.session.steer(text); }
   queuedMessages(): { steering: string[]; followUp: string[] } {
-    return {
-      steering: [...this.session.getSteeringMessages()],
-      followUp: [...this.session.getFollowUpMessages()],
-    };
+    return { steering: [...this.session.getSteeringMessages()], followUp: [...this.session.getFollowUpMessages()] };
   }
-  clearQueue(): { steering: string[]; followUp: string[] } {
-    return this.session.clearQueue();
-  }
+  clearQueue(): { steering: string[]; followUp: string[] } { return this.session.clearQueue(); }
   dispose(): void { this.session.dispose(); }
   get isStreaming(): boolean { return this.session.isStreaming; }
   get modelId(): string {
@@ -87,5 +86,14 @@ export class SessionFacade {
   get tokenUsage(): TokenUsage {
     const tokens = this.session.getSessionStats().tokens;
     return { input: tokens.input, output: tokens.output, cacheRead: tokens.cacheRead, cacheWrite: tokens.cacheWrite, total: tokens.total };
+  }
+
+  tree(): TreeNode[] { return mapTree(this.manager.getTree() as unknown[]); }
+  leafId(): string | undefined { return this.manager.getLeafId() ?? undefined; }
+  async branchTo(id: string): Promise<string | undefined> { return (await this.session.navigateTree(id)).editorText; }
+  setLabel(id: string, label: string): void { this.manager.appendLabelChange(id, label); }
+  forkSession(): string | undefined {
+    const p = this.manager.getSessionFile();
+    return p ? SessionManager.forkFrom(p, this.manager.getCwd()).getSessionFile() : undefined;
   }
 }
