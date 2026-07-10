@@ -20,6 +20,9 @@ importers:
       '@earendil-works/pi-coding-agent':
         specifier: ^0.80.3
         version: 0.80.3(ws@8.21.0)(zod@4.4.3)
+      '@earendil-works/pi-tui':
+        specifier: ^0.80.3
+        version: 0.80.3
       '@opentui/core':
         specifier: ^0.4.3
         version: 0.4.3(typescript@6.0.3)(web-tree-sitter@0.25.10)

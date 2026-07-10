@@ -1,5 +1,6 @@
 import { KeybindingsManager, setKeybindings, type KeybindingsConfig } from "@pit/tui";
-import { APP_KEYBINDINGS, migrateKeybindingsConfig, toKeybindingsConfig } from "../../domain/keybindings/index.ts";
+import { toKeybindingsConfig } from "../../domain/keybindings/index.ts";
+import { resolveDefinitions, resolveMigrate } from "./upstream-defs.ts";
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -35,11 +36,11 @@ export class KeybindingsStore {
       return {};
     }
     if (typeof parsed !== "object" || parsed === null) return {};
-    return toKeybindingsConfig(migrateKeybindingsConfig(parsed as Record<string, unknown>).config);
+    return toKeybindingsConfig(resolveMigrate()(parsed as Record<string, unknown>).config);
   }
 
   install(): KeybindingsManager {
-    const mgr = new KeybindingsManager(APP_KEYBINDINGS, this.load());
+    const mgr = new KeybindingsManager(resolveDefinitions(), this.load());
     setKeybindings(mgr);
     return mgr;
   }
