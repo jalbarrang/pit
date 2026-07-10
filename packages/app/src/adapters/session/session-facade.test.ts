@@ -40,3 +40,29 @@ describe("SessionFacade.prompt images", () => {
     assert.equal(calls[0].options, options);
   });
 });
+
+describe("SessionFacade queue", () => {
+  it("queuedMessages copies steering and followUp from the session", () => {
+    const session = {
+      getSteeringMessages: () => ["steer-a", "steer-b"] as const,
+      getFollowUpMessages: () => ["follow-a"] as const,
+    } as unknown as AgentSession;
+    assert.deepEqual(facade(session).queuedMessages(), {
+      steering: ["steer-a", "steer-b"],
+      followUp: ["follow-a"],
+    });
+  });
+
+  it("clearQueue delegates to the session and returns its result", () => {
+    const cleared = { steering: ["s"], followUp: ["f"] };
+    let called = 0;
+    const session = {
+      clearQueue: () => {
+        called += 1;
+        return cleared;
+      },
+    } as unknown as AgentSession;
+    assert.deepEqual(facade(session).clearQueue(), cleared);
+    assert.equal(called, 1);
+  });
+});

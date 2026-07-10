@@ -63,6 +63,8 @@ export class AppSession implements SessionGateway {
   prompt(text: string, options?: { streamingBehavior?: "steer" | "followUp"; images?: ImagePart[] }) { return this.facade.prompt(text, options); }
   abort() { return this.facade.abort(); }
   steer(text: string) { return this.facade.steer(text); }
+  queuedMessages() { return this.facade.queuedMessages(); }
+  clearQueue() { return this.facade.clearQueue(); }
   dispose() { this.facade.dispose(); }
   get isStreaming() { return this.facade.isStreaming; }
   get modelId() { return this.facade.modelId; }

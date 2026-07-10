@@ -12,7 +12,8 @@ const fakeDeps = (overrides: Partial<GlobalInputDeps> = {}): { deps: GlobalInput
     abortIfStreaming: (data) => { calls.push(`abort:${data}`); return false; },
     cycleModel: (dir) => void calls.push(`cycleModel:${dir}`), cycleThinking: () => void calls.push("cycleThinking"),
     suspend: () => void calls.push("suspend"), externalEditor: () => void calls.push("externalEditor"),
-    pasteImage: () => void calls.push("pasteImage"),
+    pasteImage: () => void calls.push("pasteImage"), followUp: () => void calls.push("followUp"),
+    dequeue: () => void calls.push("dequeue"), openModelSelector: () => void calls.push("openModelSelector"),
     exitKeysInput: () => "ignored", ...overrides,
   };
   return { deps, calls };
@@ -51,25 +52,23 @@ describe("routeGlobalInput", () => {
     assert.deepEqual(routeGlobalInput(deps, "bwd"), { consume: true });
     assert.deepEqual(calls, ["cycleModel:1", "cycleModel:-1"]);
   });
-  it("cycles thinking level", () => {
-    const { deps, calls } = fakeDeps({ matches: { matches: (data, id) => data === "tab" && id === "app.thinking.cycle" } });
-    assert.deepEqual(routeGlobalInput(deps, "tab"), { consume: true });
-    assert.deepEqual(calls, ["cycleThinking"]);
+  it("cycles thinking, suspends, opens external editor, pastes image", () => {
+    const { deps, calls } = fakeDeps({
+      matches: { matches: (data, id) =>
+        (data === "tab" && id === "app.thinking.cycle") || (data === "z" && id === "app.suspend") ||
+        (data === "g" && id === "app.editor.external") || (data === "v" && id === "app.clipboard.pasteImage") },
+    });
+    for (const d of ["tab", "z", "g", "v"]) assert.deepEqual(routeGlobalInput(deps, d), { consume: true });
+    assert.deepEqual(calls, ["cycleThinking", "suspend", "externalEditor", "pasteImage"]);
   });
-  it("suspends on app.suspend", () => {
-    const { deps, calls } = fakeDeps({ matches: { matches: (data, id) => data === "z" && id === "app.suspend" } });
-    assert.deepEqual(routeGlobalInput(deps, "z"), { consume: true });
-    assert.deepEqual(calls, ["suspend"]);
-  });
-  it("opens external editor on app.editor.external", () => {
-    const { deps, calls } = fakeDeps({ matches: { matches: (data, id) => data === "g" && id === "app.editor.external" } });
-    assert.deepEqual(routeGlobalInput(deps, "g"), { consume: true });
-    assert.deepEqual(calls, ["externalEditor"]);
-  });
-  it("pastes image on app.clipboard.pasteImage", () => {
-    const { deps, calls } = fakeDeps({ matches: { matches: (data, id) => data === "v" && id === "app.clipboard.pasteImage" } });
-    assert.deepEqual(routeGlobalInput(deps, "v"), { consume: true });
-    assert.deepEqual(calls, ["pasteImage"]);
+  it("dispatches follow-up, dequeue, and model-select", () => {
+    const { deps, calls } = fakeDeps({
+      matches: { matches: (data, id) =>
+        (data === "fu" && id === "app.message.followUp") || (data === "dq" && id === "app.message.dequeue") ||
+        (data === "ms" && id === "app.model.select") },
+    });
+    for (const d of ["fu", "dq", "ms"]) assert.deepEqual(routeGlobalInput(deps, d), { consume: true });
+    assert.deepEqual(calls, ["followUp", "dequeue", "openModelSelector"]);
   });
   it("aborts stream on interrupt when abortIfStreaming returns true", () => {
     const { deps, calls } = fakeDeps({

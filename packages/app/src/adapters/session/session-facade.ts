@@ -51,6 +51,15 @@ export class SessionFacade {
   }
   abort(): Promise<void> { return this.session.abort(); }
   steer(text: string): Promise<void> { return this.session.steer(text); }
+  queuedMessages(): { steering: string[]; followUp: string[] } {
+    return {
+      steering: [...this.session.getSteeringMessages()],
+      followUp: [...this.session.getFollowUpMessages()],
+    };
+  }
+  clearQueue(): { steering: string[]; followUp: string[] } {
+    return this.session.clearQueue();
+  }
   dispose(): void { this.session.dispose(); }
   get isStreaming(): boolean { return this.session.isStreaming; }
   get modelId(): string {

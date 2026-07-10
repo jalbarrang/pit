@@ -61,6 +61,18 @@ describe("resolveGlobalAction", () => {
     assertAction("\u0016", [["\u0016", "app.clipboard.pasteImage"]], false, "paste-image");
   });
 
+  it("returns follow-up when app.message.followUp matches", () => {
+    assertAction("\u001b\r", [["\u001b\r", "app.message.followUp"]], false, "follow-up");
+  });
+
+  it("returns dequeue when app.message.dequeue matches", () => {
+    assertAction("\u001b[A", [["\u001b[A", "app.message.dequeue"]], false, "dequeue");
+  });
+
+  it("returns model-select when app.model.select matches", () => {
+    assertAction("\u000c", [["\u000c", "app.model.select"]], false, "model-select");
+  });
+
   it("returns none when nothing matches", () => {
     assertAction("x", [], false, "none");
   });

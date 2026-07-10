@@ -8,7 +8,7 @@ import type { ImagePart, OpenableImage, SessionGateway } from "../../domain/inde
 import { AuthStore } from "../auth/index.ts"; import { SettingsStore } from "../settings/index.ts"; import { TrustStore } from "../trust/index.ts";
 import { bindShellExtensions } from "./bind-shell.ts"; import { ShellChrome } from "./chrome.ts";
 import { DoubleCtrlCExit } from "./exit-keys.ts"; import { ExtensionMount } from "./extension-mount.ts";
-import { createClipboardImageDeps, readClipboardImage } from "./clipboard-image.ts"; import { openInExternalEditor } from "./external-editor.ts"; import { routeGlobalInput } from "./global-input.ts";
+import { createClipboardImageDeps, readClipboardImage } from "./clipboard-image.ts"; import { openInExternalEditor } from "./external-editor.ts"; import { FollowUpController } from "./follow-up.ts"; import { routeGlobalInput } from "./global-input.ts";
 import { promptOptionsForStreaming, shouldAbortStream } from "./interrupt-keys.ts"; import { MacOpenImageViewer, type ImageViewer } from "./images/index.ts"; import { PendingImages } from "./pending-images.ts";
 import { ScrollChat } from "./scroll-chat.ts"; import { bindSelectionCopy } from "./selection-copy.ts";
 import type { ChatShellOptions, Expandable } from "./shell-types.ts";
@@ -21,10 +21,8 @@ export class ChatShell {
   private cwd = process.cwd(); private toolsExpanded = false; private settingsStore = new SettingsStore();
   private authStore?: AuthStore; private trustStore?: TrustStore; private imageViewer: ImageViewer = new MacOpenImageViewer(); private images: OpenableImage[] = []; private readonly pendingImages = new PendingImages();
   readonly tui: TUI; readonly chat: ScrollChat; readonly editor: EditorComponent; readonly footer: FooterComponent; readonly root: Container; readonly extensionMount: ExtensionMount;
-  private constructor(tui: TUI, chat: ScrollChat, editor: EditorComponent, footer: FooterComponent, root: Container) {
-    this.tui = tui; this.chat = chat; this.editor = editor; this.footer = footer; this.root = root;
-    this.extensionMount = new ExtensionMount(tui.ctx, footer, createTheme("dark"));
-  }
+  private readonly followUpCtl = new FollowUpController({ editorText: () => this.editor.getText(), setEditorText: (t) => this.editor.setText(t), isStreaming: () => !!this.session?.isStreaming, hasSession: () => this.session !== undefined, promptFollowUp: (t) => this.session?.prompt(t, { streamingBehavior: "followUp" }) ?? Promise.resolve(), submit: (t) => void this.submit(t), queued: () => this.session?.queuedMessages?.() ?? { steering: [], followUp: [] }, clearQueue: () => this.session?.clearQueue?.(), showPending: (lines) => this.showPendingWidget(lines) });
+  private constructor(tui: TUI, chat: ScrollChat, editor: EditorComponent, footer: FooterComponent, root: Container) { this.tui = tui; this.chat = chat; this.editor = editor; this.footer = footer; this.root = root; this.extensionMount = new ExtensionMount(tui.ctx, footer, createTheme("dark")); }
   static async create(options: ChatShellOptions = {}): Promise<ChatShell> {
     const tui = await TUI.create();
     const settingsStore = options.settingsStore ?? new SettingsStore(options.cwd);
@@ -57,19 +55,16 @@ export class ChatShell {
       openLastImage: () => void this.openLastImage(), page: (d) => this.chat.page(d), toggleTools: () => this.toggleTools(), exit: () => this.exit(),
       abortIfStreaming: (d) => { if (shouldAbortStream(d, this.session !== undefined)) { void this.session?.abort(); return true; } return false; },
       cycleModel: (dir) => this.cycleModel(dir), cycleThinking: () => this.cycleThinking(), suspend: () => this.suspendApp(),
-      externalEditor: () => this.openExternalEditor(), pasteImage: () => this.pasteImage(), exitKeysInput: (d) => this.exitKeys.input(d) }, data);
+      externalEditor: () => this.openExternalEditor(), pasteImage: () => this.pasteImage(), followUp: () => this.followUpCtl.followUp(), dequeue: () => this.followUpCtl.dequeue(), openModelSelector: () => void this.runCommand("/model"), exitKeysInput: (d) => this.exitKeys.input(d) }, data);
   }
+  private showPendingWidget(lines: string[]): void { this.mountWidget("pending-queue", lines.length ? new Text(this.tui.ctx, lines.join("\n"), 1, 0, { fg: createTheme(this.settingsStore.get().theme).color("muted") }) : undefined, "aboveEditor"); }
   private cycleModel(dir: 1 | -1): void {
     const s = this.session, models = s?.listModels?.() ?? [], i = s?.modelId.indexOf("/") ?? -1;
     const next = models.length >= 2 && s?.setModel ? nextModel(models, { provider: s.modelId.slice(0, i), id: s.modelId.slice(i + 1) }, dir) : null;
     if (!next || !s?.setModel) return this.notify("Model cycling unavailable");
     void s.setModel(next).then(() => { this.refreshFooter(); this.notify(`Model: ${next.provider}/${next.id}`); });
   }
-  private cycleThinking(): void {
-    const s = this.session, levels = s?.availableThinkingLevels?.() ?? [];
-    if (!levels.length || !s?.setThinkingLevel) return this.notify("Thinking levels unavailable");
-    const next = nextThinkingLevel(levels, s.thinkingLevel ?? ""); s.setThinkingLevel(next); this.notify(`Thinking: ${next}`);
-  }
+  private cycleThinking(): void { const s = this.session, levels = s?.availableThinkingLevels?.() ?? []; if (!levels.length || !s?.setThinkingLevel) return this.notify("Thinking levels unavailable"); const next = nextThinkingLevel(levels, s.thinkingLevel ?? ""); s.setThinkingLevel(next); this.notify(`Thinking: ${next}`); }
   private suspendApp(): void { suspendToBackground({ platform: process.platform, renderer: this.tui.renderer, proc: process, notify: (m) => this.notify(m) }); }
   private openExternalEditor(): void {
     const tmp = join(tmpdir(), `pit-${Date.now()}.md`), r = this.tui.renderer;

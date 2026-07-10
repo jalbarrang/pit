@@ -35,6 +35,8 @@ export interface SessionGateway<TEvent = unknown> {
   setThinkingLevel?(level: string): void;
   readonly sessionPath?: string;
   history?(): HistoryMessage[];
+  queuedMessages?(): { steering: string[]; followUp: string[] };
+  clearQueue?(): { steering: string[]; followUp: string[] };
 }
 
 export interface TokenUsage {

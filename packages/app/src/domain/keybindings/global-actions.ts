@@ -10,6 +10,9 @@ export type GlobalAction =
   | "suspend"
   | "external-editor"
   | "paste-image"
+  | "follow-up"
+  | "dequeue"
+  | "model-select"
   | "none";
 
 interface KbMatcher {
@@ -30,6 +33,9 @@ export function resolveGlobalAction(
   if (kb.matches(data, "app.suspend")) return "suspend";
   if (kb.matches(data, "app.editor.external")) return "external-editor";
   if (kb.matches(data, "app.clipboard.pasteImage")) return "paste-image";
+  if (kb.matches(data, "app.message.followUp")) return "follow-up";
+  if (kb.matches(data, "app.message.dequeue")) return "dequeue";
+  if (kb.matches(data, "app.model.select")) return "model-select";
   if (data === "\u001b[5~") return "page-up";
   if (data === "\u001b[6~") return "page-down";
   return "none";
