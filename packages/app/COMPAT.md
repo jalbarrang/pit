@@ -73,6 +73,7 @@ Divergences / notes:
 - **Footer**: cwd │ git branch │ session name │ model │ thinking level │ tokens │ `ctx N% of Mk` (context usage) — absent segments omitted. Git branch from a cached (5s TTL) `git rev-parse` adapter; context from the SDK `getContextUsage()`.
 - **Prompt history**: submitted prompts, commands, and queued follow-ups feed the editor's `PromptHistory`; up at the first line / down while browsing recalls entries, preserving the in-progress draft.
 - **Commands**: `/new` (fresh session — available when the app was started with a session factory), `/name [text]` (show or set the session name; footer reflects it), `/session` (file, id, message/tool counts, tokens, cost), `/copy` (last assistant message → clipboard via OSC52 — same terminal caveat as drag-copy).
+- **Bash mode**: `!cmd` runs a shell command — output streams into a collapsible chat component (`ctrl+o` toggles, like tools) and is recorded in the session context via the SDK `executeBash`; `!!cmd` runs it **excluded** from context (the `!`/`!!` distinction is a compiled hiker law, `.hiker/tents/bash-context/`, enforced by an exhaustive conformance test). Escape aborts a running command. Divergences: pit shows the component in chat immediately (upstream defers to a pending area while the agent streams); no per-command spinner.
 - **Architecture intent**: `pnpm test` runs `hiker check` on `.hiker/tents/*` and `hiker verify` of the domain-purity law (no `@opentui` imports in domain production modules) over facts extracted by `scripts/extract-intent-facts.sh`.
 
 ## Perf snapshot

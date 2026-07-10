@@ -3,10 +3,10 @@ import { BoxRenderable } from "@opentui/core";
 import { Container, Editor, TUI, Text, getKeybindings, type Component, type EditorComponent } from "@pit/tui";
 import { FooterComponent } from "../../components/footer.ts";
 import { emptyTokens } from "../../components/footer-format.ts";
-import { resolveEditorCommand } from "../../domain/keybindings/external-editor.ts"; import { nextModel } from "../../domain/keybindings/model-cycle.ts"; import { nextThinkingLevel } from "../../domain/keybindings/thinking-cycle.ts"; import { createTheme, getEditorTheme, type ThemeName } from "../../domain/theming/index.ts";
+import { parseBashInput } from "../../domain/bash/index.ts"; import { resolveEditorCommand } from "../../domain/keybindings/external-editor.ts"; import { nextModel } from "../../domain/keybindings/model-cycle.ts"; import { nextThinkingLevel } from "../../domain/keybindings/thinking-cycle.ts"; import { createTheme, getEditorTheme, type ThemeName } from "../../domain/theming/index.ts";
 import type { ImagePart, OpenableImage, SessionGateway } from "../../domain/index.ts";
 import { AuthStore } from "../auth/index.ts"; import { SettingsStore } from "../settings/index.ts"; import { TrustStore } from "../trust/index.ts";
-import { bindShellExtensions } from "./bind-shell.ts"; import { ShellChrome } from "./chrome.ts";
+import { createShellBashRunner } from "./bash-runner.ts"; import { bindShellExtensions } from "./bind-shell.ts"; import { ShellChrome } from "./chrome.ts";
 import { DoubleCtrlCExit } from "./exit-keys.ts"; import { ExtensionMount } from "./extension-mount.ts";
 import { createClipboardImageDeps, readClipboardImage } from "./clipboard-image.ts"; import { openInExternalEditor } from "./external-editor.ts"; import { FollowUpController } from "./follow-up.ts"; import { routeGlobalInput } from "./global-input.ts";
 import { promptOptionsForStreaming, shouldAbortStream } from "./interrupt-keys.ts"; import { MacOpenImageViewer, type ImageViewer } from "./images/index.ts"; import { PendingImages } from "./pending-images.ts";
@@ -22,6 +22,7 @@ export class ChatShell {
   private authStore?: AuthStore; private trustStore?: TrustStore; private imageViewer: ImageViewer = new MacOpenImageViewer(); private images: OpenableImage[] = []; private readonly pendingImages = new PendingImages();
   readonly tui: TUI; readonly chat: ScrollChat; readonly editor: EditorComponent; readonly footer: FooterComponent; readonly root: Container; readonly extensionMount: ExtensionMount;
   private readonly followUpCtl = new FollowUpController({ editorText: () => this.editor.getText(), setEditorText: (t) => this.editor.setText(t), isStreaming: () => !!this.session?.isStreaming, hasSession: () => this.session !== undefined, promptFollowUp: (t) => this.session?.prompt(t, { streamingBehavior: "followUp" }) ?? Promise.resolve(), submit: (t) => void this.submit(t), addToHistory: (t) => this.editor.addToHistory?.(t), queued: () => this.session?.queuedMessages?.() ?? { steering: [], followUp: [] }, clearQueue: () => this.session?.clearQueue?.(), showPending: (lines) => this.showPendingWidget(lines) });
+  private readonly bashRunner = createShellBashRunner({ session: () => this.session, ctx: () => this.tui.ctx, theme: () => this.settingsStore.get().theme, registerExpandable: (c) => this.registerExpandable(c), addMessage: (c) => this.chat.addMessage(c), notify: (t) => this.notify(t) });
   private constructor(tui: TUI, chat: ScrollChat, editor: EditorComponent, footer: FooterComponent, root: Container) { this.tui = tui; this.chat = chat; this.editor = editor; this.footer = footer; this.root = root; this.extensionMount = new ExtensionMount(tui.ctx, footer, createTheme("dark")); }
   static async create(options: ChatShellOptions = {}): Promise<ChatShell> {
     const tui = await TUI.create();
@@ -53,7 +54,7 @@ export class ChatShell {
   private handleGlobalInput(data: string) {
     return routeGlobalInput({ hasOverlay: () => this.tui.hasOverlay(), editorText: () => this.editor.getText(), matches: getKeybindings(),
       openLastImage: () => void this.openLastImage(), page: (d) => this.chat.page(d), toggleTools: () => this.toggleTools(), exit: () => this.exit(),
-      abortIfStreaming: (d) => { if (shouldAbortStream(d, this.session !== undefined)) { void this.session?.abort(); return true; } return false; },
+      abortIfStreaming: (d) => { if (this.session?.isBashRunning?.()) { this.session.abortBash?.(); return true; } if (shouldAbortStream(d, this.session !== undefined)) { void this.session?.abort(); return true; } return false; },
       cycleModel: (dir) => this.cycleModel(dir), cycleThinking: () => this.cycleThinking(), toggleThinking: () => this.setThinkingVisible(!this.isThinkingVisible()), suspend: () => this.suspendApp(),
       externalEditor: () => this.openExternalEditor(), pasteImage: () => this.pasteImage(), followUp: () => this.followUpCtl.followUp(), dequeue: () => this.followUpCtl.dequeue(), openModelSelector: () => void this.runCommand("/model"), exitKeysInput: (d) => this.exitKeys.input(d) }, data);
   }
@@ -89,11 +90,10 @@ export class ChatShell {
   refreshFooter(): void { const s = this.session, ctx = s?.contextUsage?.();
     this.footer.update({ cwd: this.cwd, modelId: s?.modelId ?? "no-model", tokens: s?.tokenUsage ?? emptyTokens(), branch: this.gitBranch(), sessionName: s?.sessionName?.(), thinking: s?.thinkingLevel, contextPercent: ctx?.percent, contextWindow: ctx?.window }); }
   applyTheme(themeName: ThemeName): void { const theme = createTheme(themeName); this.editor.borderColor = getEditorTheme(theme).borderColor; this.footer.applyTheme(theme); this.refreshFooter(); }
-  registerExpandable(component: Expandable): void { component.setExpanded(this.toolsExpanded); this.expandables.push(component); }
-  registerThinking(component: Expandable): void { component.setExpanded(this.thinkingVisible); this.thinkingBlocks.push(component); }
+  registerExpandable(component: Expandable): void { component.setExpanded(this.toolsExpanded); this.expandables.push(component); } registerThinking(component: Expandable): void { component.setExpanded(this.thinkingVisible); this.thinkingBlocks.push(component); }
   private toggleTools(): void { this.setToolsExpanded(!this.toolsExpanded); }
   private async submit(text: string): Promise<void> {
-    const trimmed = text.trim(); if (!trimmed) return; this.editor.addToHistory?.(trimmed);
+    const trimmed = text.trim(); if (!trimmed) return; this.editor.addToHistory?.(trimmed); const bash = parseBashInput(trimmed); if (bash) { this.bashRunner.run(bash); return; }
     if (await this.chrome.handle(trimmed)) return; if (!this.session) this.chat.addMessage(new Text(this.tui.ctx, `You: ${trimmed}`, 1));
     const imgs = this.pendingImages.takeAll(); await this.session?.prompt(trimmed, { ...promptOptionsForStreaming(!!this.session?.isStreaming), images: imgs }); }
   stop(): void { this.session?.dispose(); this.tui.stop(); }

@@ -82,6 +82,9 @@ export class AppSession implements SessionGateway {
   setSessionName(name: string) { this.facade.setSessionName(name); }
   sessionStats() { return this.facade.sessionStats(); }
   lastAssistantText() { return this.facade.lastAssistantText(); }
+  executeBash(command: string, onChunk: (chunk: string) => void, options: { excludeFromContext: boolean }) { return this.facade.executeBash(command, onChunk, options); }
+  abortBash() { this.facade.abortBash(); }
+  isBashRunning() { return this.facade.isBashRunning(); }
 }
 
 async function buildLoader(cwd: string, extensionPaths: string[]) {

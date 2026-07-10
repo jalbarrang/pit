@@ -1,0 +1,13 @@
+// Bash mode: bang count determines context exclusion. `!!cmd` output is
+// EXCLUDED from the session context; `!cmd` is INCLUDED. This law keeps an
+// implementation from collapsing !! into ! (the shortcut that would make a
+// simpler parser pass its tests).
+
+sort BashInput { bangs: Int, excluded: Int }
+
+relation classifies(i: BashInput)
+
+law classifies(i) {
+  i.bangs == 2 => i.excluded == 1
+  i.bangs == 1 => i.excluded == 0
+}

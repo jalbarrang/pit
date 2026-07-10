@@ -1,11 +1,11 @@
 import type { AgentSession, AgentSessionEvent, ExtensionUIContext, LoadExtensionsResult, ModelRegistry } from "@earendil-works/pi-coding-agent";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
-import { textFromContent } from "../../domain/conversation/event-text.ts";
 import { toImageContent } from "../../domain/images/to-image-content.ts";
 import type { ImagePart } from "../../domain/images/types.ts";
-import type { HistoryMessage, ModelRef, TokenUsage } from "../../domain/ports.ts";
+import type { ModelRef, TokenUsage } from "../../domain/ports.ts";
 import type { TreeNode } from "../../domain/tree/types.ts";
-import { contextUsageOf, sessionStatsOf, tokenUsageOf } from "./session-facade-info.ts";
+import { abortBashOf, executeBashOf, isBashRunningOf } from "./session-facade-bash.ts";
+import { contextUsageOf, historyOf, sessionStatsOf, tokenUsageOf } from "./session-facade-info.ts";
 import { mapTree } from "./tree-mapper.ts";
 
 /** SessionGateway methods delegated onto the SDK AgentSession. */
@@ -28,12 +28,10 @@ export class SessionFacade {
   get sessionPath(): string | undefined { return this.session.sessionManager.getSessionFile(); }
   private get manager() { return this.session.sessionManager; }
 
-  history(): HistoryMessage[] {
-    return this.session.messages
-      .filter((m) => m.role === "user" || m.role === "assistant")
-      .map((m) => ({ role: m.role as "user" | "assistant", text: textFromContent(m.content as never) }))
-      .filter((m) => m.text.trim().length > 0);
-  }
+  history() { return historyOf(this.session); }
+  executeBash(command: string, onChunk: (chunk: string) => void, options: { excludeFromContext: boolean }) { return executeBashOf(this.session, command, onChunk, options); }
+  abortBash() { abortBashOf(this.session); }
+  isBashRunning() { return isBashRunningOf(this.session); }
 
   listModels(): ModelRef[] {
     return this.modelRegistry.getAvailable().map((m) => ({ provider: m.provider, id: m.id }));

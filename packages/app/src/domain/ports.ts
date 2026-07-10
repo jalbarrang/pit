@@ -60,6 +60,9 @@ export interface SessionGateway<TEvent = unknown> {
     cost?: number;
   };
   lastAssistantText?(): string | undefined;
+  executeBash?(command: string, onChunk: (chunk: string) => void, options: { excludeFromContext: boolean }): Promise<{ exitCode?: number | null; cancelled: boolean }>;
+  abortBash?(): void;
+  isBashRunning?(): boolean;
 }
 
 export interface TokenUsage {

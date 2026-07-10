@@ -1,5 +1,13 @@
 import type { AgentSession } from "@earendil-works/pi-coding-agent";
-import type { TokenUsage } from "../../domain/ports.ts";
+import { textFromContent } from "../../domain/conversation/event-text.ts";
+import type { HistoryMessage, TokenUsage } from "../../domain/ports.ts";
+
+export function historyOf(session: AgentSession): HistoryMessage[] {
+  return session.messages
+    .filter((m) => m.role === "user" || m.role === "assistant")
+    .map((m) => ({ role: m.role as "user" | "assistant", text: textFromContent(m.content as never) }))
+    .filter((m) => m.text.trim().length > 0);
+}
 
 export function contextUsageOf(session: AgentSession): { percent: number; window: number } | undefined {
   const usage = session.getContextUsage();
