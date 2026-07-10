@@ -1,0 +1,8 @@
+// pit DDD rule: pure domain modules never touch the terminal layer.
+// Any production file under packages/*/src/domain/** that imports @opentui/core
+// is a structural violation. There is deliberately no "allowed" escape hatch:
+// the relation is forbidden, so ANY extracted tuple fails `hiker verify`.
+
+sort File
+
+forbidden relation domain_imports_opentui(f: File)

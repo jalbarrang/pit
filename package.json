@@ -8,7 +8,8 @@
     "node": ">=26.4.0"
   },
   "scripts": {
-    "test": "scripts/check-file-size.sh && pnpm typecheck && node --test --test-reporter=dot 'packages/*/src/**/*.test.ts'",
+    "test": "scripts/check-file-size.sh && pnpm intent && pnpm typecheck && node --test --test-reporter=dot 'packages/*/src/**/*.test.ts'",
+    "intent": "for f in .hiker/tents/*/*.tent; do hiker check \"$f\" || exit 1; done && scripts/extract-intent-facts.sh && hiker verify .hiker/tents/domain-purity/domain-purity.tent --facts .hiker-cache/domain-purity.facts.json",
     "typecheck": "tsc --noEmit -p packages/tui/tsconfig.json && tsc --noEmit -p packages/app/tsconfig.json"
   },
   "devDependencies": {
