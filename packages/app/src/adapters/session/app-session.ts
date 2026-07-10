@@ -77,6 +77,11 @@ export class AppSession implements SessionGateway {
   branchTo(id: string) { return this.facade.branchTo(id); }
   setLabel(id: string, label: string) { this.facade.setLabel(id, label); }
   forkSession() { return this.facade.forkSession(); }
+  contextUsage() { return this.facade.contextUsage(); }
+  sessionName() { return this.facade.sessionName(); }
+  setSessionName(name: string) { this.facade.setSessionName(name); }
+  sessionStats() { return this.facade.sessionStats(); }
+  lastAssistantText() { return this.facade.lastAssistantText(); }
 }
 
 async function buildLoader(cwd: string, extensionPaths: string[]) {

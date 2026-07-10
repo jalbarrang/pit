@@ -46,6 +46,20 @@ export interface SessionGateway<TEvent = unknown> {
   branchTo?(id: string): Promise<string | undefined>;
   setLabel?(id: string, label: string): void;
   forkSession?(): string | undefined;
+  contextUsage?(): { percent: number; window: number } | undefined;
+  sessionName?(): string | undefined;
+  setSessionName?(name: string): void;
+  sessionStats?(): {
+    file?: string;
+    id: string;
+    userMessages: number;
+    assistantMessages: number;
+    toolCalls: number;
+    totalMessages: number;
+    totalTokens: number;
+    cost?: number;
+  };
+  lastAssistantText?(): string | undefined;
 }
 
 export interface TokenUsage {

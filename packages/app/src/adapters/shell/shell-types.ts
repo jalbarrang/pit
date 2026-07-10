@@ -18,6 +18,7 @@ export interface ChatShellOptions {
   trustPromptOnStart?: boolean;
   imageViewer?: ImageViewer;
   reloadKeybindings?(): void;
+  newSession?(): Promise<void>;
 }
 
 export interface Expandable { setExpanded(expanded: boolean): void }

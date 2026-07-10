@@ -68,6 +68,13 @@ Divergences / notes:
 - **Defined-but-inert** (registry + `/help` only): `app.session.*` picker-internal keys (togglePath/toggleSort/toggleNamedFilter/rename/delete/deleteNoninvasive — upstream binds these inside its /resume picker; pit's session picker does not yet support them). `app.session.new/tree/fork/resume` are unbound by default upstream too and reachable via slash commands (/tree, /fork, /resume), matching pit.
 - **Known editor collisions** deferred to their feature plans: `alt+enter` (editor newline vs `app.message.followUp`), `ctrl+t` (editor transpose vs `app.thinking.toggle`).
 
+## Daily driver
+
+- **Footer**: cwd │ git branch │ session name │ model │ thinking level │ tokens │ `ctx N% of Mk` (context usage) — absent segments omitted. Git branch from a cached (5s TTL) `git rev-parse` adapter; context from the SDK `getContextUsage()`.
+- **Prompt history**: submitted prompts, commands, and queued follow-ups feed the editor's `PromptHistory`; up at the first line / down while browsing recalls entries, preserving the in-progress draft.
+- **Commands**: `/new` (fresh session — available when the app was started with a session factory), `/name [text]` (show or set the session name; footer reflects it), `/session` (file, id, message/tool counts, tokens, cost), `/copy` (last assistant message → clipboard via OSC52 — same terminal caveat as drag-copy).
+- **Architecture intent**: `pnpm test` runs `hiker check` on `.hiker/tents/*` and `hiker verify` of the domain-purity law (no `@opentui` imports in domain production modules) over facts extracted by `scripts/extract-intent-facts.sh`.
+
 ## Perf snapshot
 
 Stress fixture: `packages/app/src/perf-stress.ts`, 500 alternating user/assistant messages with markdown/tool-box text plus 20s streaming at ~60 token updates/s under a pseudo-TTY. Measured on 2026-07-09: 1,080 tokens, 1,091 frames, average frame 0.99ms, worst frame 3.00ms, RSS 162MB, `/usr/bin/time` user+sys CPU 1.52s over 20.39s (~7.5%). No hotspot fix was needed; OpenTUI's `objects-in-viewport.ts` provides viewport culling for ScrollBox child selection.

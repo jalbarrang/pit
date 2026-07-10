@@ -58,4 +58,14 @@ describe("Editor basic editing", () => {
     editor.handleInput("\x1b[B");
     assert.deepEqual(editor.getCursor(), { line: 0, col: 4 });
   });
+
+  it("recalls prompt history with up at the first line", () => {
+    const editor = new Editor({} as never, {}, {}, fake() as never);
+    editor.addToHistory("older");
+    editor.addToHistory("newer");
+    editor.handleInput("\x1b[A");
+    assert.equal(editor.getText(), "newer");
+    editor.handleInput("\x1b[A");
+    assert.equal(editor.getText(), "older");
+  });
 });

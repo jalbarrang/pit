@@ -18,6 +18,10 @@ const makeContext = () => {
     openScopedModels: () => void log.push("scoped-models"),
     openTree: () => void log.push("tree"),
     forkSession: () => void log.push("fork"),
+    newSession: () => void log.push("new"),
+    renameSession: (args) => void log.push(`name:${args}`),
+    showSessionStats: () => void log.push("session"),
+    copyLastAssistant: () => void log.push("copy"),
     reloadKeybindings: () => void log.push("reload"),
   };
   return { context, log };
@@ -55,32 +59,25 @@ test("/quit exits via the context port", async () => {
   assert.deepEqual(log, ["exit"]);
 });
 
-test("/reload reloads keybindings via the context port", async () => {
+test("/reload and /scoped-models dispatch to context ports", async () => {
   const { context, log } = makeContext();
   const registry = createBuiltinRegistry();
-  assert.ok(registry.list().some((command) => command.name === "reload"));
-  const result = await registry.dispatch("/reload", context);
-  assert.deepEqual(result, { kind: "handled", name: "reload" });
-  assert.deepEqual(log, ["reload"]);
+  assert.deepEqual(await registry.dispatch("/reload", context), { kind: "handled", name: "reload" });
+  assert.deepEqual(await registry.dispatch("/scoped-models", context), { kind: "handled", name: "scoped-models" });
+  assert.deepEqual(log, ["reload", "scoped-models"]);
 });
 
-test("/scoped-models opens the scoped models overlay", async () => {
+test("/tree /fork /new /name /session /copy dispatch to ports", async () => {
   const { context, log } = makeContext();
   const registry = createBuiltinRegistry();
-  assert.ok(registry.list().some((command) => command.name === "scoped-models"));
-  const result = await registry.dispatch("/scoped-models", context);
-  assert.deepEqual(result, { kind: "handled", name: "scoped-models" });
-  assert.deepEqual(log, ["scoped-models"]);
-});
-
-test("/tree and /fork open tree navigator and fork session", async () => {
-  const { context, log } = makeContext();
-  const registry = createBuiltinRegistry();
-  assert.ok(registry.list().some((c) => c.name === "tree"));
-  assert.ok(registry.list().some((c) => c.name === "fork"));
+  for (const name of ["tree", "fork", "new", "name", "session", "copy"]) assert.ok(registry.list().some((c) => c.name === name));
   assert.deepEqual(await registry.dispatch("/tree", context), { kind: "handled", name: "tree" });
   assert.deepEqual(await registry.dispatch("/fork", context), { kind: "handled", name: "fork" });
-  assert.deepEqual(log, ["tree", "fork"]);
+  assert.deepEqual(await registry.dispatch("/new", context), { kind: "handled", name: "new" });
+  assert.deepEqual(await registry.dispatch("/name my-session", context), { kind: "handled", name: "name" });
+  assert.deepEqual(await registry.dispatch("/session", context), { kind: "handled", name: "session" });
+  assert.deepEqual(await registry.dispatch("/copy", context), { kind: "handled", name: "copy" });
+  assert.deepEqual(log, ["tree", "fork", "new", "name:my-session", "session", "copy"]);
 });
 
 test("every builtin has a description for autocomplete", () => {

@@ -7,6 +7,7 @@ export interface FollowUpDeps {
   hasSession(): boolean;
   promptFollowUp(text: string): Promise<void>;
   submit(text: string): void;
+  addToHistory(text: string): void;
   queued(): QueuedMessages;
   clearQueue(): QueuedMessages | undefined;
   showPending(lines: string[]): void;
@@ -18,6 +19,7 @@ export class FollowUpController {
   followUp(): void {
     const text = this.deps.editorText().trim();
     if (!text) return;
+    this.deps.addToHistory(text);
     if (this.deps.hasSession() && this.deps.isStreaming()) {
       this.deps.setEditorText("");
       void this.deps.promptFollowUp(text).then(() => this.refresh());

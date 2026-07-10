@@ -15,6 +15,10 @@ export interface ChromeContext {
   openScopedModels(): void;
   openTree(): void;
   forkSession(): void;
+  newSession(): void;
+  renameSession(args: string): void;
+  showSessionStats(): void;
+  copyLastAssistant(): void;
   reloadKeybindings(): void;
 }
 
@@ -31,6 +35,10 @@ export const createBuiltinRegistry = (): CommandRegistry<ChromeContext> => {
   registry.register({ name: "scoped-models", description: "Choose which models are enabled for cycling", handler: (ctx) => ctx.openScopedModels() });
   registry.register({ name: "tree", description: "Open session tree navigator", handler: (ctx) => ctx.openTree() });
   registry.register({ name: "fork", description: "Fork current session", handler: (ctx) => ctx.forkSession() });
+  registry.register({ name: "new", description: "Start a new session", handler: (ctx) => ctx.newSession() });
+  registry.register({ name: "name", description: "Show or set the session name", handler: (ctx, args) => ctx.renameSession(args) });
+  registry.register({ name: "session", description: "Show session stats", handler: (ctx) => ctx.showSessionStats() });
+  registry.register({ name: "copy", description: "Copy last assistant message", handler: (ctx) => ctx.copyLastAssistant() });
   registry.register({ name: "reload", description: "Reload keybindings from ~/.pi/agent/keybindings.json", handler: (ctx) => ctx.reloadKeybindings() });
   registry.register({ name: "quit", description: "Quit pit", handler: (ctx) => ctx.exit() });
   return registry;

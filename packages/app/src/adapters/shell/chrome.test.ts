@@ -18,6 +18,8 @@ const makeChrome = () => {
     reloadKeybindings: () => void log.push("reload"),
     setEnabledModels: async () => {},
     replay: () => void log.push("replay"),
+    copyToClipboard: () => false,
+    noticeCopied: () => {},
   };
   const chrome = new ShellChrome(host);
   return { chrome, log };
@@ -62,4 +64,10 @@ test("autocomplete still completes file paths", async () => {
   const suggestions = await provider.getSuggestions(["read ./package.js"], 0, 18, { signal: new AbortController().signal });
   assert.ok(suggestions);
   assert.ok(suggestions.items.some((item) => item.value.includes("package.json")));
+});
+
+test("/new notifies when newSession hook absent", async () => {
+  const { chrome, log } = makeChrome();
+  assert.equal(await chrome.handle("/new"), true);
+  assert.deepEqual(log, ["notify:New session unavailable"]);
 });

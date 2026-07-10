@@ -12,17 +12,16 @@ import { createClipboardImageDeps, readClipboardImage } from "./clipboard-image.
 import { promptOptionsForStreaming, shouldAbortStream } from "./interrupt-keys.ts"; import { MacOpenImageViewer, type ImageViewer } from "./images/index.ts"; import { PendingImages } from "./pending-images.ts";
 import { ScrollChat } from "./scroll-chat.ts"; import { bindSelectionCopy } from "./selection-copy.ts";
 import type { ChatShellOptions, Expandable } from "./shell-types.ts";
-import { suspendToBackground } from "./suspend.ts";
-import { replaySession } from "../../application/replay.ts";
-export type { ChatShellOptions } from "./shell-types.ts";
+import { createGitBranch } from "./git-branch.ts"; import { suspendToBackground } from "./suspend.ts";
+import { replaySession } from "../../application/replay.ts"; export type { ChatShellOptions } from "./shell-types.ts";
 export class ChatShell {
   private readonly exitKeys = new DoubleCtrlCExit();
-  private readonly chrome = new ShellChrome({ tui: () => this.tui, session: () => this.session, notify: (text) => this.notify(text), exit: () => this.exit(), refreshFooter: () => this.refreshFooter(), settings: () => this.settingsStore.get(), setSetting: (id, value) => this.settingsStore.set(id, value), applyTheme: (theme) => this.applyTheme(theme), auth: () => this.authStore, trust: () => this.trustStore, onAuthConfigured: () => this.hooks.onAuthConfigured?.() ?? Promise.resolve(), listSessions: () => this.hooks.listSessions?.() ?? Promise.resolve([]), switchSession: (path) => this.hooks.switchSession?.(path) ?? Promise.resolve(), reloadKeybindings: () => { this.hooks.reloadKeybindings?.(); this.notify("Keybindings reloaded"); }, setEnabledModels: (patterns) => this.settingsStore.setEnabledModels(patterns), replay: () => { if (this.session) replaySession(this, this.session); }, setEditorText: (t) => this.editor.setText(t) });
+  private readonly chrome = new ShellChrome({ tui: () => this.tui, session: () => this.session, notify: (text) => this.notify(text), exit: () => this.exit(), refreshFooter: () => this.refreshFooter(), settings: () => this.settingsStore.get(), setSetting: (id, value) => this.settingsStore.set(id, value), applyTheme: (theme) => this.applyTheme(theme), auth: () => this.authStore, trust: () => this.trustStore, onAuthConfigured: () => this.hooks.onAuthConfigured?.() ?? Promise.resolve(), listSessions: () => this.hooks.listSessions?.() ?? Promise.resolve([]), switchSession: (path) => this.hooks.switchSession?.(path) ?? Promise.resolve(), reloadKeybindings: () => { this.hooks.reloadKeybindings?.(); this.notify("Keybindings reloaded"); }, setEnabledModels: (patterns) => this.settingsStore.setEnabledModels(patterns), replay: () => { if (this.session) replaySession(this, this.session); }, setEditorText: (t) => this.editor.setText(t), newSession: () => { const h = this.hooks.newSession; if (!h) return this.notify("New session unavailable"); void h().then(() => this.notify("New session")); }, copyToClipboard: (t) => this.tui.renderer.copyToClipboardOSC52(t), noticeCopied: () => this.notify("Copied to clipboard") });
   private hooks: ChatShellOptions = {}; private readonly expandables: Expandable[] = []; private readonly thinkingBlocks: Expandable[] = []; private session?: SessionGateway;
-  private cwd = process.cwd(); private toolsExpanded = false; private thinkingVisible = false; private settingsStore = new SettingsStore();
+  private cwd = process.cwd(); private toolsExpanded = false; private thinkingVisible = false; private settingsStore = new SettingsStore(); private readonly gitBranch = createGitBranch();
   private authStore?: AuthStore; private trustStore?: TrustStore; private imageViewer: ImageViewer = new MacOpenImageViewer(); private images: OpenableImage[] = []; private readonly pendingImages = new PendingImages();
   readonly tui: TUI; readonly chat: ScrollChat; readonly editor: EditorComponent; readonly footer: FooterComponent; readonly root: Container; readonly extensionMount: ExtensionMount;
-  private readonly followUpCtl = new FollowUpController({ editorText: () => this.editor.getText(), setEditorText: (t) => this.editor.setText(t), isStreaming: () => !!this.session?.isStreaming, hasSession: () => this.session !== undefined, promptFollowUp: (t) => this.session?.prompt(t, { streamingBehavior: "followUp" }) ?? Promise.resolve(), submit: (t) => void this.submit(t), queued: () => this.session?.queuedMessages?.() ?? { steering: [], followUp: [] }, clearQueue: () => this.session?.clearQueue?.(), showPending: (lines) => this.showPendingWidget(lines) });
+  private readonly followUpCtl = new FollowUpController({ editorText: () => this.editor.getText(), setEditorText: (t) => this.editor.setText(t), isStreaming: () => !!this.session?.isStreaming, hasSession: () => this.session !== undefined, promptFollowUp: (t) => this.session?.prompt(t, { streamingBehavior: "followUp" }) ?? Promise.resolve(), submit: (t) => void this.submit(t), addToHistory: (t) => this.editor.addToHistory?.(t), queued: () => this.session?.queuedMessages?.() ?? { steering: [], followUp: [] }, clearQueue: () => this.session?.clearQueue?.(), showPending: (lines) => this.showPendingWidget(lines) });
   private constructor(tui: TUI, chat: ScrollChat, editor: EditorComponent, footer: FooterComponent, root: Container) { this.tui = tui; this.chat = chat; this.editor = editor; this.footer = footer; this.root = root; this.extensionMount = new ExtensionMount(tui.ctx, footer, createTheme("dark")); }
   static async create(options: ChatShellOptions = {}): Promise<ChatShell> {
     const tui = await TUI.create();
@@ -87,13 +86,15 @@ export class ChatShell {
   private exit(): void { this.stop(); process.exit(0); }
   replaceSession(session: SessionGateway): void { this.session?.dispose(); this.session = session; this.refreshFooter(); void bindShellExtensions(this, session, this.settingsStore); }
   runCommand(text: string): Promise<boolean> { return this.chrome.handle(text); }
-  refreshFooter(): void { this.footer.update(this.cwd, this.session?.modelId ?? "no-model", this.session?.tokenUsage ?? emptyTokens()); }
+  refreshFooter(): void { const s = this.session, ctx = s?.contextUsage?.();
+    this.footer.update({ cwd: this.cwd, modelId: s?.modelId ?? "no-model", tokens: s?.tokenUsage ?? emptyTokens(), branch: this.gitBranch(), sessionName: s?.sessionName?.(), thinking: s?.thinkingLevel, contextPercent: ctx?.percent, contextWindow: ctx?.window }); }
   applyTheme(themeName: ThemeName): void { const theme = createTheme(themeName); this.editor.borderColor = getEditorTheme(theme).borderColor; this.footer.applyTheme(theme); this.refreshFooter(); }
   registerExpandable(component: Expandable): void { component.setExpanded(this.toolsExpanded); this.expandables.push(component); }
   registerThinking(component: Expandable): void { component.setExpanded(this.thinkingVisible); this.thinkingBlocks.push(component); }
   private toggleTools(): void { this.setToolsExpanded(!this.toolsExpanded); }
-  private async submit(text: string): Promise<void> { const trimmed = text.trim();
-    if (!trimmed || await this.chrome.handle(trimmed)) return; if (!this.session) this.chat.addMessage(new Text(this.tui.ctx, `You: ${trimmed}`, 1));
+  private async submit(text: string): Promise<void> {
+    const trimmed = text.trim(); if (!trimmed) return; this.editor.addToHistory?.(trimmed);
+    if (await this.chrome.handle(trimmed)) return; if (!this.session) this.chat.addMessage(new Text(this.tui.ctx, `You: ${trimmed}`, 1));
     const imgs = this.pendingImages.takeAll(); await this.session?.prompt(trimmed, { ...promptOptionsForStreaming(!!this.session?.isStreaming), images: imgs }); }
   stop(): void { this.session?.dispose(); this.tui.stop(); }
 }

@@ -26,6 +26,7 @@ function makeFake(overrides: Partial<FollowUpDeps> & {
     hasSession: () => overrides.session ?? true,
     promptFollowUp: (t) => { calls.push(`promptFollowUp:${t}`); return promptPromise; },
     submit: (t) => { calls.push(`submit:${t}`); },
+    addToHistory: (t) => { calls.push(`addToHistory:${t}`); },
     queued: () => state.queue,
     clearQueue: () => {
       calls.push("clearQueue");
@@ -49,6 +50,7 @@ describe("FollowUpController", () => {
       queue: { steering: [], followUp: ["queued msg"] },
     });
     new FollowUpController(deps).followUp();
+    assert.ok(calls.includes("addToHistory:queued msg"));
     assert.ok(calls.includes("setEditorText:"));
     assert.ok(calls.includes("promptFollowUp:queued msg"));
     assert.ok(!calls.some((c) => c.startsWith("showPending:")));
@@ -61,7 +63,7 @@ describe("FollowUpController", () => {
   it("idle path submits trimmed text and clears editor", () => {
     const { deps, calls } = makeFake({ text: "  go  ", streaming: false });
     new FollowUpController(deps).followUp();
-    assert.deepEqual(calls, ["setEditorText:", "submit:go"]);
+    assert.deepEqual(calls, ["addToHistory:go", "setEditorText:", "submit:go"]);
   });
 
   it("empty editor is a no-op", () => {

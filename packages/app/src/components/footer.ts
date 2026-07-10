@@ -1,17 +1,14 @@
 import type { Renderable, RenderContext } from "@opentui/core";
 import { Component, Text, type TextContent } from "@pit/tui";
-import type { TokenUsage } from "../domain/index.ts";
 import type { PitTheme } from "../domain/theming/index.ts";
-import { formatFooter } from "./footer-format.ts";
+import { formatFooter, type FooterInfo } from "./footer-format.ts";
 
 type TextLike = Renderable & { content: TextContent; options?: Record<string, unknown> };
 
 export class FooterComponent extends Component {
   readonly renderable: TextLike;
   private readonly text: Text;
-  private lastCwd = "";
-  private lastModelId = "";
-  private lastTokens: TokenUsage | null = null;
+  private lastInfo: FooterInfo | null = null;
 
   constructor(ctx: RenderContext, theme: PitTheme, renderable?: TextLike) {
     super();
@@ -19,11 +16,9 @@ export class FooterComponent extends Component {
     this.renderable = this.text.renderable as TextLike;
   }
 
-  update(cwd: string, modelId: string, tokens: TokenUsage): void {
-    this.lastCwd = cwd;
-    this.lastModelId = modelId;
-    this.lastTokens = tokens;
-    this.text.setText(formatFooter(cwd, modelId, tokens));
+  update(info: FooterInfo): void {
+    this.lastInfo = info;
+    this.text.setText(formatFooter(info));
   }
 
   notice(text: string): void {
@@ -31,11 +26,11 @@ export class FooterComponent extends Component {
   }
 
   clearNotice(): void {
-    if (this.lastTokens === null) {
+    if (this.lastInfo === null) {
       this.text.setText("");
       return;
     }
-    this.text.setText(formatFooter(this.lastCwd, this.lastModelId, this.lastTokens));
+    this.text.setText(formatFooter(this.lastInfo));
   }
 
   applyTheme(theme: PitTheme): void {

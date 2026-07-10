@@ -5,6 +5,7 @@ import { toImageContent } from "../../domain/images/to-image-content.ts";
 import type { ImagePart } from "../../domain/images/types.ts";
 import type { HistoryMessage, ModelRef, TokenUsage } from "../../domain/ports.ts";
 import type { TreeNode } from "../../domain/tree/types.ts";
+import { contextUsageOf, sessionStatsOf, tokenUsageOf } from "./session-facade-info.ts";
 import { mapTree } from "./tree-mapper.ts";
 
 /** SessionGateway methods delegated onto the SDK AgentSession. */
@@ -79,15 +80,8 @@ export class SessionFacade {
   clearQueue(): { steering: string[]; followUp: string[] } { return this.session.clearQueue(); }
   dispose(): void { this.session.dispose(); }
   get isStreaming(): boolean { return this.session.isStreaming; }
-  get modelId(): string {
-    const model = this.session.model;
-    return model ? `${model.provider}/${model.id}` : "no-model";
-  }
-  get tokenUsage(): TokenUsage {
-    const tokens = this.session.getSessionStats().tokens;
-    return { input: tokens.input, output: tokens.output, cacheRead: tokens.cacheRead, cacheWrite: tokens.cacheWrite, total: tokens.total };
-  }
-
+  get modelId(): string { const m = this.session.model; return m ? `${m.provider}/${m.id}` : "no-model"; }
+  get tokenUsage(): TokenUsage { return tokenUsageOf(this.session); }
   tree(): TreeNode[] { return mapTree(this.manager.getTree() as unknown[]); }
   leafId(): string | undefined { return this.manager.getLeafId() ?? undefined; }
   async branchTo(id: string): Promise<string | undefined> { return (await this.session.navigateTree(id)).editorText; }
@@ -96,4 +90,9 @@ export class SessionFacade {
     const p = this.manager.getSessionFile();
     return p ? SessionManager.forkFrom(p, this.manager.getCwd()).getSessionFile() : undefined;
   }
+  contextUsage() { return contextUsageOf(this.session); }
+  sessionName() { return this.session.sessionName; }
+  setSessionName(name: string) { this.session.setSessionName(name); }
+  sessionStats() { return sessionStatsOf(this.session); }
+  lastAssistantText() { return this.session.getLastAssistantText(); }
 }

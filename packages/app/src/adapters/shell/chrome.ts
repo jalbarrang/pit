@@ -4,14 +4,16 @@ import { AuthSelectors, type AuthSelectorHost } from "./auth-selectors.ts";
 import { MiscSelectors, type MiscSelectorHost } from "./misc-selectors.ts";
 import { ScopedModelsSelectors } from "./scoped-models-selector.ts";
 import { ChromeSelectors, type SelectorHost } from "./selectors.ts";
+import { SessionInfoSelectors, type SessionInfoHost } from "./session-info.ts";
 import { openLabelInput, TreeSelectors } from "./tree-selector.ts";
 
-export interface ChromeHost extends SelectorHost, AuthSelectorHost, MiscSelectorHost {
+export interface ChromeHost extends SelectorHost, AuthSelectorHost, MiscSelectorHost, SessionInfoHost {
   exit(): void;
   reloadKeybindings(): void;
   setEnabledModels(patterns: string[] | undefined): Promise<void>;
   replay(): void;
   setEditorText?(text: string): void;
+  newSession?(): void;
 }
 
 /** Bridges the pure command registry to the shell: autocomplete + submit dispatch. */
@@ -34,6 +36,7 @@ export class ShellChrome {
       setEditorText: (text) => host.setEditorText?.(text),
       openInput: (prompt, onSubmit) => openLabelInput(host.tui(), prompt, onSubmit),
     }),
+    sessionInfo = new SessionInfoSelectors(host),
   ) {
     this.context = {
       notify: (text) => host.notify(text),
@@ -49,6 +52,10 @@ export class ShellChrome {
       openScopedModels: () => scopedSelectors.openScopedModels(),
       openTree: () => treeSelectors.openTree(),
       forkSession: () => treeSelectors.forkSession(),
+      newSession: () => { const h = host.newSession; if (!h) return host.notify("New session unavailable"); h(); },
+      renameSession: (args) => sessionInfo.renameSession(args),
+      showSessionStats: () => sessionInfo.showSessionStats(),
+      copyLastAssistant: () => sessionInfo.copyLastAssistant(),
       reloadKeybindings: () => host.reloadKeybindings(),
     };
   }
