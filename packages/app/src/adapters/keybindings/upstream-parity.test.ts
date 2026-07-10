@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readdirSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, it } from "node:test";
 import * as sdk from "@earendil-works/pi-coding-agent";
 import { TUI_KEYBINDINGS as UP_TUI } from "@earendil-works/pi-tui";
@@ -29,13 +31,23 @@ describe("upstream TUI_KEYBINDINGS parity", () => {
   });
 });
 
+/** The SDK does not export KEYBINDINGS from its root; the exports map blocks bare-specifier deep
+ * imports, but direct file paths bypass it. If the dist layout changes on an upgrade, this fails
+ * loudly — which is the tripwire doing its job (adjust the path then). */
+const upstreamAppDefs = async (): Promise<Defs> => {
+  const fromRoot = (sdk as Record<string, unknown>).KEYBINDINGS;
+  if (fromRoot && typeof fromRoot === "object") return fromRoot as Defs;
+  const store = resolve(process.cwd(), "node_modules/.pnpm");
+  const dir = readdirSync(store).find((d) => d.startsWith("@earendil-works+pi-coding-agent@"));
+  assert.ok(dir, "pi-coding-agent not found in the pnpm store — parity tripwire cannot run");
+  const file = resolve(store, dir, "node_modules/@earendil-works/pi-coding-agent/dist/core/keybindings.js");
+  const mod = (await import(file)) as { KEYBINDINGS?: Defs };
+  assert.ok(mod.KEYBINDINGS, "dist/core/keybindings.js no longer exposes KEYBINDINGS — update this tripwire");
+  return mod.KEYBINDINGS;
+};
+
 describe("upstream app.* KEYBINDINGS parity", () => {
-  const up = (sdk as Record<string, unknown>).KEYBINDINGS;
-  if (!up || typeof up !== "object") {
-    it.skip("app.* parity activates once the SDK exports KEYBINDINGS", () => {});
-  } else {
-    it("matches app.* id sets and normalized defaultKeys", () => {
-      assertParity(appOnly(APP_KEYBINDINGS as Defs), appOnly(up as Defs), "app.*");
-    });
-  }
+  it("matches app.* id sets and normalized defaultKeys", async () => {
+    assertParity(appOnly(APP_KEYBINDINGS as Defs), appOnly(await upstreamAppDefs()), "app.*");
+  });
 });
