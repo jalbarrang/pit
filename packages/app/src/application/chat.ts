@@ -1,33 +1,30 @@
 import type { AgentSessionEvent } from "@earendil-works/pi-coding-agent";
-import { AssistantMessageComponent, StatusIndicator, ToolExecutionComponent, UserMessageComponent } from "../components/index.ts";
+import { AssistantMessageComponent, StatusIndicator, ThinkingComponent, ToolExecutionComponent, UserMessageComponent } from "../components/index.ts";
 import type { SessionGateway } from "../domain/index.ts";
 import { createTheme } from "../domain/theming/index.ts";
 import type { ChatShell } from "../adapters/shell/index.ts";
-import { imagesFromResult, textFromContent, textFromResult } from "./chat-parts.ts";
+import { imagesFromResult, textFromContent, textFromResult, thinkingFromContent } from "./chat-parts.ts";
 
 type MessageEvent = AgentSessionEvent & { message?: any; assistantMessageEvent?: any };
+type ChatUi = { Thinking?: typeof ThinkingComponent; Assistant?: typeof AssistantMessageComponent };
 
 export class ChatController {
   private assistant?: AssistantMessageComponent;
+  private thinking?: ThinkingComponent;
   private status?: StatusIndicator;
   private readonly tools = new Map<string, ToolExecutionComponent>();
   private readonly theme = createTheme("dark");
   private unsubscribe?: () => void;
   private readonly shell: ChatShell;
   private readonly session: SessionGateway<AgentSessionEvent>;
+  private readonly ui: ChatUi;
 
-  constructor(shell: ChatShell, session: SessionGateway<AgentSessionEvent>) {
-    this.shell = shell;
-    this.session = session;
+  constructor(shell: ChatShell, session: SessionGateway<AgentSessionEvent>, ui: ChatUi = {}) {
+    this.shell = shell; this.session = session; this.ui = ui;
   }
 
-  start(): void {
-    this.unsubscribe = this.session.subscribe((event) => this.onEvent(event as MessageEvent));
-  }
-
-  stop(): void {
-    this.unsubscribe?.();
-  }
+  start(): void { this.unsubscribe = this.session.subscribe((event) => this.onEvent(event as MessageEvent)); }
+  stop(): void { this.unsubscribe?.(); }
 
   private onEvent(event: MessageEvent): void {
     this.shell.refreshFooter();
@@ -47,22 +44,32 @@ export class ChatController {
   private addAssistant(): void {
     this.status = this.shell.extensionMount.createStatusIndicator(this.shell.tui.ctx);
     if (this.status) this.shell.chat.addMessage(this.status);
-    this.assistant = new AssistantMessageComponent(this.shell.tui.ctx, "", this.theme);
+    const Thinking = this.ui.Thinking ?? ThinkingComponent;
+    this.thinking = new Thinking(this.shell.tui.ctx, this.theme);
+    this.shell.chat.addMessage(this.thinking);
+    this.shell.registerThinking(this.thinking);
+    const Assistant = this.ui.Assistant ?? AssistantMessageComponent;
+    this.assistant = new Assistant(this.shell.tui.ctx, "", this.theme);
     this.shell.chat.addMessage(this.assistant);
   }
 
-  private updateAssistant(update: any): void {
-    if (update?.type !== "text_delta") return;
+  private clearStatus(): void {
     if (this.status) this.shell.chat.removeMessage(this.status);
     this.shell.extensionMount.clearStatusIndicator(this.status);
     this.status = undefined;
+  }
+
+  private updateAssistant(update: any): void {
+    if (update?.type === "thinking_delta") { this.clearStatus(); this.thinking?.appendThinking(update.delta ?? ""); return; }
+    if (update?.type !== "text_delta") return;
+    this.clearStatus();
     this.assistant?.append(update.delta ?? "");
   }
 
   private finishAssistant(content: unknown): void {
-    if (this.status) this.shell.chat.removeMessage(this.status);
-    this.shell.extensionMount.clearStatusIndicator(this.status);
-    this.status = undefined;
+    this.clearStatus();
+    const t = thinkingFromContent(content);
+    if (t) this.thinking?.setThinking(t);
     this.assistant?.setText(textFromContent(content));
     this.assistant?.finalize();
   }

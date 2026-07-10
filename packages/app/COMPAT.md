@@ -52,12 +52,14 @@ Global shortcuts route through the pure `resolveGlobalAction` (`domain/keybindin
 
 Message queue: `app.message.followUp` (alt+enter) queues the editor text as a follow-up while streaming (SDK-owned queue via `prompt(text, { streamingBehavior: "followUp" })`); while idle it submits normally. Queued messages show as muted `Steering:`/`Follow-up:` lines above the editor. `app.message.dequeue` (alt+up) drains the SDK queue (`clearQueue`) and restores steering-then-follow-up joined by blank lines ahead of the current editor text. **Divergence removed**: alt+enter no longer inserts a newline in pit — upstream parity; newline remains shift+enter / ctrl+j. `app.model.select` (ctrl+l) opens the model selector (same as `/model`).
 
+Thinking blocks: assistant thinking/reasoning renders in the transcript above the message text — collapsed by default to a muted "Thinking…" line (nothing shown for turns without thinking); `app.thinking.toggle` (ctrl+t) expands/collapses ALL thinking blocks globally, matching upstream's global hide/show. **Divergence removed**: the editor's ctrl+t transpose mapping was dropped (upstream has no transpose binding). Visibility is not persisted across restarts (matches pit's tools-expand behavior; upstream persists it in settings).
+
 Image attachment: pit's `SessionGateway.prompt` gained an `images?: ImagePart[]` option, threaded through `session-facade` → SDK `AgentSession.prompt({ images })` by the pure `toImageContent` mapper (`domain/images/`, `ImagePart` → pi-ai `ImageContent`). Pasted images buffer in `PendingImages` and flush on the next send; they are also remembered so `ctrl+y` can open them. On non-macOS, ctrl+v shows "Paste image not supported on this platform"; with no image on the clipboard, "No image in clipboard".
 
 Divergences / notes:
 - **ctrl+c / ctrl+d**: pit keeps its existing double-`ctrl+c` → exit; it ADDS upstream's `app.exit` = `ctrl+d` → exit **when the editor is empty**. `app.clear` (upstream ctrl+c = clear editor) is defined-but-inert to avoid breaking pit's exit UX. Whether a focused editor swallows `ctrl+d` (deleteCharForward) before the global handler sees it is key-routing-order dependent — verify on a real TTY.
 - **ctrl+y**: stays pit's global open-last-image when the editor is unfocused; editor-focused `ctrl+y` remains `tui.editor.yank`.
-- **Defined-but-inert** (registry + `/help` only, behaviors land in later `pit-keybinding-parity` plans): `app.thinking.toggle`, all `app.session.*` (except the ctrl+d exit path), all `app.tree.*`, all `app.models.*`.
+- **Defined-but-inert** (registry + `/help` only, behaviors land in later `pit-keybinding-parity` plans): all `app.session.*` (except the ctrl+d exit path), all `app.tree.*`, all `app.models.*`.
 - **Known editor collisions** deferred to their feature plans: `alt+enter` (editor newline vs `app.message.followUp`), `ctrl+t` (editor transpose vs `app.thinking.toggle`).
 
 ## Perf snapshot

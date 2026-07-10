@@ -25,7 +25,6 @@ export function editorKey(data: string): EditorKey | null {
   if (kb.matches(data, "tui.editor.deleteWordForward")) return "killWordForward";
   if (kb.matches(data, "tui.editor.yank")) return "yank";
   if (kb.matches(data, "tui.editor.yankPop")) return "yankPop";
-  if (matchesKey(data, "ctrl+t")) return "transpose";
   if (kb.matches(data, "tui.input.newLine") || matchesKey(data, "shift+enter") || matchesKey(data, "alt+enter") || data === "\x1b[13;2~" || data === "\x1b\r") return "newline";
   if (kb.matches(data, "tui.input.submit")) return "submit";
   if (kb.matches(data, "tui.input.tab")) return "tab";

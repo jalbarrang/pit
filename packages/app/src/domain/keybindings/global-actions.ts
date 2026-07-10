@@ -7,6 +7,7 @@ export type GlobalAction =
   | "model-next"
   | "model-prev"
   | "thinking-cycle"
+  | "thinking-toggle"
   | "suspend"
   | "external-editor"
   | "paste-image"
@@ -30,6 +31,7 @@ export function resolveGlobalAction(
   if (kb.matches(data, "app.model.cycleForward")) return "model-next";
   if (kb.matches(data, "app.model.cycleBackward")) return "model-prev";
   if (kb.matches(data, "app.thinking.cycle")) return "thinking-cycle";
+  if (kb.matches(data, "app.thinking.toggle")) return "thinking-toggle";
   if (kb.matches(data, "app.suspend")) return "suspend";
   if (kb.matches(data, "app.editor.external")) return "external-editor";
   if (kb.matches(data, "app.clipboard.pasteImage")) return "paste-image";

@@ -49,6 +49,10 @@ describe("resolveGlobalAction", () => {
     assertAction("\u001b[Z", [["\u001b[Z", "app.thinking.cycle"]], false, "thinking-cycle");
   });
 
+  it("returns thinking-toggle when app.thinking.toggle matches", () => {
+    assertAction("\u0014", [["\u0014", "app.thinking.toggle"]], false, "thinking-toggle");
+  });
+
   it("returns suspend when app.suspend matches", () => {
     assertAction("\u001a", [["\u001a", "app.suspend"]], false, "suspend");
   });

@@ -43,11 +43,4 @@ describe("Editor kill ring and undo", () => {
     e.handleInput("\x1b[90;6u");
     assert.equal(e.getText(), "hello ");
   });
-
-  it("transposes adjacent characters", () => {
-    const e = editor();
-    e.setText("ab");
-    e.handleInput("\x14");
-    assert.equal(e.getText(), "ba");
-  });
 });

@@ -11,6 +11,7 @@ export interface GlobalInputDeps {
   abortIfStreaming(data: string): boolean;
   cycleModel(dir: 1 | -1): void;
   cycleThinking(): void;
+  toggleThinking(): void;
   suspend(): void;
   externalEditor(): void;
   pasteImage(): void;
@@ -30,6 +31,7 @@ export function routeGlobalInput(deps: GlobalInputDeps, data: string): { consume
   if (action === "model-next") { deps.cycleModel(1); return { consume: true }; }
   if (action === "model-prev") { deps.cycleModel(-1); return { consume: true }; }
   if (action === "thinking-cycle") { deps.cycleThinking(); return { consume: true }; }
+  if (action === "thinking-toggle") { deps.toggleThinking(); return { consume: true }; }
   if (action === "suspend") { deps.suspend(); return { consume: true }; }
   if (action === "external-editor") { deps.externalEditor(); return { consume: true }; }
   if (action === "paste-image") { deps.pasteImage(); return { consume: true }; }

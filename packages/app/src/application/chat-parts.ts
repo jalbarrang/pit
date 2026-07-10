@@ -6,6 +6,11 @@ export const textFromContent = (content: any): string => {
   return content.filter((part) => part.type === "text").map((part) => part.text ?? "").join("");
 };
 
+export const thinkingFromContent = (content: unknown): string => {
+  if (!Array.isArray(content)) return "";
+  return content.filter((part) => part.type === "thinking").map((part) => part.thinking ?? "").join("");
+};
+
 export const textFromResult = (result: any): string => {
   if (typeof result?.details?.diff === "string") return result.details.diff;
   const text = textFromContent(result?.content);

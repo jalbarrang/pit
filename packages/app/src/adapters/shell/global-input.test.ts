@@ -11,7 +11,7 @@ const fakeDeps = (overrides: Partial<GlobalInputDeps> = {}): { deps: GlobalInput
     toggleTools: () => void calls.push("toggleTools"), exit: () => void calls.push("exit"),
     abortIfStreaming: (data) => { calls.push(`abort:${data}`); return false; },
     cycleModel: (dir) => void calls.push(`cycleModel:${dir}`), cycleThinking: () => void calls.push("cycleThinking"),
-    suspend: () => void calls.push("suspend"), externalEditor: () => void calls.push("externalEditor"),
+    toggleThinking: () => void calls.push("toggleThinking"), suspend: () => void calls.push("suspend"), externalEditor: () => void calls.push("externalEditor"),
     pasteImage: () => void calls.push("pasteImage"), followUp: () => void calls.push("followUp"),
     dequeue: () => void calls.push("dequeue"), openModelSelector: () => void calls.push("openModelSelector"),
     exitKeysInput: () => "ignored", ...overrides,
@@ -52,14 +52,15 @@ describe("routeGlobalInput", () => {
     assert.deepEqual(routeGlobalInput(deps, "bwd"), { consume: true });
     assert.deepEqual(calls, ["cycleModel:1", "cycleModel:-1"]);
   });
-  it("cycles thinking, suspends, opens external editor, pastes image", () => {
+  it("cycles thinking, toggles thinking, suspends, opens external editor, pastes image", () => {
     const { deps, calls } = fakeDeps({
       matches: { matches: (data, id) =>
-        (data === "tab" && id === "app.thinking.cycle") || (data === "z" && id === "app.suspend") ||
-        (data === "g" && id === "app.editor.external") || (data === "v" && id === "app.clipboard.pasteImage") },
+        (data === "tab" && id === "app.thinking.cycle") || (data === "t" && id === "app.thinking.toggle") ||
+        (data === "z" && id === "app.suspend") || (data === "g" && id === "app.editor.external") ||
+        (data === "v" && id === "app.clipboard.pasteImage") },
     });
-    for (const d of ["tab", "z", "g", "v"]) assert.deepEqual(routeGlobalInput(deps, d), { consume: true });
-    assert.deepEqual(calls, ["cycleThinking", "suspend", "externalEditor", "pasteImage"]);
+    for (const d of ["tab", "t", "z", "g", "v"]) assert.deepEqual(routeGlobalInput(deps, d), { consume: true });
+    assert.deepEqual(calls, ["cycleThinking", "toggleThinking", "suspend", "externalEditor", "pasteImage"]);
   });
   it("dispatches follow-up, dequeue, and model-select", () => {
     const { deps, calls } = fakeDeps({
