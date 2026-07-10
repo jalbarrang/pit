@@ -25,7 +25,7 @@ describe("formatBashOutput", () => {
   it("shows last 20 lines with more-lines marker when collapsed and truncated", () => {
     const lines = Array.from({ length: 25 }, (_, i) => `line ${i + 1}`);
     const result = formatBashOutput(lines.join("\n"), false);
-    assert.match(result, /^… 5 more lines\n/);
+    assert.match(result, /^… 5 more lines \(ctrl\+o expands\)\n/);
     assert.match(result, /line 6\n/);
     assert.match(result, /line 25$/);
     assert.doesNotMatch(result, /line 5\n/);

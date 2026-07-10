@@ -18,6 +18,7 @@ export interface GlobalInputDeps {
   followUp(): void;
   dequeue(): void;
   openModelSelector(): void;
+  clearEditor(): void;
   exitKeysInput(data: string): "exit" | "armed" | "ignored";
 }
 
@@ -38,6 +39,7 @@ export function routeGlobalInput(deps: GlobalInputDeps, data: string): { consume
   if (action === "follow-up") { deps.followUp(); return { consume: true }; }
   if (action === "dequeue") { deps.dequeue(); return { consume: true }; }
   if (action === "model-select") { deps.openModelSelector(); return { consume: true }; }
+  if (action === "clear-editor") { deps.clearEditor(); return { consume: true }; }
   if (action === "interrupt" && deps.abortIfStreaming(data)) return { consume: true };
   const exit = deps.exitKeysInput(data); if (exit === "exit") deps.exit();
   return exit === "armed" ? { consume: true } : undefined;

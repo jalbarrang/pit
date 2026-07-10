@@ -30,6 +30,7 @@ export class ChatController {
   private onEvent(event: MessageEvent): void {
     this.shell.refreshFooter();
     if (handleCompactionEvent(this.shell, this.theme, this.ui, event)) return;
+    if (event.type === "queue_update") this.shell.showPendingFromQueue({ steering: [...event.steering], followUp: [...event.followUp] });
     if (event.type === "message_start" && event.message?.role === "user") this.addUser(event.message.content);
     if (event.type === "message_start" && event.message?.role === "assistant") this.addAssistant();
     if (event.type === "message_update") this.updateAssistant(event.assistantMessageEvent);

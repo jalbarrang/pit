@@ -41,7 +41,7 @@ describe("BashExecutionComponent", () => {
     const component = new BashExecutionComponent({} as never, "seq 25", false, createTheme("dark"), fakeBox(), fakeText());
     for (let i = 1; i <= 25; i++) component.appendOutput(i === 1 ? `line ${i}` : `\nline ${i}`);
     const text = String(component.getText());
-    assert.match(text, /… 5 more lines/);
+    assert.match(text, /… 5 more lines \(ctrl\+o expands\)/);
     assert.match(text, /line 25/);
     assert.doesNotMatch(text, /line 5\n/);
   });
@@ -55,17 +55,28 @@ describe("BashExecutionComponent", () => {
   });
 
   it("renders exit status, omits clean exit, and shows cancelled", () => {
-    const failed = new BashExecutionComponent({} as never, "false", false, createTheme("dark"), fakeBox(), fakeText());
+    const theme = createTheme("dark");
+    const failedBox = new FakeBox();
+    const failed = new BashExecutionComponent({} as never, "false", false, theme, failedBox as never, fakeText(), fakeText());
     failed.setComplete(1, false);
-    assert.match(String(failed.getText()), /exit 1/);
+    assert.equal(failedBox.children.length, 2);
+    const failedStatus = failedBox.children[1] as Renderable & { content: string; options: Record<string, unknown> };
+    assert.equal(failedStatus.content, "exit 1");
+    assert.equal(failedStatus.options.fg, theme.color("error"));
 
-    const ok = new BashExecutionComponent({} as never, "true", false, createTheme("dark"), fakeBox(), fakeText());
+    const okBox = new FakeBox();
+    const ok = new BashExecutionComponent({} as never, "true", false, theme, okBox as never, fakeText(), fakeText());
     ok.setComplete(0, false);
+    assert.equal(okBox.children.length, 1);
     assert.doesNotMatch(String(ok.getText()), /exit /);
     assert.doesNotMatch(String(ok.getText()), /cancelled/);
 
-    const cancelled = new BashExecutionComponent({} as never, "sleep 10", false, createTheme("dark"), fakeBox(), fakeText());
+    const cancelledBox = new FakeBox();
+    const cancelled = new BashExecutionComponent({} as never, "sleep 10", false, theme, cancelledBox as never, fakeText(), fakeText());
     cancelled.setComplete(undefined, true);
-    assert.match(String(cancelled.getText()), /cancelled/);
+    assert.equal(cancelledBox.children.length, 2);
+    const cancelledStatus = cancelledBox.children[1] as Renderable & { content: string; options: Record<string, unknown> };
+    assert.equal(cancelledStatus.content, "cancelled");
+    assert.equal(cancelledStatus.options.fg, theme.color("error"));
   });
 });

@@ -3,7 +3,7 @@ import { BoxRenderable } from "@opentui/core";
 import { Container, Editor, TUI, Text, getKeybindings, type Component, type EditorComponent } from "@pit/tui";
 import { FooterComponent } from "../../components/footer.ts";
 import { emptyTokens } from "../../components/footer-format.ts";
-import { parseBashInput } from "../../domain/bash/index.ts"; import { resolveEditorCommand } from "../../domain/keybindings/external-editor.ts"; import { nextModel } from "../../domain/keybindings/model-cycle.ts"; import { nextThinkingLevel } from "../../domain/keybindings/thinking-cycle.ts"; import { createTheme, getEditorTheme, type ThemeName } from "../../domain/theming/index.ts";
+import { parseBashInput } from "../../domain/bash/index.ts"; import { resolveEditorCommand } from "../../domain/keybindings/external-editor.ts"; import { formatPending } from "../../domain/keybindings/message-queue.ts"; import { nextModel } from "../../domain/keybindings/model-cycle.ts"; import { nextThinkingLevel } from "../../domain/keybindings/thinking-cycle.ts"; import { createTheme, getEditorTheme, type ThemeName } from "../../domain/theming/index.ts";
 import type { ImagePart, OpenableImage, SessionGateway } from "../../domain/index.ts";
 import { AuthStore } from "../auth/index.ts"; import { SettingsStore } from "../settings/index.ts"; import { TrustStore } from "../trust/index.ts";
 import { createShellBashRunner } from "./bash-runner.ts"; import { CompactionRunner } from "./compaction-runner.ts"; import { bindShellExtensions } from "./bind-shell.ts"; import { ShellChrome } from "./chrome.ts";
@@ -57,9 +57,9 @@ export class ChatShell {
       openLastImage: () => void this.openLastImage(), page: (d) => this.chat.page(d), toggleTools: () => this.toggleTools(), exit: () => this.exit(),
       abortIfStreaming: (d) => { if (this.session?.isCompacting?.()) { this.session.abortCompaction?.(); return true; } if (this.session?.isBashRunning?.()) { this.session.abortBash?.(); return true; } if (shouldAbortStream(d, this.session !== undefined)) { void this.session?.abort(); return true; } return false; },
       cycleModel: (dir) => this.cycleModel(dir), cycleThinking: () => this.cycleThinking(), toggleThinking: () => this.setThinkingVisible(!this.isThinkingVisible()), suspend: () => this.suspendApp(),
-      externalEditor: () => this.openExternalEditor(), pasteImage: () => this.pasteImage(), followUp: () => this.followUpCtl.followUp(), dequeue: () => this.followUpCtl.dequeue(), openModelSelector: () => void this.runCommand("/model"), exitKeysInput: (d) => this.exitKeys.input(d) }, data);
+      externalEditor: () => this.openExternalEditor(), pasteImage: () => this.pasteImage(), followUp: () => this.followUpCtl.followUp(), dequeue: () => this.followUpCtl.dequeue(), openModelSelector: () => void this.runCommand("/model"), clearEditor: () => this.editor.setText(""), exitKeysInput: (d) => this.exitKeys.input(d) }, data);
   }
-  private showPendingWidget(lines: string[]): void { this.mountWidget("pending-queue", lines.length ? new Text(this.tui.ctx, lines.join("\n"), 1, 0, { fg: createTheme(this.settingsStore.get().theme).color("muted") }) : undefined, "aboveEditor"); }
+  private showPendingWidget(lines: string[]): void { this.mountWidget("pending-queue", lines.length ? new Text(this.tui.ctx, lines.join("\n"), 1, 0, { fg: createTheme(this.settingsStore.get().theme).color("muted") }) : undefined, "aboveEditor"); } showPendingFromQueue(q: { steering: string[]; followUp: string[] }): void { this.showPendingWidget(formatPending(q)); }
   private cycleModel(dir: 1 | -1): void {
     const s = this.session; if (s?.cycleModel) { void s.cycleModel(dir > 0 ? "forward" : "backward").then((id) => { if (!id) return this.notify("Model cycling unavailable"); this.refreshFooter(); this.notify(`Model: ${id}`); }); return; }
     const models = s?.listModels?.() ?? [], i = s?.modelId.indexOf("/") ?? -1;

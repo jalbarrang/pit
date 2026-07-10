@@ -14,7 +14,7 @@ const fakeDeps = (overrides: Partial<GlobalInputDeps> = {}): { deps: GlobalInput
     toggleThinking: () => void calls.push("toggleThinking"), suspend: () => void calls.push("suspend"), externalEditor: () => void calls.push("externalEditor"),
     pasteImage: () => void calls.push("pasteImage"), followUp: () => void calls.push("followUp"),
     dequeue: () => void calls.push("dequeue"), openModelSelector: () => void calls.push("openModelSelector"),
-    exitKeysInput: () => "ignored", ...overrides,
+    clearEditor: () => void calls.push("clearEditor"), exitKeysInput: () => "ignored", ...overrides,
   };
   return { deps, calls };
 };
@@ -22,13 +22,11 @@ const fakeDeps = (overrides: Partial<GlobalInputDeps> = {}): { deps: GlobalInput
 describe("routeGlobalInput", () => {
   it("short-circuits when an overlay is open", () => {
     const { deps, calls } = fakeDeps({ hasOverlay: () => true });
-    assert.equal(routeGlobalInput(deps, "\u0019"), undefined);
-    assert.deepEqual(calls, []);
+    assert.equal(routeGlobalInput(deps, "\u0019"), undefined); assert.deepEqual(calls, []);
   });
   it("opens last image on raw ctrl+y", () => {
     const { deps, calls } = fakeDeps();
-    assert.deepEqual(routeGlobalInput(deps, "\u0019"), { consume: true });
-    assert.deepEqual(calls, ["openLastImage"]);
+    assert.deepEqual(routeGlobalInput(deps, "\u0019"), { consume: true }); assert.deepEqual(calls, ["openLastImage"]);
   });
   it("pages chat on page-up and page-down", () => {
     const { deps, calls } = fakeDeps();
@@ -76,22 +74,26 @@ describe("routeGlobalInput", () => {
       matches: { matches: (_d, id) => id === "app.interrupt" },
       abortIfStreaming: (data) => { calls.push(`abort:${data}`); return true; },
     });
-    assert.deepEqual(routeGlobalInput(deps, "esc"), { consume: true });
-    assert.deepEqual(calls, ["abort:esc"]);
+    assert.deepEqual(routeGlobalInput(deps, "esc"), { consume: true }); assert.deepEqual(calls, ["abort:esc"]);
   });
   it("does not consume interrupt when abortIfStreaming returns false", () => {
     const { deps, calls } = fakeDeps({
       matches: { matches: (_d, id) => id === "app.interrupt" }, abortIfStreaming: () => false, exitKeysInput: () => "ignored",
     });
-    assert.equal(routeGlobalInput(deps, "esc"), undefined);
-    assert.deepEqual(calls, []);
+    assert.equal(routeGlobalInput(deps, "esc"), undefined); assert.deepEqual(calls, []);
   });
   it("consumes when double-ctrl+c arms and exits on exit", () => {
     const armed = fakeDeps({ exitKeysInput: () => "armed" });
-    assert.deepEqual(routeGlobalInput(armed.deps, "\u0003"), { consume: true });
-    assert.deepEqual(armed.calls, []);
+    assert.deepEqual(routeGlobalInput(armed.deps, "\u0003"), { consume: true }); assert.deepEqual(armed.calls, []);
     const exit = fakeDeps({ exitKeysInput: () => "exit" });
-    assert.equal(routeGlobalInput(exit.deps, "\u0003"), undefined);
-    assert.deepEqual(exit.calls, ["exit"]);
+    assert.equal(routeGlobalInput(exit.deps, "\u0003"), undefined); assert.deepEqual(exit.calls, ["exit"]);
+  });
+  it("clears non-empty editor without exitKeys; empty ctrl+c reaches exitKeys", () => {
+    const clear = fakeDeps({ editorText: () => "hello", matches: { matches: (d, id) => d === "\u0003" && id === "app.clear" },
+      exitKeysInput: () => { clear.calls.push("exitKeysInput"); return "ignored"; } });
+    assert.deepEqual(routeGlobalInput(clear.deps, "\u0003"), { consume: true }); assert.deepEqual(clear.calls, ["clearEditor"]);
+    const empty = fakeDeps({ matches: { matches: (d, id) => d === "\u0003" && id === "app.clear" },
+      exitKeysInput: () => { empty.calls.push("exitKeysInput"); return "armed"; } });
+    assert.deepEqual(routeGlobalInput(empty.deps, "\u0003"), { consume: true }); assert.deepEqual(empty.calls, ["exitKeysInput"]);
   });
 });

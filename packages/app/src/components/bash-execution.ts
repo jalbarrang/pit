@@ -10,6 +10,9 @@ export class BashExecutionComponent extends Component {
   readonly renderable: BoxLike;
   private readonly shell: Box;
   private readonly text: Text;
+  private readonly ctx: RenderContext;
+  private readonly theme: PitTheme;
+  private readonly statusRenderable?: TextLike;
   private readonly command: string;
   private readonly excluded: boolean;
   private expanded = false;
@@ -17,8 +20,11 @@ export class BashExecutionComponent extends Component {
   private exitCode: number | null | undefined;
   private cancelled = false;
 
-  constructor(ctx: RenderContext, command: string, excluded: boolean, theme: PitTheme, box?: BoxLike, textRenderable?: TextLike) {
+  constructor(ctx: RenderContext, command: string, excluded: boolean, theme: PitTheme, box?: BoxLike, textRenderable?: TextLike, statusRenderable?: TextLike) {
     super();
+    this.ctx = ctx;
+    this.theme = theme;
+    this.statusRenderable = statusRenderable;
     this.command = command;
     this.excluded = excluded;
     this.shell = new Box(ctx, 1, 0, {}, box as never);
@@ -49,8 +55,7 @@ export class BashExecutionComponent extends Component {
   }
 
   private body(): string {
-    const status = formatBashStatus(this.exitCode, this.cancelled);
-    return [formatBashHeader(this.command, this.excluded), formatBashOutput(this.output, this.expanded), status]
+    return [formatBashHeader(this.command, this.excluded), formatBashOutput(this.output, this.expanded)]
       .filter(Boolean)
       .join("\n");
   }
@@ -59,5 +64,8 @@ export class BashExecutionComponent extends Component {
     this.shell.clear();
     this.text.setText(this.body());
     this.shell.addChild(this.text);
+    const status = formatBashStatus(this.exitCode, this.cancelled);
+    if (!status) return;
+    this.shell.addChild(new Text(this.ctx, status, 0, 0, { fg: this.theme.color("error") }, this.statusRenderable));
   }
 }

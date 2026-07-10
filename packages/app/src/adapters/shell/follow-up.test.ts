@@ -83,6 +83,15 @@ describe("FollowUpController", () => {
     assert.ok(calls.some((c) => c.startsWith("showPending:")));
   });
 
+  it("dequeue hides pending widget with empty lines after queue cleared", () => {
+    const { deps, calls } = makeFake({
+      text: "draft",
+      queue: { steering: ["s1"], followUp: ["f1"] },
+    });
+    new FollowUpController(deps).dequeue();
+    assert.ok(calls.includes("showPending:[]"));
+  });
+
   it("dequeue is a no-op when clearQueue returns undefined", () => {
     const { deps, calls } = makeFake({ clearResult: undefined });
     new FollowUpController(deps).dequeue();

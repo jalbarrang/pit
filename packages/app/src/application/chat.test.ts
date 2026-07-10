@@ -21,8 +21,9 @@ const ui = { Thinking: FakeThinking as never, Assistant: FakeAssistant as never 
 const fakeShell = () => {
   const messages: unknown[] = [];
   const thinkingRegistered: unknown[] = [];
+  const pendingLines: string[][] = [];
   return {
-    messages, thinkingRegistered, tui: { ctx: {} },
+    messages, thinkingRegistered, pendingLines, tui: { ctx: {} },
     chat: {
       addMessage: (m: unknown) => void messages.push(m),
       removeMessage: (m: unknown) => { const i = messages.indexOf(m); if (i >= 0) messages.splice(i, 1); },
@@ -30,6 +31,12 @@ const fakeShell = () => {
     extensionMount: { createStatusIndicator: () => undefined, clearStatusIndicator: () => {} },
     registerThinking: (c: unknown) => void thinkingRegistered.push(c),
     registerExpandable: () => {}, rememberImages: () => {}, refreshFooter: () => {},
+    showPendingFromQueue: (q: { steering: string[]; followUp: string[] }) => {
+      pendingLines.push([
+        ...q.steering.map((t) => `Steering: ${t}`),
+        ...q.followUp.map((t) => `Follow-up: ${t}`),
+      ]);
+    },
   };
 };
 
@@ -39,6 +46,22 @@ const start = (shell: ReturnType<typeof fakeShell>) => {
   controller.start();
   return send;
 };
+
+describe("ChatController queue_update", () => {
+  it("shows pending widget lines from queue_update items", () => {
+    const shell = fakeShell();
+    start(shell)({ type: "queue_update", steering: ["steer"], followUp: ["follow"] });
+    assert.deepEqual(shell.pendingLines.at(-1), ["Steering: steer", "Follow-up: follow"]);
+  });
+
+  it("clears pending widget when queue_update has empty arrays", () => {
+    const shell = fakeShell();
+    const send = start(shell);
+    send({ type: "queue_update", steering: ["steer"], followUp: [] });
+    send({ type: "queue_update", steering: [], followUp: [] });
+    assert.deepEqual(shell.pendingLines.at(-1), []);
+  });
+});
 
 describe("ChatController thinking", () => {
   it("adds thinking before assistant on message_start and registers it", () => {

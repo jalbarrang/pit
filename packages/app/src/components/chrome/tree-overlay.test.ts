@@ -1,21 +1,15 @@
 import assert from "node:assert/strict";
 import { before, test } from "node:test";
-import type { Renderable } from "@opentui/core";
 import { KeybindingsManager, setKeybindings } from "@pit/tui";
 import { APP_KEYBINDINGS } from "../../domain/keybindings/index.ts";
 import type { TreeNode } from "../../domain/tree/index.ts";
 import { TreeOverlay } from "./tree-overlay.ts";
 
 class FakeRenderable {
-  content = "";
-  visible = true;
-  width?: number;
-  options: Record<string, unknown> = {};
+  content = ""; visible = true; width?: number; options: Record<string, unknown> = {};
   requestRender(): void {}
   add(): number { return 0; }
   remove(): void {}
-  getChildren(): Renderable[] { return []; }
-  getChildrenCount(): number { return 0; }
 }
 
 const nodes: TreeNode[] = [{
@@ -28,54 +22,57 @@ const nodes: TreeNode[] = [{
 
 before(() => { setKeybindings(new KeybindingsManager(APP_KEYBINDINGS)); });
 
-const make = (leafId?: string) => {
+export const make = (opts: { leafId?: string; nodes?: TreeNode[]; maxVisible?: number } = {}) => {
   const selected: string[] = [];
   const edited: string[] = [];
   let cancelled = 0;
-  const overlay = new TreeOverlay(
-    {} as never, { nodes, ...(leafId !== undefined ? { leafId } : {}) }, new FakeRenderable() as never,
-  );
+  const body = new FakeRenderable();
+  const overlay = new TreeOverlay({} as never, {
+    nodes: opts.nodes ?? nodes,
+    ...(opts.leafId !== undefined ? { leafId: opts.leafId } : {}),
+    ...(opts.maxVisible !== undefined ? { maxVisible: opts.maxVisible } : {}),
+  }, { box: new FakeRenderable() as never, body: body as never });
   overlay.onSelect = (id) => void selected.push(id);
   overlay.onEditLabel = (id) => void edited.push(id);
   overlay.onCancel = () => void (cancelled += 1);
-  return { overlay, selected, edited, cancelled: () => cancelled, content: () => overlay.renderable.content };
+  return { overlay, selected, edited, cancelled: () => cancelled, content: () => body.content };
 };
 
-test("rows render with fold markers, indent, and leaf marker on leafId", () => {
-  const { content } = make("a2");
+export const TREE_HINT =
+  "enter branch · ctrl+←→ fold · ctrl+d/t/u/l/a filter · shift+l label · shift+t times";
+
+test("rows render with fold markers, indent, title, and leaf marker", () => {
+  const { content } = make({ leafId: "a2" });
   const lines = content().split("\n");
-  assert.match(lines[0]!, /^filter:default/);
+  assert.match(lines[0]!, /^Session tree · filter:default/);
   assert.ok(lines.some((l) => l.includes("▾") && l.includes("hello")));
   assert.ok(lines.some((l) => l.includes("▾") && l.includes("[ckpt]") && l.includes("world")));
   assert.ok(lines.some((l) => l.includes("· toolcall")));
   const leaf = lines.find((l) => l.includes("bye"));
-  assert.ok(leaf?.includes("➤"));
-  assert.ok(leaf?.startsWith("→ "));
+  assert.ok(leaf?.includes("➤") && leaf?.startsWith("→ "));
+  assert.equal(lines.at(-1), TREE_HINT);
 });
 
 test("foldOrUp folds the selected parent and hides children", () => {
-  const { overlay, content } = make("a1");
+  const { overlay, content } = make({ leafId: "a1" });
   assert.ok(content().includes("toolcall"));
-  overlay.handleInput("\x1b[1;5D"); // ctrl+left → foldOrUp
+  overlay.handleInput("\x1b[1;5D");
   assert.equal(content().includes("toolcall"), false);
   assert.ok(content().includes("▸"));
 });
 
-test("filter userOnly hides non-user rows and resets folding", () => {
-  const { overlay, content } = make("a1");
+test("filter userOnly hides non-user rows and title reflects filter", () => {
+  const { overlay, content } = make({ leafId: "a1" });
   overlay.handleInput("\x1b[1;5D");
-  assert.equal(content().includes("toolcall"), false);
-  overlay.handleInput("\x15"); // ctrl+u → userOnly
+  overlay.handleInput("\x15");
   const body = content().split("\n").slice(1).join("\n");
-  assert.match(content().split("\n")[0]!, /filter:userOnly/);
+  assert.match(content().split("\n")[0]!, /Session tree · filter:userOnly/);
   assert.ok(body.includes("hello"));
-  assert.equal(body.includes("world"), false);
-  assert.equal(body.includes("toolcall"), false);
-  assert.equal(body.includes("bye"), false);
+  assert.equal(body.includes("world") || body.includes("toolcall") || body.includes("bye"), false);
 });
 
 test("typing narrows rows; cancel clears query first, then fires onCancel", () => {
-  const { overlay, content, cancelled } = make("a2");
+  const { overlay, content, cancelled } = make({ leafId: "a2" });
   for (const ch of "bye") overlay.handleInput(ch);
   assert.match(content().split("\n")[0]!, /bye/);
   assert.ok(content().includes("bye"));
@@ -88,9 +85,9 @@ test("typing narrows rows; cancel clears query first, then fires onCancel", () =
 });
 
 test("confirm fires onSelect; editLabel fires onEditLabel", () => {
-  const { overlay, selected, edited } = make("a2");
+  const { overlay, selected, edited } = make({ leafId: "a2" });
   overlay.handleInput("\r");
   assert.deepEqual(selected, ["a2"]);
-  overlay.handleInput("L"); // shift+l → editLabel
+  overlay.handleInput("L");
   assert.deepEqual(edited, ["a2"]);
 });

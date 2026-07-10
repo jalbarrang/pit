@@ -5,7 +5,7 @@ export const formatBashOutput = (output: string, expanded: boolean, lines = 20):
   if (expanded) return output;
   const parts = output.trimEnd().split("\n");
   const tail = parts.slice(-lines).join("\n");
-  return parts.length > lines ? `… ${parts.length - lines} more lines\n${tail}` : tail;
+  return parts.length > lines ? `… ${parts.length - lines} more lines (ctrl+o expands)\n${tail}` : tail;
 };
 
 export const formatBashStatus = (exitCode: number | null | undefined, cancelled: boolean): string => {

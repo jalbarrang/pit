@@ -1,24 +1,29 @@
-import { TextRenderable, type RenderContext, type Renderable } from "@opentui/core";
-import { Component, getKeybindings, type Focusable } from "@pit/tui";
+import { BoxRenderable, TextRenderable, type RenderContext, type Renderable } from "@opentui/core";
+import { Container, getKeybindings, type Focusable } from "@pit/tui";
 import {
   cycleFilter, filterRows, flattenVisible, foldOrUp, moveSelection, unfoldOrDown,
   type TreeFilter, type TreeNode, type TreeRow,
 } from "../../domain/tree/index.ts";
 import { formatTreeOverlayLines } from "./tree-overlay-rows.ts";
 
-export interface TreeOverlayOptions { nodes: TreeNode[]; leafId?: string }
+export interface TreeOverlayOptions { nodes: TreeNode[]; leafId?: string; maxVisible?: number }
 type TextLike = Renderable & { content: string; width?: number };
-const createRenderable = (ctx: RenderContext): TextLike =>
+interface Injected { box?: BoxRenderable; body?: TextLike }
+
+const createBox = (ctx: RenderContext): BoxRenderable =>
+  new BoxRenderable(ctx, { flexDirection: "column", width: "100%", height: "auto", border: true } as never);
+const createBody = (ctx: RenderContext): TextLike =>
   new TextRenderable(ctx, { content: "", height: "auto", wrapMode: "none" }) as unknown as TextLike;
 const isTextInput = (data: string): boolean => data === "\x7f" || (!data.startsWith("\x1b") && data >= " ");
 
-export class TreeOverlay extends Component implements Focusable {
-  readonly renderable: TextLike;
+export class TreeOverlay extends Container implements Focusable {
+  readonly body: TextLike;
   onSelect?: (id: string) => void;
   onCancel?: () => void;
   onEditLabel?: (id: string) => void;
   private readonly nodes: TreeNode[];
   private readonly leafId?: string;
+  private readonly maxVisible: number;
   private folded = new Set<string>();
   private selectedId: string | undefined;
   private filter: TreeFilter = "default";
@@ -26,11 +31,13 @@ export class TreeOverlay extends Component implements Focusable {
   private showTimestamps = false;
   private _focused = false;
 
-  constructor(ctx: RenderContext, options: TreeOverlayOptions, renderable?: TextLike) {
-    super();
+  constructor(ctx: RenderContext, options: TreeOverlayOptions, inject: Injected = {}) {
+    super(ctx, inject.box ?? createBox(ctx));
     this.nodes = options.nodes;
     this.leafId = options.leafId;
-    this.renderable = renderable ?? createRenderable(ctx);
+    this.maxVisible = options.maxVisible ?? 12;
+    this.body = inject.body ?? createBody(ctx);
+    this.renderable.add(this.body);
     const rows = this.rows();
     this.selectedId = options.leafId && rows.some((r) => r.id === options.leafId) ? options.leafId : rows[0]?.id;
     this.paint();
@@ -38,7 +45,7 @@ export class TreeOverlay extends Component implements Focusable {
 
   get focused(): boolean { return this._focused; }
   set focused(value: boolean) { this._focused = value; }
-  setWidth(width: number): void { this.renderable.width = width; this.paint(); }
+  setWidth(width: number): void { this.body.width = width - 2; this.paint(); }
 
   handleInput(data: string): void {
     const kb = getKeybindings();
@@ -68,30 +75,25 @@ export class TreeOverlay extends Component implements Focusable {
   private setFilter(filter: TreeFilter): void {
     this.filter = filter; this.folded = new Set(); this.clampSelection();
   }
-
   private cancelOrClear(): void {
     if (this.query) { this.query = ""; this.clampSelection(); return; }
     this.onCancel?.();
   }
-
   private type(data: string): void {
     this.query = data === "\x7f" ? this.query.slice(0, -1) : this.query + data;
     this.clampSelection();
   }
-
   private clampSelection(): void {
     const rows = this.rows();
     if (rows.length === 0) { this.selectedId = undefined; return; }
     if (!rows.some((r) => r.id === this.selectedId)) this.selectedId = rows[0]!.id;
   }
-
   private rows(): TreeRow[] {
     return filterRows(flattenVisible(this.nodes, this.folded, this.filter), this.query);
   }
-
   private paint(): void {
-    this.renderable.content = formatTreeOverlayLines(
-      this.rows(), this.selectedId, this.filter, this.query, this.leafId, this.showTimestamps,
+    this.body.content = formatTreeOverlayLines(
+      this.rows(), this.selectedId, this.filter, this.query, this.leafId, this.showTimestamps, this.maxVisible,
     ).join("\n");
     this.invalidate();
   }

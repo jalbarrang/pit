@@ -1,6 +1,7 @@
 export type GlobalAction =
   | "interrupt"
   | "tools-expand"
+  | "clear-editor"
   | "exit-if-empty"
   | "page-up"
   | "page-down"
@@ -27,6 +28,7 @@ export function resolveGlobalAction(
 ): GlobalAction {
   if (kb.matches(data, "app.interrupt")) return "interrupt";
   if (kb.matches(data, "app.tools.expand")) return "tools-expand";
+  if (!ctx.editorEmpty && kb.matches(data, "app.clear")) return "clear-editor";
   if (ctx.editorEmpty && kb.matches(data, "app.exit")) return "exit-if-empty";
   if (kb.matches(data, "app.model.cycleForward")) return "model-next";
   if (kb.matches(data, "app.model.cycleBackward")) return "model-prev";

@@ -1,20 +1,24 @@
-import { TextRenderable, type RenderContext, type Renderable } from "@opentui/core";
-import { Component, fuzzyFilter, getKeybindings, ListSelection, type Focusable } from "@pit/tui";
+import { BoxRenderable, TextRenderable, type RenderContext, type Renderable } from "@opentui/core";
+import { Container, fuzzyFilter, getKeybindings, ListSelection, type Focusable } from "@pit/tui";
 import {
   clearAll, enableAll, reorder, toggle, toggleProvider, type ScopedState,
 } from "../../domain/models/scoped-state.ts";
 import { formatOverlayLines, type ScopedModelItem } from "./scoped-models-rows.ts";
 
-export interface ScopedModelsOverlayOptions { items: ScopedModelItem[]; initial: string[] | null }
+export interface ScopedModelsOverlayOptions { items: ScopedModelItem[]; initial: string[] | null; maxVisible?: number }
 
 type TextLike = Renderable & { content: string; width?: number };
-const createRenderable = (ctx: RenderContext): TextLike =>
+interface Injected { box?: BoxRenderable; body?: TextLike }
+
+const createBox = (ctx: RenderContext): BoxRenderable =>
+  new BoxRenderable(ctx, { flexDirection: "column", width: "100%", height: "auto", border: true } as never);
+const createBody = (ctx: RenderContext): TextLike =>
   new TextRenderable(ctx, { content: "", height: "auto", wrapMode: "none" }) as unknown as TextLike;
 const isTextInput = (data: string): boolean => data === "\x7f" || (!data.startsWith("\x1b") && data >= " ");
 const itemText = (item: ScopedModelItem): string => `${item.id} ${item.label} ${item.provider}`;
 
-export class ScopedModelsOverlay extends Component implements Focusable {
-  readonly renderable: TextLike;
+export class ScopedModelsOverlay extends Container implements Focusable {
+  readonly body: TextLike;
   onChange?: (enabled: string[] | null) => void;
   onPersist?: (enabled: string[] | null) => void;
   onCancel?: () => void;
@@ -23,21 +27,24 @@ export class ScopedModelsOverlay extends Component implements Focusable {
   private readonly selection: ListSelection<ScopedModelItem>;
   private readonly universe: string[];
   private readonly allItems: ScopedModelItem[];
+  private readonly maxVisible: number;
   private _focused = false;
 
-  constructor(ctx: RenderContext, options: ScopedModelsOverlayOptions, renderable?: TextLike) {
-    super();
+  constructor(ctx: RenderContext, options: ScopedModelsOverlayOptions, inject: Injected = {}) {
+    super(ctx, inject.box ?? createBox(ctx));
     this.allItems = options.items;
     this.universe = options.items.map((item) => item.id);
     this.state = { enabled: options.initial };
+    this.maxVisible = options.maxVisible ?? 12;
     this.selection = new ListSelection(options.items);
-    this.renderable = renderable ?? createRenderable(ctx);
+    this.body = inject.body ?? createBody(ctx);
+    this.renderable.add(this.body);
     this.paint();
   }
 
   get focused(): boolean { return this._focused; }
   set focused(value: boolean) { this._focused = value; }
-  setWidth(width: number): void { this.renderable.width = width; this.paint(); }
+  setWidth(width: number): void { this.body.width = width - 2; this.paint(); }
 
   handleInput(data: string): void {
     const kb = getKeybindings();
@@ -82,8 +89,8 @@ export class ScopedModelsOverlay extends Component implements Focusable {
   }
 
   private paint(): void {
-    this.renderable.content = formatOverlayLines(
-      this.selection.filteredItems, this.state, this.universe, this.selection.selectedIndex, this.query,
+    this.body.content = formatOverlayLines(
+      this.selection.filteredItems, this.state, this.universe, this.selection.selectedIndex, this.query, this.maxVisible,
     ).join("\n");
     this.invalidate();
   }
