@@ -15,6 +15,7 @@ const makeContext = () => {
     openLoginSelector: () => void log.push("login"),
     openHelpSelector: () => void log.push("help"),
     openTrustSelector: () => void log.push("trust"),
+    openScopedModels: () => void log.push("scoped-models"),
     reloadKeybindings: () => void log.push("reload"),
   };
   return { context, log };
@@ -59,6 +60,15 @@ test("/reload reloads keybindings via the context port", async () => {
   const result = await registry.dispatch("/reload", context);
   assert.deepEqual(result, { kind: "handled", name: "reload" });
   assert.deepEqual(log, ["reload"]);
+});
+
+test("/scoped-models opens the scoped models overlay", async () => {
+  const { context, log } = makeContext();
+  const registry = createBuiltinRegistry();
+  assert.ok(registry.list().some((command) => command.name === "scoped-models"));
+  const result = await registry.dispatch("/scoped-models", context);
+  assert.deepEqual(result, { kind: "handled", name: "scoped-models" });
+  assert.deepEqual(log, ["scoped-models"]);
 });
 
 test("every builtin has a description for autocomplete", () => {

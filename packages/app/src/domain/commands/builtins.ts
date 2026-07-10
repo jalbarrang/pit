@@ -12,6 +12,7 @@ export interface ChromeContext {
   openLoginSelector(): void;
   openHelpSelector(): void;
   openTrustSelector(): void;
+  openScopedModels(): void;
   reloadKeybindings(): void;
 }
 
@@ -25,6 +26,7 @@ export const createBuiltinRegistry = (): CommandRegistry<ChromeContext> => {
   registry.register({ name: "login", description: "Configure model credentials", handler: (ctx) => ctx.openLoginSelector() });
   registry.register({ name: "help", description: "Show keybinding hints", handler: (ctx) => ctx.openHelpSelector() });
   registry.register({ name: "trust", description: "Configure project trust", handler: (ctx) => ctx.openTrustSelector() });
+  registry.register({ name: "scoped-models", description: "Choose which models are enabled for cycling", handler: (ctx) => ctx.openScopedModels() });
   registry.register({ name: "reload", description: "Reload keybindings from ~/.pi/agent/keybindings.json", handler: (ctx) => ctx.reloadKeybindings() });
   registry.register({ name: "quit", description: "Quit pit", handler: (ctx) => ctx.exit() });
   return registry;

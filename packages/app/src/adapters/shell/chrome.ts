@@ -2,16 +2,30 @@ import { CombinedAutocompleteProvider, NodeFileSearchPort, type AutocompleteProv
 import { createBuiltinRegistry, type ChromeContext, type CommandInfo } from "../../domain/commands/index.ts";
 import { AuthSelectors, type AuthSelectorHost } from "./auth-selectors.ts";
 import { MiscSelectors, type MiscSelectorHost } from "./misc-selectors.ts";
+import { ScopedModelsSelectors } from "./scoped-models-selector.ts";
 import { ChromeSelectors, type SelectorHost } from "./selectors.ts";
 
-export interface ChromeHost extends SelectorHost, AuthSelectorHost, MiscSelectorHost { exit(): void; reloadKeybindings(): void }
+export interface ChromeHost extends SelectorHost, AuthSelectorHost, MiscSelectorHost {
+  exit(): void;
+  reloadKeybindings(): void;
+  setEnabledModels(patterns: string[] | undefined): Promise<void>;
+}
 
 /** Bridges the pure command registry to the shell: autocomplete + submit dispatch. */
 export class ShellChrome {
   private readonly registry = createBuiltinRegistry();
   private readonly context: ChromeContext;
 
-  constructor(host: ChromeHost, selectors = new ChromeSelectors(host), authSelectors = new AuthSelectors(host), miscSelectors = new MiscSelectors(host)) {
+  constructor(
+    host: ChromeHost,
+    selectors = new ChromeSelectors(host),
+    authSelectors = new AuthSelectors(host),
+    miscSelectors = new MiscSelectors(host),
+    scopedSelectors = new ScopedModelsSelectors({
+      tui: () => host.tui(), session: () => host.session(), notify: (text) => host.notify(text),
+      settings: () => ({ setEnabledModels: (patterns) => host.setEnabledModels(patterns) }),
+    }),
+  ) {
     this.context = {
       notify: (text) => host.notify(text),
       exit: () => host.exit(),
@@ -23,6 +37,7 @@ export class ShellChrome {
       openLoginSelector: () => authSelectors.openLogin(),
       openHelpSelector: () => miscSelectors.openHelp(),
       openTrustSelector: () => miscSelectors.openTrust(),
+      openScopedModels: () => scopedSelectors.openScopedModels(),
       reloadKeybindings: () => host.reloadKeybindings(),
     };
   }

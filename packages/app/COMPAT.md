@@ -54,12 +54,14 @@ Message queue: `app.message.followUp` (alt+enter) queues the editor text as a fo
 
 Thinking blocks: assistant thinking/reasoning renders in the transcript above the message text — collapsed by default to a muted "Thinking…" line (nothing shown for turns without thinking); `app.thinking.toggle` (ctrl+t) expands/collapses ALL thinking blocks globally, matching upstream's global hide/show. **Divergence removed**: the editor's ctrl+t transpose mapping was dropped (upstream has no transpose binding). Visibility is not persisted across restarts (matches pit's tools-expand behavior; upstream persists it in settings).
 
+Scoped models: `/scoped-models` opens a multi-mark selector (enter toggles the highlighted model; `ctrl+a`/`ctrl+x` enable/clear the search-filtered set; `ctrl+p` toggles the highlighted model's provider; `alt+up`/`alt+down` reorder — order controls cycling; `ctrl+s` persists to settings `enabledModels`; esc clears search then closes, keeping the live session scope). Changes apply live via the SDK `setScopedModels`; main-chat `ctrl+p` cycling now delegates to the SDK `cycleModel`, which honors the scoped order (falls back to pit's flat cycle for gateways without it).
+
 Image attachment: pit's `SessionGateway.prompt` gained an `images?: ImagePart[]` option, threaded through `session-facade` → SDK `AgentSession.prompt({ images })` by the pure `toImageContent` mapper (`domain/images/`, `ImagePart` → pi-ai `ImageContent`). Pasted images buffer in `PendingImages` and flush on the next send; they are also remembered so `ctrl+y` can open them. On non-macOS, ctrl+v shows "Paste image not supported on this platform"; with no image on the clipboard, "No image in clipboard".
 
 Divergences / notes:
 - **ctrl+c / ctrl+d**: pit keeps its existing double-`ctrl+c` → exit; it ADDS upstream's `app.exit` = `ctrl+d` → exit **when the editor is empty**. `app.clear` (upstream ctrl+c = clear editor) is defined-but-inert to avoid breaking pit's exit UX. Whether a focused editor swallows `ctrl+d` (deleteCharForward) before the global handler sees it is key-routing-order dependent — verify on a real TTY.
 - **ctrl+y**: stays pit's global open-last-image when the editor is unfocused; editor-focused `ctrl+y` remains `tui.editor.yank`.
-- **Defined-but-inert** (registry + `/help` only, behaviors land in later `pit-keybinding-parity` plans): all `app.session.*` (except the ctrl+d exit path), all `app.tree.*`, all `app.models.*`.
+- **Defined-but-inert** (registry + `/help` only, behaviors land in later `pit-keybinding-parity` plans): all `app.session.*` picker-internal keys (togglePath/toggleSort/toggleNamedFilter/rename/delete — upstream binds these inside its /resume picker; pit's session picker does not yet), all `app.tree.*` (session-tree plan).
 - **Known editor collisions** deferred to their feature plans: `alt+enter` (editor newline vs `app.message.followUp`), `ctrl+t` (editor transpose vs `app.thinking.toggle`).
 
 ## Perf snapshot

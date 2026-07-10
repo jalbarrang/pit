@@ -16,7 +16,7 @@ import { suspendToBackground } from "./suspend.ts";
 export type { ChatShellOptions } from "./shell-types.ts";
 export class ChatShell {
   private readonly exitKeys = new DoubleCtrlCExit();
-  private readonly chrome = new ShellChrome({ tui: () => this.tui, session: () => this.session, notify: (text) => this.notify(text), exit: () => this.exit(), refreshFooter: () => this.refreshFooter(), settings: () => this.settingsStore.get(), setSetting: (id, value) => this.settingsStore.set(id, value), applyTheme: (theme) => this.applyTheme(theme), auth: () => this.authStore, trust: () => this.trustStore, onAuthConfigured: () => this.hooks.onAuthConfigured?.() ?? Promise.resolve(), listSessions: () => this.hooks.listSessions?.() ?? Promise.resolve([]), switchSession: (path) => this.hooks.switchSession?.(path) ?? Promise.resolve(), reloadKeybindings: () => { this.hooks.reloadKeybindings?.(); this.notify("Keybindings reloaded"); } });
+  private readonly chrome = new ShellChrome({ tui: () => this.tui, session: () => this.session, notify: (text) => this.notify(text), exit: () => this.exit(), refreshFooter: () => this.refreshFooter(), settings: () => this.settingsStore.get(), setSetting: (id, value) => this.settingsStore.set(id, value), applyTheme: (theme) => this.applyTheme(theme), auth: () => this.authStore, trust: () => this.trustStore, onAuthConfigured: () => this.hooks.onAuthConfigured?.() ?? Promise.resolve(), listSessions: () => this.hooks.listSessions?.() ?? Promise.resolve([]), switchSession: (path) => this.hooks.switchSession?.(path) ?? Promise.resolve(), reloadKeybindings: () => { this.hooks.reloadKeybindings?.(); this.notify("Keybindings reloaded"); }, setEnabledModels: (patterns) => this.settingsStore.setEnabledModels(patterns) });
   private hooks: ChatShellOptions = {}; private readonly expandables: Expandable[] = []; private readonly thinkingBlocks: Expandable[] = []; private session?: SessionGateway;
   private cwd = process.cwd(); private toolsExpanded = false; private thinkingVisible = false; private settingsStore = new SettingsStore();
   private authStore?: AuthStore; private trustStore?: TrustStore; private imageViewer: ImageViewer = new MacOpenImageViewer(); private images: OpenableImage[] = []; private readonly pendingImages = new PendingImages();
@@ -59,7 +59,8 @@ export class ChatShell {
   }
   private showPendingWidget(lines: string[]): void { this.mountWidget("pending-queue", lines.length ? new Text(this.tui.ctx, lines.join("\n"), 1, 0, { fg: createTheme(this.settingsStore.get().theme).color("muted") }) : undefined, "aboveEditor"); }
   private cycleModel(dir: 1 | -1): void {
-    const s = this.session, models = s?.listModels?.() ?? [], i = s?.modelId.indexOf("/") ?? -1;
+    const s = this.session; if (s?.cycleModel) { void s.cycleModel(dir > 0 ? "forward" : "backward").then((id) => { if (!id) return this.notify("Model cycling unavailable"); this.refreshFooter(); this.notify(`Model: ${id}`); }); return; }
+    const models = s?.listModels?.() ?? [], i = s?.modelId.indexOf("/") ?? -1;
     const next = models.length >= 2 && s?.setModel ? nextModel(models, { provider: s.modelId.slice(0, i), id: s.modelId.slice(i + 1) }, dir) : null;
     if (!next || !s?.setModel) return this.notify("Model cycling unavailable");
     void s.setModel(next).then(() => { this.refreshFooter(); this.notify(`Model: ${next.provider}/${next.id}`); });

@@ -16,6 +16,7 @@ const makeChrome = () => {
     auth: () => undefined,
     trust: () => undefined,
     reloadKeybindings: () => void log.push("reload"),
+    setEnabledModels: async () => {},
   };
   const chrome = new ShellChrome(host);
   return { chrome, log };

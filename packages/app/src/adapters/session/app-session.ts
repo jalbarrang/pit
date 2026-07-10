@@ -56,6 +56,9 @@ export class AppSession implements SessionGateway {
   history() { return this.facade.history(); }
   listModels() { return this.facade.listModels(); }
   setModel(ref: Parameters<SessionFacade["setModel"]>[0]) { return this.facade.setModel(ref); }
+  scopedModels() { return this.facade.scopedModels(); }
+  setScopedModels(refs: Parameters<SessionFacade["setScopedModels"]>[0]) { this.facade.setScopedModels(refs); }
+  cycleModel(direction: "forward" | "backward") { return this.facade.cycleModel(direction); }
   get thinkingLevel() { return this.facade.thinkingLevel; }
   availableThinkingLevels() { return this.facade.availableThinkingLevels(); }
   setThinkingLevel(level: string) { this.facade.setThinkingLevel(level); }

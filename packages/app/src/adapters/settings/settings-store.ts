@@ -31,4 +31,13 @@ export class SettingsStore {
     await this.manager.flush();
     return this.get();
   }
+
+  getEnabledModels(): string[] | undefined {
+    return this.manager.getEnabledModels();
+  }
+
+  async setEnabledModels(patterns: string[] | undefined): Promise<void> {
+    this.manager.setEnabledModels(patterns);
+    await this.manager.flush();
+  }
 }

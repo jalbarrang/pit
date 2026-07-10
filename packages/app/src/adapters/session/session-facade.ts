@@ -40,6 +40,24 @@ export class SessionFacade {
     await this.session.setModel(model);
   }
 
+  scopedModels(): ModelRef[] {
+    return this.session.scopedModels.map((e) => ({ provider: e.model.provider, id: e.model.id }));
+  }
+
+  setScopedModels(refs: ModelRef[] | null): void {
+    if (refs === null) { this.session.setScopedModels([]); return; }
+    const available = this.modelRegistry.getAvailable();
+    this.session.setScopedModels(refs.flatMap((ref) => {
+      const model = available.find((m) => m.provider === ref.provider && m.id === ref.id);
+      return model ? [{ model }] : [];
+    }));
+  }
+
+  async cycleModel(direction: "forward" | "backward"): Promise<string | undefined> {
+    const result = await this.session.cycleModel(direction);
+    return result ? `${result.model.provider}/${result.model.id}` : undefined;
+  }
+
   get thinkingLevel(): string { return this.session.thinkingLevel; }
   availableThinkingLevels(): string[] { return this.session.getAvailableThinkingLevels(); }
   setThinkingLevel(level: string): void { this.session.setThinkingLevel(level as never); }

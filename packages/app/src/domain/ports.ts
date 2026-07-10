@@ -30,6 +30,9 @@ export interface SessionGateway<TEvent = unknown> {
   readonly tokenUsage: TokenUsage;
   listModels?(): ModelRef[];
   setModel?(ref: ModelRef): Promise<void>;
+  scopedModels?(): ModelRef[];
+  setScopedModels?(refs: ModelRef[] | null): void;
+  cycleModel?(direction: "forward" | "backward"): Promise<string | undefined>;
   readonly thinkingLevel?: string;
   availableThinkingLevels?(): string[];
   setThinkingLevel?(level: string): void;
