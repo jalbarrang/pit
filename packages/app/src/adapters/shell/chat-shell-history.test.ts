@@ -8,6 +8,7 @@ describe("ChatShell prompt history feed", () => {
     const shell = Object.create(ChatShell.prototype) as any;
     shell.editor = { addToHistory: (t: string) => history.push(t) };
     shell.chrome = { handle: async (t: string) => t.startsWith("/") };
+    shell.compactionCtl = { gate: () => false };
     shell.session = { prompt: async () => {}, isStreaming: false };
     shell.pendingImages = { takeAll: () => [] };
     await shell["submit"]("hello");

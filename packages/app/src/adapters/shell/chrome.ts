@@ -14,6 +14,7 @@ export interface ChromeHost extends SelectorHost, AuthSelectorHost, MiscSelector
   replay(): void;
   setEditorText?(text: string): void;
   newSession?(): void;
+  compactSession(args: string): void;
 }
 
 /** Bridges the pure command registry to the shell: autocomplete + submit dispatch. */
@@ -57,6 +58,7 @@ export class ShellChrome {
       showSessionStats: () => sessionInfo.showSessionStats(),
       copyLastAssistant: () => sessionInfo.copyLastAssistant(),
       reloadKeybindings: () => host.reloadKeybindings(),
+      compactSession: (args) => host.compactSession(args),
     };
   }
 

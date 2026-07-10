@@ -5,6 +5,7 @@ import type { ImagePart } from "../../domain/images/types.ts";
 import type { ModelRef, TokenUsage } from "../../domain/ports.ts";
 import type { TreeNode } from "../../domain/tree/types.ts";
 import { abortBashOf, executeBashOf, isBashRunningOf } from "./session-facade-bash.ts";
+import { abortCompactionOf, compactOf, isCompactingOf } from "./session-facade-compaction.ts";
 import { contextUsageOf, historyOf, sessionStatsOf, tokenUsageOf } from "./session-facade-info.ts";
 import { mapTree } from "./tree-mapper.ts";
 
@@ -32,6 +33,9 @@ export class SessionFacade {
   executeBash(command: string, onChunk: (chunk: string) => void, options: { excludeFromContext: boolean }) { return executeBashOf(this.session, command, onChunk, options); }
   abortBash() { abortBashOf(this.session); }
   isBashRunning() { return isBashRunningOf(this.session); }
+  compact(instructions?: string) { return compactOf(this.session, instructions); }
+  abortCompaction() { abortCompactionOf(this.session); }
+  isCompacting() { return isCompactingOf(this.session); }
 
   listModels(): ModelRef[] {
     return this.modelRegistry.getAvailable().map((m) => ({ provider: m.provider, id: m.id }));

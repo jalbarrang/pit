@@ -20,6 +20,7 @@ export interface ChromeContext {
   showSessionStats(): void;
   copyLastAssistant(): void;
   reloadKeybindings(): void;
+  compactSession(args: string): void;
 }
 
 export const createBuiltinRegistry = (): CommandRegistry<ChromeContext> => {
@@ -40,6 +41,7 @@ export const createBuiltinRegistry = (): CommandRegistry<ChromeContext> => {
   registry.register({ name: "session", description: "Show session stats", handler: (ctx) => ctx.showSessionStats() });
   registry.register({ name: "copy", description: "Copy last assistant message", handler: (ctx) => ctx.copyLastAssistant() });
   registry.register({ name: "reload", description: "Reload keybindings from ~/.pi/agent/keybindings.json", handler: (ctx) => ctx.reloadKeybindings() });
+  registry.register({ name: "compact", description: "Compact the session context", handler: (ctx, args) => ctx.compactSession(args) });
   registry.register({ name: "quit", description: "Quit pit", handler: (ctx) => ctx.exit() });
   return registry;
 };

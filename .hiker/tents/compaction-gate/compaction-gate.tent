@@ -1,0 +1,15 @@
+// Compaction gate: a prompt submitted while the session is compacting must be
+// QUEUED, never sent and never dropped; when idle it must be sent, not queued.
+// This law keeps an implementation from collapsing the gate (sending during
+// compaction, or silently dropping the message).
+
+sort Submission { compacting: Int, queued: Int, sent: Int }
+
+relation gates(s: Submission)
+
+law gates(s) {
+  s.compacting == 1 => s.queued == 1
+  s.compacting == 1 => s.sent == 0
+  s.compacting == 0 => s.sent == 1
+  s.compacting == 0 => s.queued == 0
+}

@@ -17,21 +17,16 @@ export interface AppSessionOptions {
 
 export class AppSession implements SessionGateway {
   private readonly facade: SessionFacade;
-
   private constructor(facade: SessionFacade) { this.facade = facade; }
-
   static create(cwd = process.cwd(), authPath?: string): Promise<AppSession> {
     return AppSession.make({ cwd, authPath, sessionManager: SessionManager.create(cwd) });
   }
-
   static resume(path: string, cwd = process.cwd(), authPath?: string): Promise<AppSession> {
     return AppSession.make({ cwd, authPath, sessionManager: SessionManager.open(path) });
   }
-
   static createWithExtensions(options: AppSessionOptions): Promise<AppSession> {
     return AppSession.make(options);
   }
-
   private static async make(options: AppSessionOptions): Promise<AppSession> {
     const cwd = options.cwd ?? process.cwd();
     const authStorage = AuthStorage.create(options.authPath);
@@ -85,6 +80,9 @@ export class AppSession implements SessionGateway {
   executeBash(command: string, onChunk: (chunk: string) => void, options: { excludeFromContext: boolean }) { return this.facade.executeBash(command, onChunk, options); }
   abortBash() { this.facade.abortBash(); }
   isBashRunning() { return this.facade.isBashRunning(); }
+  compact(instructions?: string) { return this.facade.compact(instructions); }
+  abortCompaction() { this.facade.abortCompaction(); }
+  isCompacting() { return this.facade.isCompacting(); }
 }
 
 async function buildLoader(cwd: string, extensionPaths: string[]) {

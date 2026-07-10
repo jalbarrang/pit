@@ -20,6 +20,7 @@ const makeChrome = () => {
     replay: () => void log.push("replay"),
     copyToClipboard: () => false,
     noticeCopied: () => {},
+    compactSession: (args: string) => void log.push(`compact:${args}`),
   };
   const chrome = new ShellChrome(host);
   return { chrome, log };
@@ -35,6 +36,12 @@ test("/reload invokes host.reloadKeybindings", async () => {
   const { chrome, log } = makeChrome();
   assert.equal(await chrome.handle("/reload"), true);
   assert.deepEqual(log, ["reload"]);
+});
+
+test("/compact invokes host.compactSession", async () => {
+  const { chrome, log } = makeChrome();
+  assert.equal(await chrome.handle("/compact keep goals"), true);
+  assert.deepEqual(log, ["compact:keep goals"]);
 });
 
 test("unknown slash command notifies with a friendly error and consumes", async () => {

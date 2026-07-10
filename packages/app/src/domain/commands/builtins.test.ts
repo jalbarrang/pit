@@ -23,6 +23,7 @@ const makeContext = () => {
     showSessionStats: () => void log.push("session"),
     copyLastAssistant: () => void log.push("copy"),
     reloadKeybindings: () => void log.push("reload"),
+    compactSession: (args) => void log.push(`compact:${args}`),
   };
   return { context, log };
 };
@@ -65,6 +66,14 @@ test("/reload and /scoped-models dispatch to context ports", async () => {
   assert.deepEqual(await registry.dispatch("/reload", context), { kind: "handled", name: "reload" });
   assert.deepEqual(await registry.dispatch("/scoped-models", context), { kind: "handled", name: "scoped-models" });
   assert.deepEqual(log, ["reload", "scoped-models"]);
+});
+
+test("/compact dispatches to compactSession with args", async () => {
+  const { context, log } = makeContext();
+  const registry = createBuiltinRegistry();
+  assert.deepEqual(await registry.dispatch("/compact keep goals", context), { kind: "handled", name: "compact" });
+  assert.deepEqual(await registry.dispatch("/compact", context), { kind: "handled", name: "compact" });
+  assert.deepEqual(log, ["compact:keep goals", "compact:"]);
 });
 
 test("/tree /fork /new /name /session /copy dispatch to ports", async () => {

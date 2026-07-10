@@ -63,6 +63,9 @@ export interface SessionGateway<TEvent = unknown> {
   executeBash?(command: string, onChunk: (chunk: string) => void, options: { excludeFromContext: boolean }): Promise<{ exitCode?: number | null; cancelled: boolean }>;
   abortBash?(): void;
   isBashRunning?(): boolean;
+  compact?(instructions?: string): Promise<{ summary: string; tokensBefore: number; tokensAfter?: number }>;
+  abortCompaction?(): void;
+  isCompacting?(): boolean;
 }
 
 export interface TokenUsage {
