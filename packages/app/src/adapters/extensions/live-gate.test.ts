@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -26,6 +27,10 @@ describe("extension live gate", () => {
 
     const session = await AppSession.createWithExtensions({
       cwd: process.cwd(),
+      // Credential-less: the gate tests the extension binding contract, not
+      // model auth, and must run in CI where no pi login exists.
+      authPath: path.join(os.tmpdir(), "pit-live-gate-no-auth.json"),
+      requireAuth: false,
       extensionPaths: [fixture],
       sessionManager: SessionManager.inMemory(),
     });
