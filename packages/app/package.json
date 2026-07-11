@@ -9,8 +9,8 @@
     "pit": "./bin/pit"
   },
   "dependencies": {
-    "@earendil-works/pi-coding-agent": "^0.80.3",
-    "@earendil-works/pi-tui": "^0.80.3",
+    "@earendil-works/pi-coding-agent": "^0.80.6",
+    "@earendil-works/pi-tui": "^0.80.6",
     "@opentui/core": "^0.4.3",
     "@pit/tui": "workspace:*"
   }
