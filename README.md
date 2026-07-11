@@ -29,7 +29,7 @@ pit ships from `main` on two channels, both as GitHub Releases (no npm publish y
 - **stable** — cut manually: run the `release` workflow (`.github/workflows/release.yml`) from `main` with a `major`/`minor`/`patch` bump (or an explicit version override). The workflow bumps the workspace versions, commits `release: vX.Y.Z` back to `main`, tags, and publishes a GitHub Release marked latest with a `pit-X.Y.Z.tar.gz` source tarball and notes generated since the previous stable tag.
 - **nightly** — a daily scheduled run (06:00 UTC) that skips when `main` has no commits since the last nightly tag. It releases `vX.Y.Z-nightly.YYYYMMDD.N` (next patch above current stable) as a prerelease, never marked latest, with notes since the previous nightly. Nothing is committed back to `main`. A manual nightly can be dispatched with `channel=nightly`.
 
-Version math lives in `scripts/release-version.mjs` (`stable --bump …` / `nightly --date … --run …`).
+Version math lives in `scripts/release-version.mjs` (`stable --bump …` / `nightly --date … --run …`). Full release runbook and philosophy: [DEPLOY.md](DEPLOY.md).
 
 ## Known Issues
 

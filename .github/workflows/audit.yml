@@ -1,0 +1,57 @@
+name: audit
+
+on:
+  schedule:
+    - cron: "0 5 * * *" # daily, one hour before the nightly release check
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    if: github.repository == 'jalbarrang/pit'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - name: Install hiker
+        uses: jalbarrang/hiker@v0.1.3
+
+      - name: Bump dependencies to latest
+        run: |
+          pnpm dlx npm-check-updates -u --workspaces --root
+          pnpm install --no-frozen-lockfile
+
+      - name: Test
+        run: pnpm test
+
+      - name: Security audit (informational)
+        run: pnpm audit || true
+
+      - name: Open PR with the bumps
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: ci/audit-dependency-bumps
+          delete-branch: true
+          commit-message: "fix(deps): bump dependencies to latest"
+          title: "fix(deps): bump dependencies to latest"
+          body: |
+            Automated daily dependency bump (`audit` workflow).
+
+            All bumps passed the full `pnpm test` gate (file-size, hiker
+            intent, typecheck, node tests) in this workflow run before the
+            PR was opened. Upstream pi bumps are exercised by the keybinding
+            parity tests and the extension live gate — see UPGRADING.md for
+            the manual drift surfaces to skim before merging.
+
+            Merging lands on `main`; the next nightly ships it automatically
+            and it rolls into the next stable release.
