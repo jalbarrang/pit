@@ -21,6 +21,16 @@ The `pit` wrapper resolves the app entry relative to the real wrapper path, so i
 
 The workspace packages are versioned `0.1.0`, but publishing is constrained by OpenTUI's native platform packages and Node's experimental FFI support. Publish only after verifying the target package includes or can resolve the correct `@opentui/core` optional native dependency for the supported OS/CPU matrix; today the tested path is local workspace install on macOS with Node 26.4.0.
 
+## Releases
+
+pit ships from `main` on two channels, both as GitHub Releases (no npm publish yet — see the npm publishability note above). CI (`.github/workflows/ci.yml`) runs the full `pnpm test` gate on every push to `main` and every PR, and the same gate runs again before any release.
+
+- **main** — the development branch. No artifacts; every commit is a candidate for the next nightly.
+- **stable** — cut manually: run the `release` workflow (`.github/workflows/release.yml`) from `main` with a `major`/`minor`/`patch` bump (or an explicit version override). The workflow bumps the workspace versions, commits `release: vX.Y.Z` back to `main`, tags, and publishes a GitHub Release marked latest with a `pit-X.Y.Z.tar.gz` source tarball and notes generated since the previous stable tag.
+- **nightly** — a daily scheduled run (06:00 UTC) that skips when `main` has no commits since the last nightly tag. It releases `vX.Y.Z-nightly.YYYYMMDD.N` (next patch above current stable) as a prerelease, never marked latest, with notes since the previous nightly. Nothing is committed back to `main`. A manual nightly can be dispatched with `channel=nightly`.
+
+Version math lives in `scripts/release-version.mjs` (`stable --bump …` / `nightly --date … --run …`).
+
 ## Known Issues
 
 - Inline terminal graphics are not implemented in pit 0.1.0. OpenTUI 0.4.3 exposes terminal capability detection for Kitty graphics/sixel but no installed renderable or public passthrough API for placing graphics inside the cell-buffer frame, so pit renders image tool results as bordered placeholders with dimensions and opens the latest image externally with `Ctrl-Y` on macOS.
