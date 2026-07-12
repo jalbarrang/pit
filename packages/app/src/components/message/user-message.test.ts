@@ -19,6 +19,8 @@ describe("UserMessageComponent", () => {
     assert.deepEqual(box.border, ["left"]);
     assert.equal(box.borderColor, "#a78bfa");
     const options = box.options as Record<string, unknown> & { customBorderChars?: { vertical: string } };
+    assert.equal(options.paddingX, 2);
+    assert.equal(options.paddingY, 1);
     assert.equal(options.backgroundColor, "#251d36");
     assert.deepEqual(options.border, ["left"]);
     assert.equal(options.borderColor, "#a78bfa");

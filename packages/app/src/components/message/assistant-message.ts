@@ -17,17 +17,24 @@ export class AssistantMessageComponent extends Component {
     this.markdown.setText(sanitizeMessageText(text));
     this.markdown.setStreaming(true);
     this.renderable = this.markdown.renderable;
-    spaceBelow(this.renderable);
+    this.syncMargin();
   }
 
   append(delta: string): void {
     this.rawText += delta;
     this.markdown.setText(sanitizeMessageText(this.rawText));
+    this.syncMargin();
   }
 
   setText(text: string): void {
     this.rawText = text;
     this.markdown.setText(sanitizeMessageText(text));
+    this.syncMargin();
+  }
+
+  // Tool-only assistant turns have no text; they must not add a blank row.
+  private syncMargin(): void {
+    spaceBelow(this.renderable, this.rawText.trim() ? 1 : 0);
   }
 
   finalize(): void {

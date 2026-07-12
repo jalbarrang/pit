@@ -22,7 +22,7 @@ export class UserMessageComponent extends Component {
 
   constructor(ctx: RenderContext, text: string, theme: PitTheme, box?: BoxLike, markdown?: MarkdownPort) {
     super();
-    const shell = new Box(ctx, 1, 0, { bg: theme.color("userMessageBg") }, box as never);
+    const shell = new Box(ctx, 2, 1, { bg: theme.color("userMessageBg") }, box as never);
     this.renderable = shell.renderable as BoxLike;
     this.renderable.border = ["left"];
     this.renderable.borderColor = theme.color("interactive");
