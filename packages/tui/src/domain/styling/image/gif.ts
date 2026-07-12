@@ -1,4 +1,5 @@
-import { createRequire } from "node:module";
+// @ts-expect-error omggif does not publish TypeScript declarations.
+import omggif from "omggif";
 import type { DecodedImageData, ImageDimensions } from "./types.ts";
 
 type GifReader = {
@@ -9,8 +10,7 @@ type GifReader = {
 };
 type Omggif = { GifReader: new (data: Uint8Array) => GifReader };
 
-const require = createRequire(import.meta.url);
-const { GifReader } = require("omggif") as Omggif;
+const { GifReader } = omggif as Omggif;
 
 const toGifBytes = (base64Data: string): Buffer => Buffer.from(base64Data, "base64");
 

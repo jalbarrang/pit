@@ -28,7 +28,21 @@ The workflow (`.github/workflows/release.yml`) then:
 2. Resolves the new version with `scripts/release-version.mjs`.
 3. Re-runs the full `pnpm test` gate.
 4. Writes the version into `package.json`, `packages/app/package.json`, and `packages/tui/package.json`, commits `release: vX.Y.Z` back to `main`, tags `vX.Y.Z`, and pushes both.
-5. Publishes a GitHub Release marked **latest**, with a `pit-X.Y.Z.tar.gz` source tarball (`git archive`) and notes auto-generated since the previous stable tag.
+5. Publishes a GitHub Release marked **latest**, with source and binary assets plus notes auto-generated since the previous stable tag.
+
+Stable release assets:
+
+```text
+pit-X.Y.Z.tar.gz
+pit-aarch64-apple-darwin.tar.gz
+pit-aarch64-apple-darwin.tar.gz.sha256
+pit-x86_64-apple-darwin.tar.gz
+pit-x86_64-apple-darwin.tar.gz.sha256
+pit-aarch64-unknown-linux-gnu.tar.gz
+pit-aarch64-unknown-linux-gnu.tar.gz.sha256
+pit-x86_64-unknown-linux-gnu.tar.gz
+pit-x86_64-unknown-linux-gnu.tar.gz.sha256
+```
 
 Total ceremony: one dispatch. No local tagging, no version editing, no changelog writing.
 
@@ -38,6 +52,24 @@ Total ceremony: one dispatch. No local tagging, no version editing, no changelog
 - **Skip condition**: the run exits early when `main` has not moved since the last `v*-nightly.*` tag — no commits, no release.
 - **Version**: `X.Y.Z-nightly.YYYYMMDD.<run_number>`, where `X.Y.Z` is the next patch above the version in the root `package.json`.
 - **Publishing**: always a GitHub **prerelease**, never marked latest, notes generated since the previous nightly tag. Nothing is committed back to `main` — the tag is created directly on the released commit.
+
+Nightly release assets:
+
+```text
+pit-X.Y.Z-nightly.YYYYMMDD.N.tar.gz
+pit-aarch64-apple-darwin.tar.gz
+pit-aarch64-apple-darwin.tar.gz.sha256
+pit-x86_64-apple-darwin.tar.gz
+pit-x86_64-apple-darwin.tar.gz.sha256
+pit-aarch64-unknown-linux-gnu.tar.gz
+pit-aarch64-unknown-linux-gnu.tar.gz.sha256
+pit-x86_64-unknown-linux-gnu.tar.gz
+pit-x86_64-unknown-linux-gnu.tar.gz.sha256
+```
+
+## Binary builds
+
+Bun 1.3.14 is a build-time dependency only; source-mode pit remains on Node 26. `scripts/build-binary.ts` owns the validated `Bun.build()` compile shape, including the embedded OpenTUI parser worker and baked release metadata. One Ubuntu runner installs every OpenTUI native package and cross-compiles all four targets. The runner launches its native linux-x64 binary in tmux and requires a rendered footer frame because a compile-only check cannot detect missing embedded themes, decoders, or worker assets; non-native targets receive executable existence and size checks.
 
 ## Version math
 

@@ -1,4 +1,5 @@
 import { chdir } from "node:process";
+import { channel, version } from "./domain/release-info.ts";
 import { AuthStore } from "./adapters/auth/index.ts";
 import { AppSession } from "./adapters/session/index.ts";
 import { runChatApp } from "./app.ts";
@@ -7,6 +8,10 @@ import { parseArgs } from "./args.ts";
 
 const main = async () => {
   const args = parseArgs(process.argv.slice(2));
+  if (args.version) {
+    console.log(`pit ${version} (${channel})`);
+    return;
+  }
   chdir(args.cwd);
   const authStore = new AuthStore();
   const trustStore = new TrustStore(args.cwd);

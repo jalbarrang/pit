@@ -1,4 +1,6 @@
-import { createRequire } from "node:module";
+import jpegModule from "jpeg-js";
+// @ts-expect-error upng-js does not publish TypeScript declarations.
+import UPNGModule from "upng-js";
 import { decodeGifFirstFrame } from "./gif.ts";
 import type { DecodedImageData } from "./types.ts";
 import { decodeWebp } from "./webp.ts";
@@ -9,9 +11,8 @@ type Upng = {
 };
 type Jpeg = { decode(data: Uint8Array, options?: { useTArray?: boolean }): { width: number; height: number; data: Uint8Array } };
 
-const require = createRequire(import.meta.url);
-const UPNG = require("upng-js") as Upng;
-const jpeg = require("jpeg-js") as Jpeg;
+const UPNG = UPNGModule as Upng;
+const jpeg = jpegModule as Jpeg;
 
 const toBytes = (base64Data: string): Uint8Array => new Uint8Array(Buffer.from(base64Data, "base64"));
 const toArrayBuffer = (bytes: Uint8Array): ArrayBuffer => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
