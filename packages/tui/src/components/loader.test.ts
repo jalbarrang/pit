@@ -5,6 +5,8 @@ import { CancellableLoader, Loader } from "./index.ts";
 
 class FakeRenderable {
   content = "";
+  fg?: unknown;
+  options: Record<string, unknown> = {};
   requestRenderCount = 0;
   requestRender(): void { this.requestRenderCount++; }
   add(): number { return 0; }
@@ -12,13 +14,14 @@ class FakeRenderable {
   getChildren(): Renderable[] { return []; }
   getChildrenCount(): number { return 0; }
 }
-const fake = () => new FakeRenderable() as unknown as Renderable & { content: string; requestRenderCount: number };
+const fake = () => new FakeRenderable() as unknown as Renderable & { content: string; fg?: unknown; options: Record<string, unknown>; requestRenderCount: number };
 
 describe("Loader", () => {
   it("advances spinner frames and stops its timer", async () => {
     const renderable = fake();
     const loader = new Loader({} as never, undefined, undefined, "Work", { frames: ["a", "b", "c"], intervalMs: 5 }, renderable as never);
     loader.start();
+    assert.equal(renderable.fg, "#ff5f87");
     const first = renderable.content;
     await new Promise((resolve) => setTimeout(resolve, 7));
     const second = renderable.content;

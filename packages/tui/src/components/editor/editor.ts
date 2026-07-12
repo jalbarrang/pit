@@ -21,6 +21,7 @@ export class Editor extends Component implements Focusable, EditorComponent {
   onChange?: (text: string) => void;
   borderColor?: string;
   private paddingX: number;
+  private readonly outerWidth: number;
   private maxHeight: number;
   private _focused = false;
   private autocomplete: EditorAutocomplete;
@@ -28,8 +29,9 @@ export class Editor extends Component implements Focusable, EditorComponent {
     super();
     const merged = { ...defaultEditorTheme, ...theme };
     this.paddingX = Math.max(0, Math.floor(options.paddingX ?? 0));
+    this.outerWidth = Math.max(3, Math.floor(options.width ?? 80));
     this.maxHeight = Math.max(1, Math.floor(options.maxHeight ?? 8));
-    this.model.width = Math.max(1, Math.floor(options.width ?? 80) - this.paddingX * 2);
+    this.model.width = Math.max(1, this.outerWidth - this.paddingX * 2 - 2);
     this.borderColor = merged.borderColor;
     this.autocomplete = new EditorAutocomplete(ctx, merged.selectList, options.autocompleteMaxVisible ?? 5);
     this.renderable = renderable ?? makeRenderable(ctx, merged);
@@ -47,7 +49,7 @@ export class Editor extends Component implements Focusable, EditorComponent {
   setText(text: string): void { this.model.setText(text); this.changed(); }
   addToHistory(text: string): void { this.model.addToHistory(text); }
   insertTextAtCursor(t: string): void { this.model.insert(t, true); this.changed(); }
-  setPaddingX(padding: number): void { this.paddingX = Math.max(0, Math.floor(padding)); this.update(); }
+  setPaddingX(padding: number): void { this.paddingX = Math.max(0, Math.floor(padding)); this.model.width = Math.max(1, this.outerWidth - this.paddingX * 2 - 2); this.update(); }
   setAutocompleteMaxVisible(maxVisible: number): void { this.autocomplete.setMaxVisible(maxVisible); }
   handleInput(data: string): void {
     if (this.handlePaste(data)) return;
@@ -92,7 +94,7 @@ export class Editor extends Component implements Focusable, EditorComponent {
     const width = this.model.width;
     const view = renderViewport(this.model.getState(), width, this.maxHeight, this.model.getCursor());
     this.renderable.content = buildEditorContent(view, { width, paddingX: this.paddingX, focused: this.focused, borderColor: this.borderColor, extraLines: this.autocomplete.render(width) });
-    this.renderable.width = width + this.paddingX * 2;
+    this.renderable.width = width + this.paddingX * 2 + 2;
     this.invalidate();
   }
 }

@@ -5,7 +5,8 @@ import { textOptions, type PitStyle } from "./component-style.ts";
 export interface LoaderIndicatorOptions { frames?: string[]; intervalMs?: number }
 const DEFAULT_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const DEFAULT_INTERVAL_MS = 80;
-type TextLike = Renderable & { content: string; options?: Record<string, unknown> };
+const DEFAULT_SPINNER_STYLE: PitStyle = { fg: "#ff5f87" };
+type TextLike = Renderable & { content: string; fg?: unknown; options?: Record<string, unknown> };
 const createRenderable = (ctx: RenderContext, style?: PitStyle): TextLike =>
   new TextRenderable(ctx, { content: "", height: 1, wrapMode: "none", ...textOptions(style) }) as unknown as TextLike;
 
@@ -29,7 +30,7 @@ export class Loader extends Component {
     requestRender?: () => void,
   ) {
     super();
-    this.spinnerStyle = spinnerStyle;
+    this.spinnerStyle = spinnerStyle ?? DEFAULT_SPINNER_STYLE;
     this.messageStyle = messageStyle;
     this.requestRender = requestRender;
     this.renderable = renderable ?? createRenderable(ctx, messageStyle);
@@ -68,7 +69,8 @@ export class Loader extends Component {
     const frame = this.frames[this.currentFrame] ?? "";
     const gap = frame ? " " : "";
     this.renderable.content = `${frame}${gap}${this.message}`;
-    this.renderable.options = { ...this.renderable.options, spinnerStyle: this.spinnerStyle, messageStyle: this.messageStyle };
+    this.renderable.fg = this.spinnerStyle?.fg;
+    this.renderable.options = { ...this.renderable.options, fg: this.spinnerStyle?.fg, spinnerStyle: this.spinnerStyle, messageStyle: this.messageStyle };
     this.requestRender?.();
     this.invalidate();
   }

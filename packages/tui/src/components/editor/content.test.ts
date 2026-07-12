@@ -16,14 +16,16 @@ describe("buildEditorContent", () => {
   it("omits the cursor chunk when unfocused", () => {
     const styled = buildEditorContent(view, { width: 5, paddingX: 0, focused: false });
     assert.equal(styled.chunks.some((chunk) => ((chunk.attributes ?? 0) & TextAttributes.INVERSE) !== 0), false);
-    assert.equal(styled.chunks.map((chunk) => chunk.text).join(""), "─────\nhello\n─────");
+    assert.equal(styled.chunks.map((chunk) => chunk.text).join(""), "╭─────╮\n│hello│\n╰─────╯");
   });
 
-  it("colors border bars when a border color is set", () => {
-    const styled = buildEditorContent(view, { width: 5, paddingX: 1, focused: false, borderColor: "#585858", extraLines: ["  hint"] });
-    const bars = styled.chunks.filter((chunk) => chunk.text.includes("─"));
-    assert.equal(bars.length, 2);
-    for (const barChunk of bars) assert.notEqual(barChunk.fg, undefined);
+  it("renders titled rounded chrome and colors every border", () => {
+    const styled = buildEditorContent(view, { width: 12, paddingX: 1, focused: false, borderColor: "#585858", extraLines: ["  hint"] });
+    const text = styled.chunks.map((chunk) => chunk.text).join("");
+    assert.match(text, /^╭─ message ────╮\n│ hello {8}│\n╰─{14}╯/);
+    const borders = styled.chunks.filter((chunk) => /[╭╮╰╯│─]/.test(chunk.text));
+    assert.ok(borders.length >= 4);
+    for (const borderChunk of borders) assert.notEqual(borderChunk.fg, undefined);
     assert.equal(styled.chunks.at(-1)?.text, "\n  hint");
   });
 });

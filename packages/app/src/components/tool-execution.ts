@@ -1,9 +1,9 @@
 import type { Renderable, RenderContext } from "@opentui/core";
-import { Box, Component, Image, Text, ansiTextToStyledText, formatImagePlaceholder, getImageDimensions, type TextContent } from "@pit/tui";
+import { Box, Component, Image, Text, formatImagePlaceholder, getImageDimensions, type TextContent } from "@pit/tui";
 import { isDiffText, type ToolRun } from "../domain/index.ts";
 import type { PitTheme } from "../domain/theming/index.ts";
 import { DiffViewComponent, type DiffLineFactory } from "./diff-view.ts";
-import { formatToolRun } from "./tool-format.ts";
+import { buildToolText } from "./tool-styled.ts";
 
 type BoxLike = Renderable & { add(child: Renderable): number; onMouseDown?: (event: any) => void; options?: Record<string, unknown> };
 type TextLike = Renderable & { content: TextContent; options?: Record<string, unknown> };
@@ -27,16 +27,15 @@ export class ToolExecutionComponent extends Component {
     this.theme = theme;
     this.ctx = ctx;
     this.diffInject = diffInject;
-    this.shell = new Box(ctx, 1, 0, this.bg(), box as never);
+    this.shell = new Box(ctx, 1, 0, undefined, box as never);
     this.renderable = this.shell.renderable as BoxLike;
-    this.text = new Text(ctx, formatToolRun(this.run), 0, 0, { fg: theme.color("toolOutput") }, textRenderable);
+    this.text = new Text(ctx, buildToolText(this.run, theme, false), 0, 0, undefined, textRenderable);
     this.renderable.onMouseDown = () => this.setExpanded(!this.expanded);
     this.renderBody(ctx);
   }
 
   update(run: ToolRun): void {
     this.run = { ...run };
-    this.shell.setBackground(this.bg());
     this.renderBody(this.ctx);
   }
 
@@ -49,19 +48,13 @@ export class ToolExecutionComponent extends Component {
     return this.text.getText();
   }
 
-  // opentui renders escape bytes literally, so parse ANSI (and drop kitty/OSC
-  // sequences) when tool output contains escapes; plain output stays a string.
-  private display(text: string): TextContent {
-    return text.includes("\x1b") ? ansiTextToStyledText(text) : text;
-  }
-
   private renderBody(ctx: RenderContext): void {
     for (const image of this.imageComponents) image.dispose();
     this.imageComponents = [];
     this.shell.clear();
     const diffText = this.diffText();
-    if (!diffText) { this.text.setText(this.display(formatToolRun(this.run, this.expanded))); this.shell.addChild(this.text); this.renderImages(ctx); return; }
-    this.text.setText(this.display(formatToolRun({ ...this.run, output: "" }, this.expanded)));
+    if (!diffText) { this.text.setText(buildToolText(this.run, this.theme, this.expanded)); this.shell.addChild(this.text); this.renderImages(ctx); return; }
+    this.text.setText(buildToolText(this.run, this.theme, this.expanded, false));
     this.shell.addChild(this.text);
     this.diff = new DiffViewComponent(ctx, diffText, this.theme, this.diffInject?.box, this.diffInject?.line);
     this.shell.addChild(this.diff);
@@ -84,11 +77,5 @@ export class ToolExecutionComponent extends Component {
 
   private diffText(): string | undefined {
     return ["edit", "write"].includes(this.run.name) && isDiffText(this.run.output) ? this.run.output : undefined;
-  }
-
-  private bg() {
-    if (this.run.status === "failed") return { bg: this.theme.color("toolErrorBg") };
-    if (this.run.status === "succeeded") return { bg: this.theme.color("toolSuccessBg") };
-    return { bg: this.theme.color("toolPendingBg") };
   }
 }

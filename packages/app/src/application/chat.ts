@@ -14,7 +14,7 @@ export class ChatController {
   private thinking?: ThinkingComponent;
   private status?: StatusIndicator;
   private readonly tools = new Map<string, ToolExecutionComponent>();
-  private readonly theme = createTheme("dark");
+  private get theme() { return (this.shell as ChatShell & { currentTheme?: ChatShell["currentTheme"] }).currentTheme?.() ?? createTheme("dark"); }
   private unsubscribe?: () => void;
   private readonly shell: ChatShell;
   private readonly session: SessionGateway<AgentSessionEvent>;

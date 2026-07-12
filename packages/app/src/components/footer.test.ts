@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import type { Renderable } from "@opentui/core";
 import type { TextContent } from "@pit/tui";
 import { createTheme } from "../domain/theming/index.ts";
-import { formatCwd, formatFooter, formatTokens } from "./footer-format.ts";
+import { formatCwd, formatFooter, formatFooterPlain, formatTokens } from "./footer-format.ts";
 import { FooterComponent } from "./footer.ts";
 
 class FakeText { content = ""; options: Record<string, unknown> = {}; requestRender() {} }
@@ -18,14 +18,18 @@ describe("footer formatting", () => {
     assert.equal(formatCwd("/Users/me/project", "/Users/me"), "~/project");
   });
 
-  it("shows required segments only", () => {
-    const text = formatFooter(base);
-    assert.equal(text, "/repo  │  anthropic/model  │  10 tok");
+  it("builds the required status chips", () => {
+    assert.deepEqual(formatFooter(base), {
+      branch: "",
+      cwd: "/repo",
+      model: "anthropic/model",
+      usage: "10 tok",
+    });
     assert.equal(formatTokens({ input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 }), "0 tok");
   });
 
   it("includes all optional segments when present", () => {
-    const text = formatFooter({
+    const chips = formatFooter({
       ...base,
       branch: "main",
       sessionName: "my-session",
@@ -33,24 +37,25 @@ describe("footer formatting", () => {
       contextPercent: 12.5,
       contextWindow: 200_000,
     });
-    assert.equal(
-      text,
-      "/repo  │  main  │  my-session  │  anthropic/model  │  high  │  10 tok  │  ctx 13% of 200k",
-    );
+    assert.deepEqual(chips, {
+      branch: "main · my-session",
+      cwd: "/repo",
+      model: "anthropic/model · high",
+      usage: "10 tok · ctx 13% of 200k",
+    });
   });
 
   it("shows context percent without window", () => {
-    assert.equal(
-      formatFooter({ ...base, contextPercent: 12.4 }),
-      "/repo  │  anthropic/model  │  10 tok  │  ctx 12%",
-    );
+    assert.equal(formatFooter({ ...base, contextPercent: 12.4 }).usage, "10 tok · ctx 12%");
   });
 
   it("omits empty optional segments", () => {
-    assert.equal(
-      formatFooter({ ...base, branch: "", sessionName: undefined, thinking: "" }),
-      "/repo  │  anthropic/model  │  10 tok",
-    );
+    assert.deepEqual(formatFooter({ ...base, branch: "", sessionName: undefined, thinking: "" }), {
+      branch: "",
+      cwd: "/repo",
+      model: "anthropic/model",
+      usage: "10 tok",
+    });
   });
 });
 
@@ -68,7 +73,7 @@ describe("FooterComponent notice", () => {
     const footer = new FooterComponent({} as never, createTheme("dark"), renderable);
     const info = { ...base, branch: "main", thinking: "high" };
     footer.update(info);
-    const expected = formatFooter(info);
+    const expected = formatFooterPlain(info);
     footer.notice("Copied 2 lines");
     footer.clearNotice();
     assert.equal(renderable.content, expected);

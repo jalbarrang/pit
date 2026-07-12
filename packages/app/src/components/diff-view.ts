@@ -1,4 +1,4 @@
-import type { RenderContext, Renderable } from "@opentui/core";
+import { StyledText, fg, type RenderContext, type Renderable } from "@opentui/core";
 import { Box, Component, Text } from "@pit/tui";
 import { classifyDiffLines, type DiffLineKind } from "../domain/conversation/index.ts";
 import type { PitTheme } from "../domain/theming/index.ts";
@@ -25,10 +25,23 @@ export class DiffViewComponent extends Component {
 
   setDiff(diffText: string): void {
     this.box.clear();
-    for (const line of classifyDiffLines(diffText)) {
+    const lines = classifyDiffLines(diffText);
+    lines.forEach((line, index) => {
       const color = this.color(line.kind);
-      this.box.addChild(this.makeLine?.(this.ctx, line.text, color) ?? new Text(this.ctx, line.text, 0, 0, { fg: color }));
-    }
+      const connector = index === 0 || index === lines.length - 1 ? "⎿" : "│";
+      const text = `  ${connector} ${line.text}`;
+      if (this.makeLine) {
+        this.box.addChild(this.makeLine(this.ctx, text, color));
+        return;
+      }
+      const styled = new StyledText([
+        { __isChunk: true, text: "  " },
+        fg(this.theme.color("connector"))(connector),
+        { __isChunk: true, text: " " },
+        fg(color)(line.text),
+      ]);
+      this.box.addChild(new Text(this.ctx, styled));
+    });
   }
 
   private color(kind: DiffLineKind): string {

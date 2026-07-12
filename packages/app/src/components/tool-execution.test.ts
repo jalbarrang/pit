@@ -10,6 +10,10 @@ class FakeBox { children: Renderable[] = []; options = {}; onMouseDown?: () => v
 class FakeText { content = ""; options: Record<string, unknown> = {}; requestRender() {} }
 const fakeBox = () => new FakeBox() as unknown as Renderable & { add(child: Renderable): number; options: Record<string, unknown> };
 const fakeText = () => new FakeText() as unknown as Renderable & { content: string; options: Record<string, unknown> };
+const contentText = (content: unknown): string => {
+  if (typeof content === "string") return content;
+  return (content as { chunks: Array<{ text: string }> }).chunks.map((chunk) => chunk.text).join("");
+};
 
 describe("ToolExecutionComponent", () => {
   it("renders collapsed and expanded tool output", () => {
@@ -18,7 +22,7 @@ describe("ToolExecutionComponent", () => {
     assert.match(formatToolRun(run), /… 2 more lines/);
     const component = new ToolExecutionComponent({} as never, run, createTheme("dark"), fakeBox(), fakeText());
     component.setExpanded(true);
-    assert.match(String(component.getText()), /line 1/);
+    assert.match(contentText(component.getText()), /line 1/);
   });
 
   it("parses ANSI in tool output into styled chunks (no raw escape bytes)", () => {
@@ -47,7 +51,7 @@ describe("ToolExecutionComponent", () => {
     const output = Array.from({ length: 8 }, (_, i) => `line ${i + 1}`).join("\n");
     const component = new ToolExecutionComponent({} as never, { id: "m", name: "read", args: {}, status: "succeeded", output }, createTheme("dark"), shellBox as never, fakeText());
     shellBox.onMouseDown?.();
-    assert.match(String(component.getText()), /line 1/);
+    assert.match(contentText(component.getText()), /line 1/);
   });
 
   it("routes edit diffs to a structured diff view", () => {

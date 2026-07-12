@@ -4,7 +4,12 @@ import type { PitTheme } from "../../domain/theming/index.ts";
 import { sanitizeMessageText } from "./escape-sanitize.ts";
 import { createMarkdownPort, type MarkdownPort } from "./markdown-port.ts";
 
-type BoxLike = Renderable & { add(child: Renderable): number; options?: Record<string, unknown> };
+type BoxLike = Renderable & {
+  add(child: Renderable): number;
+  border?: boolean | Array<"top" | "right" | "bottom" | "left">;
+  borderColor?: unknown;
+  options?: Record<string, unknown>;
+};
 
 export class UserMessageComponent extends Component {
   readonly renderable: BoxLike;
@@ -14,6 +19,13 @@ export class UserMessageComponent extends Component {
     super();
     const shell = new Box(ctx, 1, 0, { bg: theme.color("userMessageBg") }, box as never);
     this.renderable = shell.renderable as BoxLike;
+    this.renderable.border = ["left"];
+    this.renderable.borderColor = theme.color("interactive");
+    this.renderable.options = {
+      ...this.renderable.options,
+      border: ["left"],
+      borderColor: theme.color("interactive"),
+    };
     const safeText = sanitizeMessageText(text);
     this.markdown = markdown ?? createMarkdownPort(ctx, theme, safeText);
     this.markdown.setText(safeText);

@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process"; import { readFileSync, unlinkSync, writeFileSync } from "node:fs"; import { tmpdir } from "node:os"; import { join } from "node:path";
 import { BoxRenderable } from "@opentui/core";
 import { Container, Editor, TUI, Text, getKeybindings, type Component, type EditorComponent } from "@pit/tui";
-import { FooterComponent } from "../../components/footer.ts";
+import { FooterComponent } from "../../components/footer.ts"; import { GreetingComponent } from "../../components/greeting.ts";
 import { emptyTokens } from "../../components/footer-format.ts";
 import { parseBashInput } from "../../domain/bash/index.ts"; import { resolveEditorCommand } from "../../domain/keybindings/external-editor.ts"; import { formatPending } from "../../domain/keybindings/message-queue.ts"; import { nextModel } from "../../domain/keybindings/model-cycle.ts"; import { nextThinkingLevel } from "../../domain/keybindings/thinking-cycle.ts"; import { createTheme, getEditorTheme, type ThemeName } from "../../domain/theming/index.ts";
 import type { ImagePart, OpenableImage, SessionGateway } from "../../domain/index.ts";
@@ -24,7 +24,7 @@ export class ChatShell {
   private readonly followUpCtl = new FollowUpController({ editorText: () => this.editor.getText(), setEditorText: (t) => this.editor.setText(t), isStreaming: () => !!this.session?.isStreaming, hasSession: () => this.session !== undefined, promptFollowUp: (t) => this.session?.prompt(t, { streamingBehavior: "followUp" }) ?? Promise.resolve(), submit: (t) => void this.submit(t), addToHistory: (t) => this.editor.addToHistory?.(t), queued: () => this.session?.queuedMessages?.() ?? { steering: [], followUp: [] }, clearQueue: () => this.session?.clearQueue?.(), showPending: (lines) => this.showPendingWidget(lines) });
   private readonly bashRunner = createShellBashRunner({ session: () => this.session, ctx: () => this.tui.ctx, theme: () => this.settingsStore.get().theme, registerExpandable: (c) => this.registerExpandable(c), addMessage: (c) => this.chat.addMessage(c), notify: (t) => this.notify(t) });
   private readonly compactionCtl = new CompactionRunner({ isCompacting: () => !!this.session?.isCompacting?.(), canCompact: () => !!this.session?.compact, compact: (i) => this.session!.compact!(i), prompt: (t) => this.session?.prompt(t, promptOptionsForStreaming(!!this.session?.isStreaming)) ?? Promise.resolve(), notify: (t) => this.notify(t) });
-  private constructor(tui: TUI, chat: ScrollChat, editor: EditorComponent, footer: FooterComponent, root: Container) { this.tui = tui; this.chat = chat; this.editor = editor; this.footer = footer; this.root = root; this.extensionMount = new ExtensionMount(tui.ctx, footer, createTheme("dark")); }
+  private constructor(tui: TUI, chat: ScrollChat, editor: EditorComponent, footer: FooterComponent, root: Container, theme = createTheme("dark")) { this.tui = tui; this.chat = chat; this.editor = editor; this.footer = footer; this.root = root; this.extensionMount = new ExtensionMount(tui.ctx, footer, theme); }
   static async create(options: ChatShellOptions = {}): Promise<ChatShell> {
     const tui = await TUI.create();
     const settingsStore = options.settingsStore ?? new SettingsStore(options.cwd);
@@ -33,7 +33,7 @@ export class ChatShell {
     const chat = new ScrollChat(tui.ctx);
     const editor = new Editor(tui.ctx, getEditorTheme(theme), { maxHeight: 10, width: tui.renderer.width });
     const footer = new FooterComponent(tui.ctx, theme);
-    const shell = new ChatShell(tui, chat, editor, footer, root);
+    const shell = new ChatShell(tui, chat, editor, footer, root, theme);
     shell.settingsStore = settingsStore; shell.authStore = options.authStore; shell.trustStore = options.trustStore; shell.thinkingVisible = !settingsStore.get().hideThinkingBlock; shell.mount(options);
     return shell;
   }
@@ -42,7 +42,7 @@ export class ChatShell {
     this.root.addChild(this.extensionMount.headerSlot); this.root.addChild(this.chat);
     this.root.addChild(this.extensionMount.widgetAboveSlot); this.root.addChild(this.editor as never);
     this.root.addChild(this.extensionMount.widgetBelowSlot); this.root.addChild(this.extensionMount.footerSlot);
-    this.chat.addDummyLines(this.tui.ctx, options.dummyLines ?? []); this.refreshFooter();
+    this.showGreeting(); this.chat.addDummyLines(this.tui.ctx, options.dummyLines ?? []); this.refreshFooter();
     this.editor.setAutocompleteProvider?.(this.chrome.autocomplete(this.cwd));
     this.editor.onSubmit = (text) => void this.submit(text);
     (this.editor.renderable as typeof this.editor.renderable & { onMouseDown?: () => void }).onMouseDown = () => this.tui.setFocus(this.editor as never);
@@ -77,7 +77,7 @@ export class ChatShell {
   }
   private pasteImage(): void { const img = readClipboardImage(createClipboardImageDeps()); if (!img) return this.notify(process.platform === "darwin" ? "No image in clipboard" : "Paste image not supported on this platform"); this.pendingImages.push(img); this.rememberImages([img]); this.notify(`Image attached (${this.pendingImages.count})`); }
   private notify(text: string): void { this.chat.addMessage(new Text(this.tui.ctx, text, 1)); } notifyExtension(text: string): void { this.notify(text); } areToolsExpanded(): boolean { return this.toolsExpanded; } isThinkingVisible(): boolean { return this.thinkingVisible; }
-  mountHeader(component: Component | undefined): void { this.extensionMount.mountHeader(component); } mountFooter(component: Component | undefined): void { this.extensionMount.mountFooter(component); }
+  currentTheme() { return createTheme(this.settingsStore.get().theme); } showGreeting(): void { this.chat.addMessage(new GreetingComponent(this.tui.ctx, this.currentTheme())); } mountHeader(component: Component | undefined): void { this.extensionMount.mountHeader(component); } mountFooter(component: Component | undefined): void { this.extensionMount.mountFooter(component); }
   mountWidget(key: string, component: Component | undefined, placement?: "aboveEditor" | "belowEditor"): void { this.extensionMount.mountWidget(key, component, placement); }
   setWorkingMessage(message?: string): void { this.extensionMount.setWorkingMessage(message); } setWorkingVisible(visible: boolean): void { this.extensionMount.setWorkingVisible(visible); } flushCompactionQueue(): void { this.compactionCtl.flush(); }
   rememberImages(images: ImagePart[]): void { this.images.push(...images.map((image, i) => ({ ...image, id: `image-${this.images.length + i + 1}` }))); }
@@ -89,7 +89,7 @@ export class ChatShell {
   runCommand(text: string): Promise<boolean> { return this.chrome.handle(text); }
   refreshFooter(): void { const s = this.session, ctx = s?.contextUsage?.();
     this.footer.update({ cwd: this.cwd, modelId: s?.modelId ?? "no-model", tokens: s?.tokenUsage ?? emptyTokens(), branch: this.gitBranch(), sessionName: s?.sessionName?.(), thinking: s?.thinkingLevel, contextPercent: ctx?.percent, contextWindow: ctx?.window }); }
-  applyTheme(themeName: ThemeName): void { const theme = createTheme(themeName); this.editor.borderColor = getEditorTheme(theme).borderColor; this.footer.applyTheme(theme); this.refreshFooter(); }
+  applyTheme(themeName: ThemeName): void { const theme = createTheme(themeName); this.editor.borderColor = getEditorTheme(theme).borderColor; this.footer.applyTheme(theme); this.extensionMount.applyTheme(theme); this.refreshFooter(); }
   registerExpandable(component: Expandable): void { component.setExpanded(this.toolsExpanded); this.expandables.push(component); } registerThinking(component: Expandable): void { component.setExpanded(this.thinkingVisible); this.thinkingBlocks.push(component); }
   private toggleTools(): void { this.setToolsExpanded(!this.toolsExpanded); }
   private async submit(text: string): Promise<void> {

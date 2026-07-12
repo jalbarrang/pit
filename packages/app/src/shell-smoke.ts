@@ -7,6 +7,6 @@ shell.tui.routeKeyEvent({ raw: "i" });
 shell.tui.routeKeyEvent({ raw: "\u001b[5~" });
 setTimeout(() => {
   console.log(`shell smoke editor=${JSON.stringify(shell.editor.getText())}`);
-  console.log(`shell smoke footer=${String(shell.footer.renderable.content)}`);
+  console.log(`shell smoke footer=${shell.footer.getText()}`);
   shell.stop();
 }, 500);

@@ -16,7 +16,7 @@ export class ExtensionMount {
   private workingMessage = "thinking…";
   private workingVisible = true;
   private readonly footer: Component;
-  private readonly theme: PitTheme;
+  private theme: PitTheme;
 
   constructor(ctx: RenderContext, footer: Component, theme: PitTheme) {
     this.footer = footer;
@@ -36,6 +36,11 @@ export class ExtensionMount {
     this.above.delete(key); this.below.delete(key);
     if (component) (placement === "belowEditor" ? this.below : this.above).set(key, component);
     this.renderWidgets();
+  }
+
+  applyTheme(theme: PitTheme): void {
+    this.theme = theme;
+    this.activeStatus?.applyTheme(theme);
   }
 
   setWorkingMessage(message?: string): void {

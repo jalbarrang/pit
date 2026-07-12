@@ -19,9 +19,12 @@ describe("DiffViewComponent", () => {
     const box = new FakeBox();
     const line = (_ctx: never, text: string, fg: string) => new Text({} as never, text, 0, 0, { fg }, new FakeText() as never);
     new DiffViewComponent({} as never, "-1 old\n+1 new\n 2 ctx", createTheme("dark"), box as never, line as never);
-    const opts = box.children.map((child) => (child as Renderable & { options: Record<string, unknown> }).options);
-    assert.equal(opts[0].fg, "#cc6666");
-    assert.equal(opts[1].fg, "#b5bd68");
-    assert.equal(opts[2].fg, "#808080");
+    const rows = box.children as Array<Renderable & { content: string; options: Record<string, unknown> }>;
+    assert.equal(rows[0].content, "  ⎿ -1 old");
+    assert.equal(rows[1].content, "  │ +1 new");
+    assert.equal(rows[2].content, "  ⎿  2 ctx");
+    assert.equal(rows[0].options.fg, "#ff6b6b");
+    assert.equal(rows[1].options.fg, "#7fd88f");
+    assert.equal(rows[2].options.fg, "#6b6478");
   });
 });

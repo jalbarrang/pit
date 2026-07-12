@@ -19,21 +19,29 @@ export type FooterInfo = {
   contextWindow?: number;
 };
 
+export interface FooterChips {
+  branch: string;
+  cwd: string;
+  model: string;
+  usage: string;
+}
+
 const formatContext = (percent?: number, window?: number): string | undefined => {
   if (percent === undefined) return undefined;
   const base = `ctx ${Math.round(percent)}%`;
   return window === undefined ? base : `${base} of ${Math.round(window / 1000)}k`;
 };
 
-export const formatFooter = (info: FooterInfo): string =>
-  [
-    formatCwd(info.cwd),
-    info.branch,
-    info.sessionName,
-    info.modelId,
-    info.thinking,
-    formatTokens(info.tokens),
-    formatContext(info.contextPercent, info.contextWindow),
-  ]
-    .filter((s): s is string => !!s)
-    .join("  │  ");
+const join = (...values: Array<string | undefined>): string => values.filter(Boolean).join(" · ");
+
+export const formatFooter = (info: FooterInfo): FooterChips => ({
+  branch: join(info.branch, info.sessionName),
+  cwd: formatCwd(info.cwd),
+  model: join(info.modelId, info.thinking),
+  usage: join(formatTokens(info.tokens), formatContext(info.contextPercent, info.contextWindow)),
+});
+
+export const formatFooterPlain = (info: FooterInfo): string => {
+  const chips = formatFooter(info);
+  return ["pit", chips.branch, chips.cwd, chips.model, chips.usage].filter(Boolean).join("  ");
+};

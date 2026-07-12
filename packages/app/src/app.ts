@@ -47,7 +47,7 @@ export const runChatApp = async (options: RunChatAppOptions = {}): Promise<ChatS
     firstRunSetup: options.firstRunSetup,
     reloadKeybindings: () => keybindingsStore.reload(mgr),
     onAuthConfigured: createSession ? async () => { const session = await createSession(); shell.replaceSession(session); attach(session); } : undefined,
-    newSession: createSession ? async () => { const next = await createSession(); shell.replaceSession(next); attach(next); shell.chat.clear(); } : undefined,
+    newSession: createSession ? async () => { const next = await createSession(); shell.replaceSession(next); attach(next); shell.chat.clear(); shell.showGreeting(); } : undefined,
     switchSession: async (path) => {
       const next = await store.resume(path);
       shell.replaceSession(next);
