@@ -15,6 +15,10 @@ The root `install` script is the primary end-user install path: `curl -fsSL http
 
 Flags: `--channel stable` (default; GitHub `/releases/latest`) or `--channel nightly` (first prerelease in `/releases?per_page=30`); `--version X.Y.Z` pins an exact tag (leading `v` stripped). Env overrides: `PIT_REPO` (default `jalbarrang/pit`), `PIT_INSTALL_DIR` (default `$HOME/.pit/bin`). Supported targets match `scripts/build-binary-lib.ts`: `aarch64-apple-darwin`, `x86_64-apple-darwin`, `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`. Assets are `pit-<triple>.tar.gz` plus `pit-<triple>.tar.gz.sha256` (shasum -a 256); the archive contains a single `pit` executable at the root. Checksums are verified when the `.sha256` companion is published. Until a stable release publishes binary assets, the default channel errors clearly — use `--channel nightly` or `--version` against a nightly tag.
 
+## Self-update
+
+Compiled binaries know their own version and channel (baked by `scripts/build-binary.ts` into `packages/app/src/domain/release-info.ts`). On startup, after the first frame, pit checks GitHub Releases for a newer release on its own channel (at most once per 24h, state in `~/.pit/update-check.json`) and surfaces `pit vX.Y.Z available — run pit upgrade` as a chat notice — it never auto-downloads or auto-installs. `pit upgrade [--channel stable|nightly] [--version X.Y.Z]` downloads the matching asset, verifies the sha256, and atomically swaps the running binary in place; an explicit `--version` also permits downgrades. Source-mode pit (channel `dev`) never checks and `pit upgrade` refuses with a pointer to `git pull`. Offline or rate-limited checks fail silently.
+
 ## Cutting a stable release
 
 From a green `main`:
