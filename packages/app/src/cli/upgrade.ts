@@ -36,7 +36,12 @@ export const runUpgrade = async (args: UpgradeArgs, deps: UpgradeDependencies = 
     tag = pickLatest(requestedChannel, releases);
     if (!tag) throw new Error(`no ${requestedChannel} release found`);
   }
-  if (requestedChannel === currentChannel && !availableUpdate(currentVersion, currentChannel, [{ tag, prerelease: requestedChannel === "nightly" }])) {
+  // An explicit --version is a pin: install exactly that release (downgrades allowed);
+  // only short-circuit when it is literally the running version.
+  const upToDate = args.version
+    ? tag === `v${currentVersion.replace(/^v/, "")}`
+    : requestedChannel === currentChannel && !availableUpdate(currentVersion, currentChannel, [{ tag, prerelease: requestedChannel === "nightly" }]);
+  if (upToDate) {
     write(`pit v${currentVersion} is already up to date`);
     return 0;
   }

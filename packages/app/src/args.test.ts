@@ -45,4 +45,21 @@ describe("runUpgrade", () => {
     assert.equal(installed, "v1.1.0");
     assert.deepEqual(output, ["pit v1.0.0 → v1.1.0"]);
   });
+
+  it("treats an explicit --version as a pin that allows downgrades", async () => {
+    let installed = "";
+    const result = await runUpgrade({ version: "0.9.0" }, { currentChannel: "stable", currentVersion: "1.0.0",
+      fetchReleases: async () => { throw new Error("pins must not fetch"); },
+      install: async (tag) => { installed = tag; }, write: () => {} });
+    assert.equal(result, 0);
+    assert.equal(installed, "v0.9.0");
+  });
+
+  it("short-circuits a pin equal to the running version", async () => {
+    const output: string[] = [];
+    const result = await runUpgrade({ version: "1.0.0" }, { currentChannel: "stable", currentVersion: "1.0.0",
+      install: async () => { throw new Error("must not install"); }, write: (message) => output.push(message) });
+    assert.equal(result, 0);
+    assert.deepEqual(output, ["pit v1.0.0 is already up to date"]);
+  });
 });
