@@ -19,3 +19,12 @@ dist/
 
 .references/
 
+# Impeccable / harness-local state (machine-specific, never shared)
+.impeccable/config.local.json
+.claude/settings.local.json
+
+# Impeccable skill bundles (installed per-machine, one copy per harness)
+.pi/skills/impeccable/
+.claude/skills/impeccable/
+.cursor/skills/impeccable/
+
