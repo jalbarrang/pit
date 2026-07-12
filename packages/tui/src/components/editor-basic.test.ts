@@ -52,7 +52,7 @@ describe("Editor basic editing", () => {
   });
 
   it("moves vertically through wrapped visual lines", () => {
-    const editor = new Editor({} as never, {}, { width: 6 }, fake() as never);
+    const editor = new Editor({} as never, {}, { width: 8 }, fake() as never);
     editor.setText("abcdef");
     editor.handleInput("\x01");
     editor.handleInput("\x1b[B");

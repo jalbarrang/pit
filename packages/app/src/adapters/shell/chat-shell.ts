@@ -29,7 +29,7 @@ export class ChatShell {
     const tui = await TUI.create();
     const settingsStore = options.settingsStore ?? new SettingsStore(options.cwd);
     const theme = createTheme(settingsStore.get().theme);
-    const root = new Container(tui.ctx, new BoxRenderable(tui.ctx, { flexDirection: "column", width: "100%", height: "100%" }));
+    const root = new Container(tui.ctx, new BoxRenderable(tui.ctx, { flexDirection: "column", width: "100%", height: "100%", backgroundColor: theme.color("background") }));
     const chat = new ScrollChat(tui.ctx);
     const editor = new Editor(tui.ctx, getEditorTheme(theme), { maxHeight: 10, width: tui.renderer.width });
     const footer = new FooterComponent(tui.ctx, theme);
@@ -89,7 +89,7 @@ export class ChatShell {
   runCommand(text: string): Promise<boolean> { return this.chrome.handle(text); }
   refreshFooter(): void { const s = this.session, ctx = s?.contextUsage?.();
     this.footer.update({ cwd: this.cwd, modelId: s?.modelId ?? "no-model", tokens: s?.tokenUsage ?? emptyTokens(), branch: this.gitBranch(), sessionName: s?.sessionName?.(), thinking: s?.thinkingLevel, contextPercent: ctx?.percent, contextWindow: ctx?.window }); }
-  applyTheme(themeName: ThemeName): void { const theme = createTheme(themeName); this.editor.borderColor = getEditorTheme(theme).borderColor; this.footer.applyTheme(theme); this.extensionMount.applyTheme(theme); this.refreshFooter(); }
+  applyTheme(themeName: ThemeName): void { const theme = createTheme(themeName); this.editor.borderColor = getEditorTheme(theme).borderColor; (this.root.renderable as BoxRenderable).backgroundColor = theme.color("background") as never; this.footer.applyTheme(theme); this.extensionMount.applyTheme(theme); this.refreshFooter(); }
   registerExpandable(component: Expandable): void { component.setExpanded(this.toolsExpanded); this.expandables.push(component); } registerThinking(component: Expandable): void { component.setExpanded(this.thinkingVisible); this.thinkingBlocks.push(component); }
   private toggleTools(): void { this.setToolsExpanded(!this.toolsExpanded); }
   private async submit(text: string): Promise<void> {

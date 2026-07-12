@@ -16,13 +16,13 @@ describe("buildEditorContent", () => {
   it("omits the cursor chunk when unfocused", () => {
     const styled = buildEditorContent(view, { width: 5, paddingX: 0, focused: false });
     assert.equal(styled.chunks.some((chunk) => ((chunk.attributes ?? 0) & TextAttributes.INVERSE) !== 0), false);
-    assert.equal(styled.chunks.map((chunk) => chunk.text).join(""), "╭─────╮\n│hello│\n╰─────╯");
+    assert.equal(styled.chunks.map((chunk) => chunk.text).join(""), "╭───────╮\n│ hello │\n╰───────╯");
   });
 
   it("renders titled rounded chrome and colors every border", () => {
     const styled = buildEditorContent(view, { width: 12, paddingX: 1, focused: false, borderColor: "#585858", extraLines: ["  hint"] });
     const text = styled.chunks.map((chunk) => chunk.text).join("");
-    assert.match(text, /^╭─ message ────╮\n│ hello {8}│\n╰─{14}╯/);
+    assert.match(text, /^╭─ message ─{6}╮\n│ {2}hello {9}│\n╰─{16}╯/);
     const borders = styled.chunks.filter((chunk) => /[╭╮╰╯│─]/.test(chunk.text));
     assert.ok(borders.length >= 4);
     for (const borderChunk of borders) assert.notEqual(borderChunk.fg, undefined);

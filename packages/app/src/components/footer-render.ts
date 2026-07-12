@@ -12,13 +12,14 @@ export type FooterParts = {
   notice: TextRenderable;
 };
 
+// opentui does not paint padding cells with the text bg, so chips carry their
+// own space padding in content instead of paddingX — keeps segments contiguous.
 const segment = (ctx: RenderContext, content = "", shrink = false): TextRenderable => new TextRenderable(ctx, {
   content,
   width: "auto",
   height: 1,
   minWidth: shrink ? 0 : undefined,
   flexShrink: shrink ? 1 : 0,
-  paddingX: 1,
   wrapMode: "none",
   truncate: true,
 });
@@ -27,13 +28,13 @@ export const createFooterParts = (ctx: RenderContext): FooterParts => {
   const root = new BoxRenderable(ctx, { flexDirection: "row", width: "100%", height: 1, border: false });
   const parts: FooterParts = {
     root,
-    brand: segment(ctx, "pit"),
+    brand: segment(ctx, " pit "),
     branch: segment(ctx, "", true),
     cwd: segment(ctx, "", true),
     spacer: new BoxRenderable(ctx, { flexGrow: 1, height: 1, border: false }),
     model: segment(ctx, "", true),
     usage: segment(ctx),
-    notice: new TextRenderable(ctx, { content: "", width: "100%", height: 1, paddingX: 1 }),
+    notice: new TextRenderable(ctx, { content: "", width: "100%", height: 1 }),
   };
   for (const part of [parts.brand, parts.branch, parts.cwd, parts.spacer, parts.model, parts.usage, parts.notice]) root.add(part);
   parts.notice.visible = false;

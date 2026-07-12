@@ -36,7 +36,7 @@ export class FooterComponent extends Component {
 
   notice(text: string): void {
     if (this.legacyText) return this.legacyText.setText(text);
-    this.parts!.notice.content = text;
+    this.parts!.notice.content = ` ${text}`;
     setFooterContentVisible(this.parts!, false);
     this.parts!.notice.visible = true;
   }
@@ -66,7 +66,7 @@ export class FooterComponent extends Component {
   }
 
   private setChip(chip: FooterParts["branch"], text: string): void {
-    chip.content = text;
+    chip.content = text.length > 0 ? ` ${text} ` : "";
     chip.visible = text.length > 0;
   }
 }
