@@ -4,7 +4,15 @@ pit is a fullscreen terminal frontend for the pi coding agent, backed by OpenTUI
 
 ## Install & Run
 
-Requirements: Node 26.4.0 or newer, pnpm 11.10.0 for workspace development, and a terminal/runtime that can load OpenTUI's native FFI package for your platform.
+Primary install (prebuilt binary):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jalbarrang/pit/main/install | sh
+```
+
+Until the first stable release with binary assets ships, use the nightly channel: `curl -fsSL https://raw.githubusercontent.com/jalbarrang/pit/main/install | sh -s -- --channel nightly`. Pin an exact version with `--version X.Y.Z` (leading `v` optional). The binary lands in `~/.pit/bin` (`PIT_INSTALL_DIR` overrides); see [DEPLOY.md](DEPLOY.md) for flags and env overrides.
+
+From source (development): Node 26.4.0 or newer, pnpm 11.10.0 for workspace development, and a terminal/runtime that can load OpenTUI's native FFI package for your platform.
 
 ```bash
 pnpm install
@@ -16,8 +24,6 @@ pnpm test
 ```
 
 The `pit` wrapper resolves the app entry relative to the real wrapper path, so it works from any current directory and through symlinks such as `~/bin/pit`. It checks `node` on `PATH` for Node >=26.4.0, then launches `packages/app/src/main.ts` with `--experimental-ffi`.
-
-Prebuilt per-platform binaries are attached to stable and nightly GitHub Releases. Download the tarball for your platform directly for now; an installer script lands in a later plan.
 
 ### npm publishability
 

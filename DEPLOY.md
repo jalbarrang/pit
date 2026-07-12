@@ -9,6 +9,12 @@ pit ships from `main` on two release channels — **stable** and **nightly** —
 3. **Stable = human intent, nightly = automation.** A stable release is a deliberate act: a human picks the moment and the semver meaning of the change. Everything mechanical after that decision is automated. Nightly requires no decision, so no human is involved.
 4. **Channels never collide.** Nightlies version themselves as the next patch above the current stable (`0.1.0` stable → `0.1.1-nightly.*`), so they sort above the released stable and below the next one. Release notes diff each channel only against its own previous tag.
 
+## Installer
+
+The root `install` script is the primary end-user install path: `curl -fsSL https://raw.githubusercontent.com/jalbarrang/pit/main/install | sh`.
+
+Flags: `--channel stable` (default; GitHub `/releases/latest`) or `--channel nightly` (first prerelease in `/releases?per_page=30`); `--version X.Y.Z` pins an exact tag (leading `v` stripped). Env overrides: `PIT_REPO` (default `jalbarrang/pit`), `PIT_INSTALL_DIR` (default `$HOME/.pit/bin`). Supported targets match `scripts/build-binary-lib.ts`: `aarch64-apple-darwin`, `x86_64-apple-darwin`, `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`. Assets are `pit-<triple>.tar.gz` plus `pit-<triple>.tar.gz.sha256` (shasum -a 256); the archive contains a single `pit` executable at the root. Checksums are verified when the `.sha256` companion is published. Until a stable release publishes binary assets, the default channel errors clearly — use `--channel nightly` or `--version` against a nightly tag.
+
 ## Cutting a stable release
 
 From a green `main`:
