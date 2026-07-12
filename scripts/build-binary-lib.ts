@@ -30,13 +30,17 @@ export const parseArgs = (args: string[]): { target: TargetName; version: string
 const nativeTarget = (): string => `${process.platform}-${process.arch}`;
 const tmux = (...args: string[]) => Bun.spawnSync(["tmux", "-L", "pitbuild", ...args], { stdout: "pipe", stderr: "pipe" });
 
-export const verifyBinary = async (target: TargetName, binary: string, repo: string): Promise<void> => {
+export const verifyBinary = async (target: TargetName, binary: string, repo: string, version: string): Promise<void> => {
   const size = statSync(binary).size;
   if (size <= 20 * 1024 * 1024) throw new Error(`binary is too small: ${size} bytes`);
   if (target !== nativeTarget()) {
     console.log(`Cross-target check passed (${Math.round(size / 1024 / 1024)} MB); skipping frame smoke test.`);
     return;
   }
+  const versionRun = Bun.spawnSync([binary, "--version"], { stdout: "pipe", stderr: "pipe" });
+  const versionOut = versionRun.stdout.toString().trim();
+  if (versionRun.exitCode !== 0 || !versionOut.includes(version)) throw new Error(`--version reported "${versionOut}", expected it to include "${version}"`);
+  console.log(`Version smoke test passed (${versionOut}).`);
   if (!Bun.which("tmux")) throw new Error("tmux is required for the native frame smoke test");
   tmux("kill-server");
   const command = `'${binary.replaceAll("'", "'\\''")}' --cwd '${repo.replaceAll("'", "'\\''")}'`;

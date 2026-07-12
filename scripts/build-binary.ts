@@ -40,5 +40,5 @@ if (!result.success) {
   for (const log of result.logs) console.error(log);
   throw new Error(`Bun.build failed for ${target}`);
 }
-await verifyBinary(target, binary, repo);
+await verifyBinary(target, binary, repo, version);
 await packageBinary(binary, dist, config.triple);
