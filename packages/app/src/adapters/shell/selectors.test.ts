@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { defaultPitSettings } from "../../domain/chrome/index.ts";
 import { ChromeSelectors } from "./selectors.ts";
 import { makeHost, settle } from "./selectors-fixture.ts";
 
@@ -50,7 +51,7 @@ test("theme previews on highlight and restores on cancel", () => {
 
 test("no session notifies instead of opening", () => {
   const { log, overlays } = makeHost();
-  const selectors = new ChromeSelectors({ tui: () => ({}) as never, session: () => undefined, notify: (t) => void log.push(t), refreshFooter: () => {}, settings: () => ({ theme: "dark", showImages: false, autoResizeImages: true, blockImages: false, editorPaddingX: 0, autocompleteMaxVisible: 5 }), setSetting: async () => ({ theme: "dark", showImages: false, autoResizeImages: true, blockImages: false, editorPaddingX: 0, autocompleteMaxVisible: 5 }), applyTheme: () => {} });
+  const selectors = new ChromeSelectors({ tui: () => ({}) as never, session: () => undefined, notify: (t) => void log.push(t), refreshFooter: () => {}, settings: () => defaultPitSettings(), setSetting: async () => defaultPitSettings(), applyTheme: () => {} });
   selectors.openModel("");
   selectors.openThinking();
   assert.equal(overlays.length, 0);

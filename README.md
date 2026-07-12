@@ -46,6 +46,7 @@ Version math lives in `scripts/release-version.mjs` (`stable --bump …` / `nigh
 - `setWorkingIndicator` visual variants / `setHiddenThinkingLabel` are accepted by extension compatibility code but only partially reflected by current streaming chrome.
 - `addAutocompleteProvider` from extensions is currently a no-op.
 - Deep pi-tui internals and extensions that import `@earendil-works/pi-tui` directly may not bridge cleanly unless they expose `render(width): string[]` or a pit-native `.renderable`.
+- `/settings` covers the pi settings that affect pit or the SDK (theme, auto-compact, steering/follow-up modes, transport, HTTP idle timeout, hide thinking, default project trust, tree filter mode, image options, editor padding, autocomplete size). Settings that only affect the pi CLI or pi-tui's string renderer (collapse changelog, quiet startup, install telemetry, skill commands, warnings, cache-miss notices, clear-on-shrink, hardware cursor, terminal progress, output padding) are intentionally not exposed; set them via pi or `~/.pi/agent/settings.json` — the file is shared, so values written by either tool apply to both.
 
 ## Working agreements
 

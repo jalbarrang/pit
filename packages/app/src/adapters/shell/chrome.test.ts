@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { defaultPitSettings } from "../../domain/chrome/index.ts";
 import { ShellChrome } from "./chrome.ts";
 
 const makeChrome = () => {
@@ -10,8 +11,8 @@ const makeChrome = () => {
     tui: () => ({}) as never,
     session: () => undefined,
     refreshFooter: () => {},
-    settings: () => ({ theme: "dark" as const, showImages: false, autoResizeImages: true, blockImages: false, editorPaddingX: 0, autocompleteMaxVisible: 5 }),
-    setSetting: async () => ({ theme: "dark" as const, showImages: false, autoResizeImages: true, blockImages: false, editorPaddingX: 0, autocompleteMaxVisible: 5 }),
+    settings: () => defaultPitSettings(),
+    setSetting: async () => defaultPitSettings(),
     applyTheme: () => {},
     auth: () => undefined,
     trust: () => undefined,

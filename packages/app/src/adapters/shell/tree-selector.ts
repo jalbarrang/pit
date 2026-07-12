@@ -2,7 +2,7 @@ import type { RenderContext } from "@opentui/core";
 import type { TUI } from "@pit/tui";
 import { InputOverlay } from "../../components/chrome/input-overlay.ts";
 import { TreeOverlay, type TreeOverlayOptions } from "../../components/chrome/tree-overlay.ts";
-import type { SessionGateway } from "../../domain/index.ts";
+import type { SessionGateway, TreeFilter } from "../../domain/index.ts";
 
 export interface TreeSelectorHost {
   tui(): TUI;
@@ -12,6 +12,7 @@ export interface TreeSelectorHost {
   switchSession(path: string): Promise<void>;
   openInput(prompt: string, onSubmit: (value: string) => void): void;
   setEditorText?(text: string): void;
+  initialTreeFilter?(): TreeFilter;
 }
 
 type Factory = (ctx: RenderContext, options: TreeOverlayOptions) => TreeOverlay;
@@ -36,7 +37,8 @@ export class TreeSelectors {
     const s = this.host.session();
     if (!s?.tree) return this.host.notify("Session tree unavailable");
     const tui = this.host.tui();
-    const overlay = this.make(tui.ctx, { nodes: s.tree(), leafId: s.leafId?.() });
+    const initialFilter = this.host.initialTreeFilter?.();
+    const overlay = this.make(tui.ctx, { nodes: s.tree(), leafId: s.leafId?.(), ...(initialFilter ? { initialFilter } : {}) });
     const handle = tui.showOverlay(overlay as never, { width: width(tui), anchor: "center" });
     overlay.setWidth(width(tui));
     overlay.onCancel = () => handle.hide();

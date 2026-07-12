@@ -1,5 +1,6 @@
 export * from "./auth-select.ts";
 export * from "./help-items.ts";
+export * from "./http-idle.ts";
 export * from "./model-select.ts";
 export * from "./mouse-routing.ts";
 export * from "./oauth-flow.ts";

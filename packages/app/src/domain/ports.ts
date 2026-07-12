@@ -66,6 +66,8 @@ export interface SessionGateway<TEvent = unknown> {
   compact?(instructions?: string): Promise<{ summary: string; tokensBefore: number; tokensAfter?: number }>;
   abortCompaction?(): void;
   isCompacting?(): boolean;
+  /** Apply a changed setting to the live session; returns false when it has no live effect. */
+  applySessionSetting?(id: string, value: string): boolean;
 }
 
 export interface TokenUsage {

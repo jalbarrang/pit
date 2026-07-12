@@ -1,4 +1,5 @@
-import type { SelectItem } from "@pit/tui";
+import type { SelectItem, SettingItem } from "@pit/tui";
+import { defaultPitSettings } from "../../domain/chrome/index.ts";
 import { ChromeSelectors, type SelectorHost } from "./selectors.ts";
 
 export class FakeOverlay {
@@ -8,6 +9,16 @@ export class FakeOverlay {
   readonly options: { items: SelectItem[]; initialIndex?: number; searchable?: boolean; initialSearch?: string };
   constructor(options: { items: SelectItem[]; initialIndex?: number; searchable?: boolean; initialSearch?: string }) { this.options = options; }
   setWidth(): void {}
+}
+
+export class FakeSettingsOverlay {
+  onChange?: (id: string, value: string) => void;
+  onCancel?: () => void;
+  readonly items: SettingItem[];
+  readonly updates: string[] = [];
+  constructor(items: SettingItem[]) { this.items = items; }
+  setWidth(): void {}
+  updateValue(id: string, value: string): void { this.updates.push(`${id}=${value}`); }
 }
 
 export const makeHost = () => {
@@ -27,27 +38,34 @@ export const makeHost = () => {
     setModel: async (ref: { provider: string; id: string }) => void log.push(`setModel:${ref.provider}/${ref.id}`),
     availableThinkingLevels: () => ["off", "low", "high"],
     setThinkingLevel: (level: string) => void log.push(`setThinking:${level}`),
+    applySessionSetting: (id: string, value: string) => { log.push(`session:${id}:${value}`); return id === "steeringMode" || id === "followUpMode" || id === "autoCompact"; },
   };
   const host: SelectorHost = {
     tui: () => tui as never,
     session: () => session as never,
     notify: (text) => void log.push(`notify:${text}`),
     refreshFooter: () => void log.push("footer"),
-    settings: () => ({ theme: "dark", showImages: false, autoResizeImages: true, blockImages: false, editorPaddingX: 0, autocompleteMaxVisible: 5 }),
-    setSetting: async (id, value) => { log.push(`setting:${id}:${value}`); return { theme: value === "light" ? "light" : "dark", showImages: false, autoResizeImages: true, blockImages: false, editorPaddingX: 0, autocompleteMaxVisible: 5 }; },
+    settings: () => defaultPitSettings(),
+    setSetting: async (id, value) => { log.push(`setting:${id}:${value}`); return { ...defaultPitSettings(), theme: value === "light" ? "light" : "dark" }; },
     applyTheme: (theme) => void log.push(`theme:${theme}`),
+    setThinkingVisible: (visible) => void log.push(`thinkingVisible:${visible}`),
     listSessions: async () => [
       { path: "/s/current.jsonl", id: "c", firstMessage: "current work", modified: new Date(2), messageCount: 5 },
       { path: "/s/other.jsonl", id: "o", firstMessage: "other work", modified: new Date(1), messageCount: 9 },
     ],
     switchSession: async (path) => void log.push(`switch:${path}`),
   };
+  const settingsOverlays: FakeSettingsOverlay[] = [];
   const selectors = new ChromeSelectors(host, (_ctx, options) => {
     const overlay = new FakeOverlay(options);
     overlays.push(overlay);
     return overlay as never;
+  }, (_ctx, options) => {
+    const overlay = new FakeSettingsOverlay(options.items);
+    settingsOverlays.push(overlay);
+    return overlay as never;
   });
-  return { selectors, log, overlays, hidden: () => hidden, host };
+  return { selectors, log, overlays, settingsOverlays, hidden: () => hidden, host };
 };
 
 export const settle = (): Promise<void> => new Promise((resolve) => setImmediate(resolve));

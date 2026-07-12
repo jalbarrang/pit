@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { cycleFilter, nodeVisible, type TreeFilter } from "./filters.ts";
+import { cycleFilter, filterFromSetting, nodeVisible, type TreeFilter } from "./filters.ts";
 import type { TreeNode } from "./types.ts";
 
 const n = (partial: Partial<TreeNode> & Pick<TreeNode, "id" | "kind">): TreeNode => ({
@@ -45,5 +45,16 @@ describe("cycleFilter", () => {
     for (let i = 0; i < order.length; i++) {
       assert.equal(cycleFilter(order[i]!, -1), order[(i - 1 + order.length) % order.length]);
     }
+  });
+});
+
+describe("filterFromSetting", () => {
+  it("maps pi's treeFilterMode names onto pit filters", () => {
+    assert.equal(filterFromSetting("default"), "default");
+    assert.equal(filterFromSetting("no-tools"), "noTools");
+    assert.equal(filterFromSetting("user-only"), "userOnly");
+    assert.equal(filterFromSetting("labeled-only"), "labeledOnly");
+    assert.equal(filterFromSetting("all"), "all");
+    assert.equal(filterFromSetting("garbage"), "default");
   });
 });

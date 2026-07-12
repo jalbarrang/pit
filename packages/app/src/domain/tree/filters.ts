@@ -24,6 +24,13 @@ export function nodeVisible(filter: TreeFilter, node: TreeNode): boolean {
   }
 }
 
+const FROM_SETTING: Record<string, TreeFilter> = {
+  "default": "default", "no-tools": "noTools", "user-only": "userOnly", "labeled-only": "labeledOnly", "all": "all",
+};
+
+/** Maps the persisted treeFilterMode setting (pi naming) onto pit's TreeFilter. */
+export const filterFromSetting = (setting: string): TreeFilter => FROM_SETTING[setting] ?? "default";
+
 export function cycleFilter(filter: TreeFilter, dir: 1 | -1): TreeFilter {
   const i = ORDER.indexOf(filter);
   const idx = i < 0 ? 0 : i;

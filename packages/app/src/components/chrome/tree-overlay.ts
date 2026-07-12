@@ -6,7 +6,7 @@ import {
 } from "../../domain/tree/index.ts";
 import { formatTreeOverlayLines } from "./tree-overlay-rows.ts";
 
-export interface TreeOverlayOptions { nodes: TreeNode[]; leafId?: string; maxVisible?: number }
+export interface TreeOverlayOptions { nodes: TreeNode[]; leafId?: string; maxVisible?: number; initialFilter?: TreeFilter }
 type TextLike = Renderable & { content: string; width?: number };
 interface Injected { box?: BoxRenderable; body?: TextLike }
 
@@ -35,7 +35,7 @@ export class TreeOverlay extends Container implements Focusable {
     super(ctx, inject.box ?? createBox(ctx));
     this.nodes = options.nodes;
     this.leafId = options.leafId;
-    this.maxVisible = options.maxVisible ?? 12;
+    this.maxVisible = options.maxVisible ?? 12; this.filter = options.initialFilter ?? this.filter;
     this.body = inject.body ?? createBody(ctx);
     this.renderable.add(this.body);
     const rows = this.rows();

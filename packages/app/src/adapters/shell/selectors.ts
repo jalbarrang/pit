@@ -5,6 +5,7 @@ import { SelectorOverlay, type SelectorOverlayOptions } from "../../components/c
 import { findModel, isThemeName, modelSelectItems, sessionSelectItems, settingsItems, themeSelectItems, thinkingSelectItems, type PitSettings } from "../../domain/chrome/index.ts";
 import { createTheme, type ThemeName } from "../../domain/theming/index.ts";
 import type { SessionGateway, SessionSummary } from "../../domain/index.ts";
+import { applySettingChange } from "./settings-apply.ts";
 
 export interface SelectorHost {
   tui(): TUI;
@@ -14,6 +15,7 @@ export interface SelectorHost {
   settings(): PitSettings;
   setSetting(id: string, value: string): Promise<PitSettings>;
   applyTheme(theme: ThemeName): void;
+  setThinkingVisible?(visible: boolean): void;
   listSessions?(): Promise<SessionSummary[]>;
   switchSession?(path: string): Promise<void>;
 }
@@ -80,9 +82,8 @@ export class ChromeSelectors {
     const tui = this.host.tui();
     const overlay = this.settingsOverlay(tui.ctx, { items: settingsItems(this.host.settings()), borderColor: border() });
     const handle = tui.showOverlay(overlay as never, { width: width(tui), anchor: "center" });
-    overlay.setWidth(width(tui));
-    overlay.onCancel = () => handle.hide();
-    overlay.onChange = (id, value) => void this.host.setSetting(id, value).then((next) => { if (id === "theme") this.host.applyTheme(next.theme); overlay.updateValue(id, value); this.host.refreshFooter(); });
+    overlay.setWidth(width(tui)); overlay.onCancel = () => handle.hide();
+    overlay.onChange = (id, value) => void applySettingChange(this.host, overlay, id, value).catch((error: unknown) => this.host.notify(`Error: ${error instanceof Error ? error.message : String(error)}`));
   }
 
   private open(options: SelectorOverlayOptions, apply: (value: string) => Promise<void>): SelectorOverlay | undefined {
@@ -96,5 +97,4 @@ export class ChromeSelectors {
   }
 }
 
-const width = (tui: TUI): number => Math.min(Math.max(40, (tui.renderer?.width ?? 80) - 8), 100);
-const border = (): string => createTheme("dark").color("borderAccent");
+const width = (tui: TUI): number => Math.min(Math.max(40, (tui.renderer?.width ?? 80) - 8), 100); const border = (): string => createTheme("dark").color("borderAccent");

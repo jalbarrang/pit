@@ -1,6 +1,27 @@
 import { getAgentDir, SettingsManager } from "@earendil-works/pi-coding-agent";
-import { defaultPitSettings, type PitSettings } from "../../domain/chrome/index.ts";
+import {
+  defaultPitSettings, parseHttpIdle,
+  type PitSettings, type QueueMode, type TransportName, type TreeFilterSetting, type TrustDefault,
+} from "../../domain/chrome/index.ts";
 import type { ThemeName } from "../../domain/theming/index.ts";
+
+const setters: Record<string, (m: SettingsManager, v: string) => void> = {
+  theme: (m, v) => m.setTheme(v as ThemeName),
+  autoCompact: (m, v) => m.setCompactionEnabled(v === "true"),
+  steeringMode: (m, v) => m.setSteeringMode(v as QueueMode),
+  followUpMode: (m, v) => m.setFollowUpMode(v as QueueMode),
+  transport: (m, v) => m.setTransport(v as never),
+  httpIdleTimeout: (m, v) => { const ms = parseHttpIdle(v); if (ms !== undefined) m.setHttpIdleTimeoutMs(ms); },
+  hideThinkingBlock: (m, v) => m.setHideThinkingBlock(v === "true"),
+  defaultProjectTrust: (m, v) => m.setDefaultProjectTrust(v as TrustDefault),
+  treeFilterMode: (m, v) => m.setTreeFilterMode(v as TreeFilterSetting),
+  showImages: (m, v) => m.setShowImages(v === "true"),
+  imageWidthCells: (m, v) => m.setImageWidthCells(Number(v)),
+  autoResizeImages: (m, v) => m.setImageAutoResize(v === "true"),
+  blockImages: (m, v) => m.setBlockImages(v === "true"),
+  editorPaddingX: (m, v) => m.setEditorPaddingX(Number(v)),
+  autocompleteMaxVisible: (m, v) => m.setAutocompleteMaxVisible(Number(v)),
+};
 
 export class SettingsStore {
   private readonly manager: SettingsManager;
@@ -9,25 +30,28 @@ export class SettingsStore {
   }
 
   get(): PitSettings {
-    const defaults = defaultPitSettings();
-    const theme = this.manager.getTheme() === "light" ? "light" : defaults.theme;
+    const m = this.manager;
     return {
-      theme,
-      showImages: this.manager.getShowImages(),
-      autoResizeImages: this.manager.getImageAutoResize(),
-      blockImages: this.manager.getBlockImages(),
-      editorPaddingX: this.manager.getEditorPaddingX(),
-      autocompleteMaxVisible: this.manager.getAutocompleteMaxVisible(),
+      theme: m.getTheme() === "light" ? "light" : defaultPitSettings().theme,
+      autoCompact: m.getCompactionEnabled(),
+      steeringMode: m.getSteeringMode(),
+      followUpMode: m.getFollowUpMode(),
+      transport: m.getTransport() as TransportName,
+      httpIdleTimeoutMs: m.getHttpIdleTimeoutMs(),
+      hideThinkingBlock: m.getHideThinkingBlock(),
+      defaultProjectTrust: m.getDefaultProjectTrust(),
+      treeFilterMode: m.getTreeFilterMode(),
+      showImages: m.getShowImages(),
+      imageWidthCells: m.getImageWidthCells(),
+      autoResizeImages: m.getImageAutoResize(),
+      blockImages: m.getBlockImages(),
+      editorPaddingX: m.getEditorPaddingX(),
+      autocompleteMaxVisible: m.getAutocompleteMaxVisible(),
     };
   }
 
   async set(key: string, value: string): Promise<PitSettings> {
-    if (key === "theme") this.manager.setTheme(value as ThemeName);
-    else if (key === "showImages") this.manager.setShowImages(value === "true");
-    else if (key === "autoResizeImages") this.manager.setImageAutoResize(value === "true");
-    else if (key === "blockImages") this.manager.setBlockImages(value === "true");
-    else if (key === "editorPaddingX") this.manager.setEditorPaddingX(Number(value));
-    else if (key === "autocompleteMaxVisible") this.manager.setAutocompleteMaxVisible(Number(value));
+    setters[key]?.(this.manager, value);
     await this.manager.flush();
     return this.get();
   }

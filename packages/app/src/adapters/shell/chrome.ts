@@ -1,5 +1,6 @@
 import { CombinedAutocompleteProvider, NodeFileSearchPort, type AutocompleteProvider, type SlashCommand } from "@pit/tui";
 import { createBuiltinRegistry, type ChromeContext, type CommandInfo } from "../../domain/commands/index.ts";
+import { filterFromSetting } from "../../domain/tree/index.ts";
 import { AuthSelectors, type AuthSelectorHost } from "./auth-selectors.ts";
 import { MiscSelectors, type MiscSelectorHost } from "./misc-selectors.ts";
 import { ScopedModelsSelectors } from "./scoped-models-selector.ts";
@@ -36,6 +37,7 @@ export class ShellChrome {
       replay: () => host.replay(), switchSession: (path) => host.switchSession?.(path) ?? Promise.resolve(),
       setEditorText: (text) => host.setEditorText?.(text),
       openInput: (prompt, onSubmit) => openLabelInput(host.tui(), prompt, onSubmit),
+      initialTreeFilter: () => filterFromSetting(host.settings().treeFilterMode),
     }),
     sessionInfo = new SessionInfoSelectors(host),
   ) {

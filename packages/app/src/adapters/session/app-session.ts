@@ -83,6 +83,7 @@ export class AppSession implements SessionGateway {
   compact(instructions?: string) { return this.facade.compact(instructions); }
   abortCompaction() { this.facade.abortCompaction(); }
   isCompacting() { return this.facade.isCompacting(); }
+  applySessionSetting(id: string, value: string) { return this.facade.applySessionSetting(id, value); }
 }
 
 async function buildLoader(cwd: string, extensionPaths: string[]) {

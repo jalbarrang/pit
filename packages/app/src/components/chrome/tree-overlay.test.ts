@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { before, test } from "node:test";
 import { KeybindingsManager, setKeybindings } from "@pit/tui";
 import { APP_KEYBINDINGS } from "../../domain/keybindings/index.ts";
-import type { TreeNode } from "../../domain/tree/index.ts";
+import type { TreeFilter, TreeNode } from "../../domain/tree/index.ts";
 import { TreeOverlay } from "./tree-overlay.ts";
 
 class FakeRenderable {
@@ -22,7 +22,7 @@ const nodes: TreeNode[] = [{
 
 before(() => { setKeybindings(new KeybindingsManager(APP_KEYBINDINGS)); });
 
-export const make = (opts: { leafId?: string; nodes?: TreeNode[]; maxVisible?: number } = {}) => {
+export const make = (opts: { leafId?: string; nodes?: TreeNode[]; maxVisible?: number; initialFilter?: TreeFilter } = {}) => {
   const selected: string[] = [];
   const edited: string[] = [];
   let cancelled = 0;
@@ -31,6 +31,7 @@ export const make = (opts: { leafId?: string; nodes?: TreeNode[]; maxVisible?: n
     nodes: opts.nodes ?? nodes,
     ...(opts.leafId !== undefined ? { leafId: opts.leafId } : {}),
     ...(opts.maxVisible !== undefined ? { maxVisible: opts.maxVisible } : {}),
+    ...(opts.initialFilter !== undefined ? { initialFilter: opts.initialFilter } : {}),
   }, { box: new FakeRenderable() as never, body: body as never });
   overlay.onSelect = (id) => void selected.push(id);
   overlay.onEditLabel = (id) => void edited.push(id);
@@ -90,4 +91,10 @@ test("confirm fires onSelect; editLabel fires onEditLabel", () => {
   assert.deepEqual(selected, ["a2"]);
   overlay.handleInput("L");
   assert.deepEqual(edited, ["a2"]);
+});
+
+test("initialFilter starts the tree on the configured filter", () => {
+  const { content } = make({ initialFilter: "userOnly" });
+  assert.match(content().split("\n")[0]!, /filter:userOnly/);
+  assert.equal(content().includes("toolcall"), false);
 });
