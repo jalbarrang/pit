@@ -1,0 +1,86 @@
+#!/bin/sh
+# pit installer — channel-aware, mirrors hiker's install UX.
+#
+#   curl -fsSL https://raw.githubusercontent.com/jalbarrang/pit/main/install | sh
+#   curl -fsSL …/install | sh -s -- --channel nightly
+#   curl -fsSL …/install | sh -s -- --version 0.1.2
+#
+# Env overrides:
+#   PIT_REPO         GitHub "owner/repo" to pull releases from
+#   PIT_INSTALL_DIR  where to drop the binary (default: $HOME/.pit/bin)
+set -eu
+
+REPO="${PIT_REPO:-jalbarrang/pit}"
+INSTALL_DIR="${PIT_INSTALL_DIR:-$HOME/.pit/bin}"
+CHANNEL="stable"
+VERSION=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --channel) CHANNEL="$2"; shift 2 ;;
+    --version) VERSION="${2#v}"; shift 2 ;;
+    -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
+    *) echo "unknown option: $1" >&2; exit 2 ;;
+  esac
+done
+
+err() { printf '\033[31merror:\033[0m %s\n' "$1" >&2; exit 1; }
+info() { printf '\033[2m%s\033[0m\n' "$1"; }
+
+command -v curl >/dev/null 2>&1 || err "curl is required"
+case "$CHANNEL" in stable|nightly) ;; *) err "unknown channel: $CHANNEL (use stable or nightly)" ;; esac
+
+# ── Detect target triple ─────────────────────────────────────────────────────
+os="$(uname -s)"; arch="$(uname -m)"
+case "$arch" in x86_64|amd64) arch=x86_64 ;; arm64|aarch64) arch=aarch64 ;; *) err "unsupported arch: $arch" ;; esac
+case "$os" in
+  Linux)  target="$arch-unknown-linux-gnu" ;;
+  Darwin) target="$arch-apple-darwin" ;;
+  *) err "unsupported OS: $os (macOS and Linux only)" ;;
+esac
+
+# ── Resolve the release tag for the chosen channel ───────────────────────────
+api="https://api.github.com/repos/$REPO"
+if [ -n "$VERSION" ]; then
+  tag="v$VERSION"
+elif [ "$CHANNEL" = "stable" ]; then
+  tag="$(curl -fsSL "$api/releases/latest" | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -1)"
+else
+  # First release flagged prerelease (tag_name precedes prerelease in GH JSON).
+  tag="$(curl -fsSL "$api/releases?per_page=30" \
+    | awk -F'"' '/"tag_name":/{t=$4} /"prerelease": *true/{print t; exit}')"
+fi
+[ -n "${tag:-}" ] || err "no release found for channel '$CHANNEL' in $REPO"
+version="${tag#v}"
+
+# ── Skip if already installed ────────────────────────────────────────────────
+if command -v pit >/dev/null 2>&1; then
+  cur="$(pit --version 2>/dev/null | awk '{print $2}')"
+  [ "$cur" = "$version" ] && { info "pit $version already installed"; exit 0; }
+fi
+
+# ── Download + extract ───────────────────────────────────────────────────────
+asset="pit-$target.tar.gz"
+url="https://github.com/$REPO/releases/download/$tag/$asset"
+tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+info "downloading $asset ($tag)"
+curl -fsSL "$url" -o "$tmp/$asset" 2>/dev/null || err "no binary asset '$asset' on $tag -- try --channel nightly until a stable release with binaries ships"
+
+# Verify checksum if published alongside the asset.
+if curl -fsSL "$url.sha256" -o "$tmp/$asset.sha256" 2>/dev/null; then
+  ( cd "$tmp" && (shasum -a 256 -c "$asset.sha256" >/dev/null 2>&1 \
+    || sha256sum -c "$asset.sha256" >/dev/null 2>&1) ) || err "checksum mismatch"
+  info "checksum ok"
+fi
+
+tar -xzf "$tmp/$asset" -C "$tmp"
+mkdir -p "$INSTALL_DIR"
+install -m 0755 "$tmp/pit" "$INSTALL_DIR/pit"
+info "installed pit $version -> $INSTALL_DIR/pit"
+
+# ── PATH hint ────────────────────────────────────────────────────────────────
+# shellcheck disable=SC2016 # intentional: show literal $PATH in the hint
+case ":$PATH:" in
+  *":$INSTALL_DIR:"*) ;;
+  *) printf '\nAdd pit to your PATH:\n  export PATH="%s:$PATH"\n' "$INSTALL_DIR" ;;
+esac
