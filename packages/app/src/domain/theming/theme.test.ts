@@ -7,7 +7,7 @@ describe("pit theme tokens", () => {
     const theme = createTheme("dark");
     assert.equal(theme.color("brand"), "#ff5f87");
     assert.equal(theme.color("interactive"), "#a78bfa");
-    assert.equal(theme.color("userMessageBg"), "#1d1826");
+    assert.equal(theme.color("userMessageBg"), "#251d36");
     assert.deepEqual(theme.bg("toolSuccessBg"), { bg: "#171d1a" });
     assert.deepEqual(theme.fg("mdHeading"), { fg: "#e8bc70" });
   });

@@ -1,4 +1,4 @@
-import type { Renderable, RenderContext } from "@opentui/core";
+import { BorderChars, type BorderCharacters, type Renderable, type RenderContext } from "@opentui/core";
 import { Box, Component } from "@pit/tui";
 import type { PitTheme } from "../../domain/theming/index.ts";
 import { sanitizeMessageText } from "./escape-sanitize.ts";
@@ -8,8 +8,12 @@ type BoxLike = Renderable & {
   add(child: Renderable): number;
   border?: boolean | Array<"top" | "right" | "bottom" | "left">;
   borderColor?: unknown;
+  customBorderChars?: BorderCharacters;
   options?: Record<string, unknown>;
 };
+
+// A solid block instead of the default thin `│` so the spine reads as a bar.
+const spineChars: BorderCharacters = { ...BorderChars.single, vertical: "█" };
 
 export class UserMessageComponent extends Component {
   readonly renderable: BoxLike;
@@ -21,10 +25,12 @@ export class UserMessageComponent extends Component {
     this.renderable = shell.renderable as BoxLike;
     this.renderable.border = ["left"];
     this.renderable.borderColor = theme.color("interactive");
+    this.renderable.customBorderChars = spineChars;
     this.renderable.options = {
       ...this.renderable.options,
       border: ["left"],
       borderColor: theme.color("interactive"),
+      customBorderChars: spineChars,
     };
     const safeText = sanitizeMessageText(text);
     this.markdown = markdown ?? createMarkdownPort(ctx, theme, safeText);

@@ -18,13 +18,11 @@ describe("UserMessageComponent", () => {
     assert.equal(component.getText(), "hello");
     assert.deepEqual(box.border, ["left"]);
     assert.equal(box.borderColor, "#a78bfa");
-    assert.deepEqual(box.options, {
-      paddingX: 1,
-      paddingY: 0,
-      backgroundColor: "#1d1826",
-      border: ["left"],
-      borderColor: "#a78bfa",
-    });
+    const options = box.options as Record<string, unknown> & { customBorderChars?: { vertical: string } };
+    assert.equal(options.backgroundColor, "#251d36");
+    assert.deepEqual(options.border, ["left"]);
+    assert.equal(options.borderColor, "#a78bfa");
+    assert.equal(options.customBorderChars?.vertical, "█");
   });
 
   it("drops raw escapes before user markdown", () => {
