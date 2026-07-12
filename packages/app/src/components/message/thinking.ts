@@ -1,6 +1,7 @@
 import type { Renderable, RenderContext } from "@opentui/core";
 import { Component, Text, type TextContent } from "@pit/tui";
 import type { PitTheme } from "../../domain/theming/index.ts";
+import { spaceBelow } from "./spacing.ts";
 
 type TextLike = Renderable & { content: TextContent; options?: Record<string, unknown> };
 
@@ -35,5 +36,7 @@ export class ThinkingComponent extends Component {
 
   private render(): void {
     this.text.setText(!this.thinking ? "" : this.expanded ? this.thinking : LABEL);
+    // No margin while empty so a hidden thinking block leaves no stray gap.
+    spaceBelow(this.renderable, this.thinking ? 1 : 0);
   }
 }

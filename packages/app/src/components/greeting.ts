@@ -2,6 +2,7 @@ import { StyledText, bold, fg, type Renderable, type RenderContext } from "@open
 import { Component, Text, type TextContent } from "@pit/tui";
 import { version } from "../domain/release-info.ts";
 import type { PitTheme } from "../domain/theming/index.ts";
+import { spaceBelow } from "./message/spacing.ts";
 
 type TextLike = Renderable & { content: TextContent; options?: Record<string, unknown> };
 
@@ -16,5 +17,6 @@ export class GreetingComponent extends Component {
     ]);
     const text = new Text(ctx, content, 1, 0, undefined, renderable);
     this.renderable = text.renderable as TextLike;
+    spaceBelow(this.renderable);
   }
 }

@@ -3,6 +3,7 @@ import { Component } from "@pit/tui";
 import type { PitTheme } from "../../domain/theming/index.ts";
 import { sanitizeMessageText } from "./escape-sanitize.ts";
 import { createMarkdownPort, type MarkdownPort } from "./markdown-port.ts";
+import { spaceBelow } from "./spacing.ts";
 
 export class AssistantMessageComponent extends Component {
   readonly renderable: Renderable;
@@ -16,6 +17,7 @@ export class AssistantMessageComponent extends Component {
     this.markdown.setText(sanitizeMessageText(text));
     this.markdown.setStreaming(true);
     this.renderable = this.markdown.renderable;
+    spaceBelow(this.renderable);
   }
 
   append(delta: string): void {

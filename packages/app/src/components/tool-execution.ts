@@ -4,6 +4,7 @@ import { isDiffText, type ToolRun } from "../domain/index.ts";
 import type { PitTheme } from "../domain/theming/index.ts";
 import { DiffViewComponent, type DiffLineFactory } from "./diff-view.ts";
 import { buildToolText } from "./tool-styled.ts";
+import { spaceBelow } from "./message/spacing.ts";
 
 type BoxLike = Renderable & { add(child: Renderable): number; onMouseDown?: (event: any) => void; options?: Record<string, unknown> };
 type TextLike = Renderable & { content: TextContent; options?: Record<string, unknown> };
@@ -29,6 +30,7 @@ export class ToolExecutionComponent extends Component {
     this.diffInject = diffInject;
     this.shell = new Box(ctx, 1, 0, undefined, box as never);
     this.renderable = this.shell.renderable as BoxLike;
+    spaceBelow(this.renderable);
     this.text = new Text(ctx, buildToolText(this.run, theme, false), 0, 0, undefined, textRenderable);
     this.renderable.onMouseDown = () => this.setExpanded(!this.expanded);
     this.renderBody(ctx);
