@@ -1,7 +1,7 @@
-import { readFileSync } from "node:fs";
+import dark from "./themes/dark.json" with { type: "json" };
+import light from "./themes/light.json" with { type: "json" };
 import type { ThemeJson, ThemeName } from "./types.ts";
 
-const urlFor = (name: ThemeName): URL => new URL(`./themes/${name}.json`, import.meta.url);
+const themes = { dark, light };
 
-export const loadThemeJson = (name: ThemeName): ThemeJson =>
-  JSON.parse(readFileSync(urlFor(name), "utf8")) as ThemeJson;
+export const loadThemeJson = (name: ThemeName): ThemeJson => themes[name] as ThemeJson;
