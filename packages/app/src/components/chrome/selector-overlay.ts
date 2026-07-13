@@ -1,5 +1,6 @@
-import { BoxRenderable, type RenderContext } from "@opentui/core";
-import { Container, Input, SelectList, type Focusable, type SelectItem } from "@pit/tui";
+import type { RenderContext } from "@opentui/core";
+import { Container, Input, SelectList, type Focusable, type PitStyle, type SelectItem, type SelectListTheme } from "@pit/tui";
+import { createOverlayBox, isTextInput } from "./overlay-parts.ts";
 
 export interface SelectorOverlayOptions {
   items: SelectItem[];
@@ -8,15 +9,11 @@ export interface SelectorOverlayOptions {
   initialSearch?: string;
   maxVisible?: number;
   borderColor?: string | number;
+  listTheme?: SelectListTheme;
+  searchStyle?: PitStyle;
 }
 
 interface InjectedRenderables { box?: never; list?: never; search?: never }
-
-const createBox = (ctx: RenderContext, borderColor?: string | number): BoxRenderable =>
-  new BoxRenderable(ctx, { flexDirection: "column", width: "100%", height: "auto", border: true, ...(borderColor !== undefined ? { borderColor } : {}) } as never);
-
-/** One character (or paste chunk) of typed text, as opposed to nav/control sequences. */
-const isTextInput = (data: string): boolean => data === "\x7f" || (!data.startsWith("\x1b") && data >= " ");
 
 export class SelectorOverlay extends Container implements Focusable {
   readonly list: SelectList;
@@ -27,10 +24,10 @@ export class SelectorOverlay extends Container implements Focusable {
   private _focused = false;
 
   constructor(ctx: RenderContext, options: SelectorOverlayOptions, inject: InjectedRenderables = {}) {
-    super(ctx, inject.box ?? createBox(ctx, options.borderColor));
-    this.list = new SelectList(ctx, options.items, options.maxVisible ?? 10, {}, {}, inject.list);
+    super(ctx, inject.box ?? createOverlayBox(ctx, options.borderColor));
+    this.list = new SelectList(ctx, options.items, options.maxVisible ?? 10, options.listTheme ?? {}, {}, inject.list);
     if (options.searchable) {
-      this.search = new Input(ctx, inject.search);
+      this.search = new Input(ctx, inject.search, options.searchStyle);
       this.addChild(this.search);
     }
     this.addChild(this.list);

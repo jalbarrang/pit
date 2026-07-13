@@ -11,6 +11,7 @@ export interface SettingItem {
 }
 export interface SettingsListTheme {
   label?: PitStyle;
+  selected?: PitStyle;
   value?: PitStyle;
   description?: PitStyle;
   cursor?: string;

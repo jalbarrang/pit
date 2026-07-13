@@ -1,4 +1,4 @@
-import { TextAttributes, type StyleAttrs } from "@opentui/core";
+import { bg, fg, TextAttributes, type StyleAttrs, type TextChunk } from "@opentui/core";
 
 export type PitStyle = StyleAttrs;
 
@@ -20,3 +20,13 @@ export const textOptions = (style?: PitStyle): Record<string, unknown> => ({
   bg: style?.bg,
   attributes: textAttributes(style),
 });
+
+/** Build a StyledText chunk from a PitStyle (fg/bg/attributes). */
+export const styleChunk = (text: string, style?: PitStyle): TextChunk => {
+  let chunk: TextChunk = { __isChunk: true, text };
+  if (style?.fg !== undefined) chunk = fg(style.fg)(chunk);
+  if (style?.bg !== undefined) chunk = bg(style.bg)(chunk);
+  const attributes = textAttributes(style);
+  if (attributes) chunk.attributes = (chunk.attributes ?? 0) | attributes;
+  return chunk;
+};

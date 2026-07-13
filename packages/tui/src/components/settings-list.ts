@@ -1,10 +1,10 @@
-import { TextRenderable, type RenderContext, type Renderable } from "@opentui/core";
+import { TextRenderable, type RenderContext, type Renderable, type StyledText } from "@opentui/core";
 import { fuzzyFilter, getKeybindings, ListSelection, matchesKey } from "../domain/input/index.ts";
-import { truncateToWidth, visibleWidth } from "../domain/styling/index.ts";
 import { Component } from "./component.ts";
+import { renderSettingsLines, renderSettingsStyled, type SettingsListView } from "./settings-list-render.ts";
 import type { SettingItem, SettingsChange, SettingsListOptions, SettingsListTheme } from "./settings-list-types.ts";
 
-type TextLike = Renderable & { content: string; width?: number };
+type TextLike = Renderable & { content: string | StyledText; width?: number };
 const createRenderable = (ctx: RenderContext): TextLike => new TextRenderable(ctx, { content: "", height: "auto", wrapMode: "none" }) as unknown as TextLike;
 
 export class SettingsList extends Component {
@@ -53,22 +53,7 @@ export class SettingsList extends Component {
 
   render(width: number): string[] {
     if (this.submenu && "render" in this.submenu && typeof this.submenu.render === "function") return this.submenu.render(width) as string[];
-    const items = this.selection.filteredItems;
-    if (items.length === 0) return [this.filter ? "  No matching settings" : "  No settings available"];
-    const maxLabel = Math.min(30, Math.max(...items.map((item) => visibleWidth(item.label))));
-    const win = this.selection.window(this.maxVisible);
-    const lines = win.items.map((item, offset) => this.renderItem(item, win.start + offset === this.selection.selectedIndex, width, maxLabel));
-    if (win.start > 0 || win.end < items.length) lines.push(`  (${this.selection.selectedIndex + 1}/${items.length})`);
-    const selected = this.selection.selectedItem;
-    if (selected?.description) lines.push("", `  ${truncateToWidth(selected.description, width - 2)}`);
-    lines.push("", "  Enter/Space to change · Esc to cancel");
-    return lines;
-  }
-
-  private renderItem(item: SettingItem, selected: boolean, width: number, labelWidth: number): string {
-    const prefix = selected ? this.theme.cursor ?? "→ " : "  ";
-    const label = item.label + " ".repeat(Math.max(0, labelWidth - visibleWidth(item.label)));
-    return truncateToWidth(`${prefix}${label}  ${item.currentValue}`, width, "", true);
+    return renderSettingsLines(this.view(), width);
   }
 
   private activate(direction: 1 | -1): void {
@@ -93,5 +78,11 @@ export class SettingsList extends Component {
     this.selection.replaceFiltered(items);
     this.update();
   }
-  private update(): void { this.renderable.content = this.render(this.width).join("\n"); this.invalidate(); }
+  private view(): SettingsListView { return { selection: this.selection, maxVisible: this.maxVisible, theme: this.theme, filter: this.filter }; }
+  private themed(): boolean { return Object.keys(this.theme).length > 0; }
+  private update(): void {
+    const styled = this.themed() && !this.submenu;
+    this.renderable.content = styled ? renderSettingsStyled(this.view(), this.width) : this.render(this.width).join("\n");
+    this.invalidate();
+  }
 }

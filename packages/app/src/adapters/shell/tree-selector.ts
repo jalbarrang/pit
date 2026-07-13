@@ -3,6 +3,7 @@ import type { TUI } from "@pit/tui";
 import { InputOverlay } from "../../components/chrome/input-overlay.ts";
 import { TreeOverlay, type TreeOverlayOptions } from "../../components/chrome/tree-overlay.ts";
 import type { SessionGateway, TreeFilter } from "../../domain/index.ts";
+import type { PitTheme } from "../../domain/theming/index.ts";
 
 export interface TreeSelectorHost {
   tui(): TUI;
@@ -13,6 +14,7 @@ export interface TreeSelectorHost {
   openInput(prompt: string, onSubmit: (value: string) => void): void;
   setEditorText?(text: string): void;
   initialTreeFilter?(): TreeFilter;
+  theme?(): PitTheme;
 }
 
 type Factory = (ctx: RenderContext, options: TreeOverlayOptions) => TreeOverlay;
@@ -38,7 +40,8 @@ export class TreeSelectors {
     if (!s?.tree) return this.host.notify("Session tree unavailable");
     const tui = this.host.tui();
     const initialFilter = this.host.initialTreeFilter?.();
-    const overlay = this.make(tui.ctx, { nodes: s.tree(), leafId: s.leafId?.(), ...(initialFilter ? { initialFilter } : {}) });
+    const theme = this.host.theme?.();
+    const overlay = this.make(tui.ctx, { nodes: s.tree(), leafId: s.leafId?.(), ...(initialFilter ? { initialFilter } : {}), ...(theme ? { theme } : {}) });
     const handle = tui.showOverlay(overlay as never, { width: width(tui), anchor: "center" });
     overlay.setWidth(width(tui));
     overlay.onCancel = () => handle.hide();

@@ -2,6 +2,7 @@ import type { PitStyle } from "./component-style.ts";
 
 export interface SelectItem { value: string; label: string; description?: string }
 export interface SelectListTheme {
+  text?: PitStyle;
   selectedPrefix?: PitStyle;
   selectedText?: PitStyle;
   description?: PitStyle;

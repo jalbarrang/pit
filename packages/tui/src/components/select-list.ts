@@ -1,15 +1,11 @@
-import { TextRenderable, type RenderContext, type Renderable } from "@opentui/core";
+import { TextRenderable, type RenderContext, type Renderable, type StyledText } from "@opentui/core";
 import { fuzzyFilter, getKeybindings, ListSelection } from "../domain/input/index.ts";
-import { truncateToWidth, visibleWidth } from "../domain/styling/index.ts";
 import { Component } from "./component.ts";
+import { renderSelectLines, renderSelectStyled, type SelectListView } from "./select-list-render.ts";
 import type { SelectItem, SelectListLayoutOptions, SelectListTheme } from "./select-list-types.ts";
 
-const DEFAULT_PRIMARY_COLUMN_WIDTH = 32;
-const PRIMARY_COLUMN_GAP = 2;
-type TextLike = Renderable & { content: string; width?: number; options?: Record<string, unknown> };
+type TextLike = Renderable & { content: string | StyledText; width?: number; options?: Record<string, unknown> };
 const createRenderable = (ctx: RenderContext): TextLike => new TextRenderable(ctx, { content: "", height: "auto", wrapMode: "none" }) as unknown as TextLike;
-const normalize = (text = ""): string => text.replace(/[\r\n]+/g, " ").trim();
-const clamp = (value: number, min: number, max: number): number => Math.max(min, Math.min(value, max));
 
 export class SelectList extends Component {
   readonly renderable: TextLike;
@@ -59,37 +55,13 @@ export class SelectList extends Component {
     this.update();
   }
 
-  render(width: number): string[] {
-    if (this.selection.filteredItems.length === 0) return ["  No matching commands"];
-    const win = this.selection.window(this.maxVisible);
-    const lines = win.items.map((item, offset) => this.renderItem(item, win.start + offset === this.selection.selectedIndex, width));
-    if (win.start > 0 || win.end < this.selection.filteredItems.length) lines.push(`  (${this.selection.selectedIndex + 1}/${this.selection.filteredItems.length})`);
-    return lines;
-  }
+  render(width: number): string[] { return renderSelectLines(this.view(), width); }
 
-  private renderItem(item: SelectItem, selected: boolean, width: number): string {
-    const prefix = selected ? "→ " : "  ";
-    const primaryWidth = this.primaryColumnWidth();
-    const label = this.truncatePrimary(item, selected, Math.min(primaryWidth, width - 4), primaryWidth);
-    const desc = normalize(item.description);
-    if (!desc || width <= 40) return truncateToWidth(`${prefix}${label}`, width, "", true);
-    const spacing = " ".repeat(Math.max(1, primaryWidth - visibleWidth(label)));
-    return truncateToWidth(`${prefix}${label}${spacing}${desc}`, width, "", true);
-  }
-
-  private primaryColumnWidth(): number {
-    const min = this.layout.minPrimaryColumnWidth ?? this.layout.maxPrimaryColumnWidth ?? DEFAULT_PRIMARY_COLUMN_WIDTH;
-    const max = this.layout.maxPrimaryColumnWidth ?? this.layout.minPrimaryColumnWidth ?? DEFAULT_PRIMARY_COLUMN_WIDTH;
-    const widest = Math.max(1, ...this.selection.filteredItems.map((item) => visibleWidth(item.label || item.value) + PRIMARY_COLUMN_GAP));
-    return clamp(widest, Math.min(min, max), Math.max(min, max));
-  }
-
-  private truncatePrimary(item: SelectItem, selected: boolean, maxWidth: number, columnWidth: number): string {
-    const text = item.label || item.value;
-    const custom = this.layout.truncatePrimary?.({ text, maxWidth, columnWidth, item, isSelected: selected }) ?? text;
-    return truncateToWidth(custom, Math.max(1, maxWidth), "…");
-  }
-
+  private view(): SelectListView { return { selection: this.selection, maxVisible: this.maxVisible, theme: this.theme, layout: this.layout }; }
+  private themed(): boolean { return Object.keys(this.theme).length > 0; }
   private fireSelect(): void { const item = this.selection.selectedItem; if (item) this.onSelect?.(item); }
-  private update(): void { this.renderable.content = this.render(this.width).join("\n"); this.invalidate(); }
+  private update(): void {
+    this.renderable.content = this.themed() ? renderSelectStyled(this.view(), this.width) : this.render(this.width).join("\n");
+    this.invalidate();
+  }
 }

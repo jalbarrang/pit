@@ -3,8 +3,9 @@ import type { TUI } from "@pit/tui";
 import { SettingsOverlay, type SettingsOverlayOptions } from "../../components/chrome/settings-overlay.ts";
 import { SelectorOverlay, type SelectorOverlayOptions } from "../../components/chrome/selector-overlay.ts";
 import { findModel, isThemeName, modelSelectItems, sessionSelectItems, settingsItems, themeSelectItems, thinkingSelectItems, type PitSettings } from "../../domain/chrome/index.ts";
-import { createTheme, type ThemeName } from "../../domain/theming/index.ts";
+import type { ThemeName } from "../../domain/theming/index.ts";
 import type { SessionGateway, SessionSummary } from "../../domain/index.ts";
+import { currentTheme, overlayWidth as width, selectListTheme, settingsListTheme } from "./selector-themes.ts";
 import { applySettingChange } from "./settings-apply.ts";
 
 export interface SelectorHost {
@@ -79,16 +80,16 @@ export class ChromeSelectors {
   }
 
   openSettings(): void {
-    const tui = this.host.tui();
-    const overlay = this.settingsOverlay(tui.ctx, { items: settingsItems(this.host.settings()), borderColor: border() });
+    const tui = this.host.tui(), theme = currentTheme(this.host);
+    const overlay = this.settingsOverlay(tui.ctx, { items: settingsItems(this.host.settings()), borderColor: theme.color("borderMuted"), listTheme: settingsListTheme(theme) });
     const handle = tui.showOverlay(overlay as never, { width: width(tui), anchor: "center" });
     overlay.setWidth(width(tui)); overlay.onCancel = () => handle.hide();
     overlay.onChange = (id, value) => void applySettingChange(this.host, overlay, id, value).catch((error: unknown) => this.host.notify(`Error: ${error instanceof Error ? error.message : String(error)}`));
   }
 
   private open(options: SelectorOverlayOptions, apply: (value: string) => Promise<void>): SelectorOverlay | undefined {
-    const tui = this.host.tui();
-    const overlay = this.factory(tui.ctx, { ...options, borderColor: border() });
+    const tui = this.host.tui(), theme = currentTheme(this.host);
+    const overlay = this.factory(tui.ctx, { borderColor: theme.color("borderMuted"), listTheme: selectListTheme(theme), searchStyle: theme.fg("text"), ...options });
     overlay.setWidth(width(tui));
     const handle = tui.showOverlay(overlay as never, { width: width(tui), anchor: "center" });
     overlay.onCancel = () => handle.hide();
@@ -97,4 +98,3 @@ export class ChromeSelectors {
   }
 }
 
-const width = (tui: TUI): number => Math.min(Math.max(40, (tui.renderer?.width ?? 80) - 8), 100); const border = (): string => createTheme("dark").color("borderAccent");
