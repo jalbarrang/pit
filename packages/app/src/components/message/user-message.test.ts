@@ -5,7 +5,8 @@ import { createTheme } from "../../domain/theming/index.ts";
 import type { MarkdownPort } from "./markdown-port.ts";
 import { UserMessageComponent } from "./user-message.ts";
 
-const fakeBox = () => ({ add() { return 0; }, options: {} }) as unknown as Renderable & { add(child: Renderable): number; border?: Array<"top" | "right" | "bottom" | "left">; borderColor?: unknown; options?: Record<string, unknown> };
+type FakeBox = Renderable & { add(child: Renderable): number; border?: Array<"top" | "right" | "bottom" | "left">; borderColor?: unknown; marginBottom?: number; maxWidth?: number; options?: Record<string, unknown> };
+const fakeBox = () => ({ add() { return 0; }, options: {} }) as unknown as FakeBox;
 const fakeMarkdown = (): MarkdownPort => {
   let text = "";
   return { renderable: {} as Renderable, setText: (value) => { text = value; }, appendText: (delta) => { text += delta; }, setStreaming() {}, getText: () => text };
@@ -21,6 +22,9 @@ describe("UserMessageComponent", () => {
     const options = box.options as Record<string, unknown> & { customBorderChars?: { vertical: string } };
     assert.equal(options.paddingX, 2);
     assert.equal(options.paddingY, 1);
+    assert.equal(options.maxWidth, undefined);
+    assert.equal(box.maxWidth, undefined);
+    assert.equal(box.marginBottom, 1);
     assert.equal(options.backgroundColor, "#251d36");
     assert.deepEqual(options.border, ["left"]);
     assert.equal(options.borderColor, "#a78bfa");

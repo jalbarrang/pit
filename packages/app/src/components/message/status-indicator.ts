@@ -1,6 +1,7 @@
 import type { Renderable, RenderContext } from "@opentui/core";
 import { Component, Text } from "@pit/tui";
 import type { PitTheme } from "../../domain/theming/index.ts";
+import { TRANSCRIPT_GUTTER } from "./spacing.ts";
 
 type TextLike = Renderable & { content: string; fg?: unknown; options?: Record<string, unknown> };
 
@@ -10,7 +11,7 @@ export class StatusIndicator extends Component {
 
   constructor(ctx: RenderContext, theme: PitTheme, label = "thinking…", renderable?: TextLike) {
     super();
-    this.text = new Text(ctx, this.display(label), 1, 0, { fg: theme.color("brand") }, renderable);
+    this.text = new Text(ctx, this.display(label), TRANSCRIPT_GUTTER, 0, { fg: theme.color("brand") }, renderable);
     this.renderable = this.text.renderable as TextLike;
   }
 

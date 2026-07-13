@@ -1,7 +1,7 @@
 import type { Renderable, RenderContext } from "@opentui/core";
 import { Component, Text, type TextContent } from "@pit/tui";
 import type { PitTheme } from "../../domain/theming/index.ts";
-import { spaceBelow } from "./spacing.ts";
+import { spaceBelow, TRANSCRIPT_GUTTER } from "./spacing.ts";
 
 type TextLike = Renderable & { content: TextContent; options?: Record<string, unknown> };
 
@@ -16,7 +16,7 @@ export class CompactionSummaryComponent extends Component {
 
   constructor(ctx: RenderContext, theme: PitTheme, renderable?: TextLike) {
     super();
-    this.text = new Text(ctx, "", 0, 0, { fg: theme.color("muted"), italic: true }, renderable);
+    this.text = new Text(ctx, "", TRANSCRIPT_GUTTER, 0, { fg: theme.color("muted"), italic: true }, renderable);
     this.renderable = this.text.renderable as TextLike;
     spaceBelow(this.renderable);
   }

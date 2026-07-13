@@ -2,7 +2,7 @@ import { BorderChars, type BorderCharacters, type Renderable, type RenderContext
 import { Box, Component } from "@pit/tui";
 import type { PitTheme } from "../../domain/theming/index.ts";
 import { sanitizeMessageText } from "./escape-sanitize.ts";
-import { spaceBelow } from "./spacing.ts";
+import { spaceBelow, TURN_GAP_ROWS, USER_MESSAGE_GUTTER } from "./spacing.ts";
 import { createMarkdownPort, type MarkdownPort } from "./markdown-port.ts";
 
 type BoxLike = Renderable & {
@@ -22,7 +22,7 @@ export class UserMessageComponent extends Component {
 
   constructor(ctx: RenderContext, text: string, theme: PitTheme, box?: BoxLike, markdown?: MarkdownPort) {
     super();
-    const shell = new Box(ctx, 2, 1, { bg: theme.color("userMessageBg") }, box as never);
+    const shell = new Box(ctx, USER_MESSAGE_GUTTER, 1, { bg: theme.color("userMessageBg") }, box as never);
     this.renderable = shell.renderable as BoxLike;
     this.renderable.border = ["left"];
     this.renderable.borderColor = theme.color("interactive");
@@ -33,7 +33,7 @@ export class UserMessageComponent extends Component {
       borderColor: theme.color("interactive"),
       customBorderChars: spineChars,
     };
-    spaceBelow(this.renderable);
+    spaceBelow(this.renderable, TURN_GAP_ROWS);
     const safeText = sanitizeMessageText(text);
     this.markdown = markdown ?? createMarkdownPort(ctx, theme, safeText);
     this.markdown.setText(safeText);

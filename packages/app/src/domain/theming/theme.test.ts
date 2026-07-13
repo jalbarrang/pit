@@ -20,9 +20,10 @@ describe("pit theme tokens", () => {
     assert.equal(getEditorTheme(theme).borderColor, "#a78bfa");
   });
 
-  it("keeps dark and light token keys in parity", () => {
+  it("keeps all theme token keys in parity with dark", () => {
     const dark = Object.keys(loadThemeJson("dark").colors).sort();
-    const light = Object.keys(loadThemeJson("light").colors).sort();
-    assert.deepEqual(light, dark);
+    for (const name of ["light", "tokyo-night"] as const) {
+      assert.deepEqual(Object.keys(loadThemeJson(name).colors).sort(), dark, `theme "${name}" diverges from dark`);
+    }
   });
 });

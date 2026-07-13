@@ -5,7 +5,7 @@ import { defaultPitSettings, settingsItems, themeSelectItems } from "./index.ts"
 test("theme selector marks the current theme", () => {
   const { items, initialIndex } = themeSelectItems("light");
   assert.equal(initialIndex, 1);
-  assert.deepEqual(items.map((item) => item.value), ["dark", "light"]);
+  assert.deepEqual(items.map((item) => item.value), ["dark", "light", "tokyo-night"]);
   assert.equal(items[1]!.description, "(current)");
 });
 

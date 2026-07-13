@@ -1,4 +1,4 @@
-export type ThemeName = "dark" | "light";
+export type ThemeName = "dark" | "light" | "tokyo-night";
 export type ColorValue = string | number;
 export type ThemeColors = Record<string, ColorValue>;
 

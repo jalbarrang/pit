@@ -1,6 +1,7 @@
 import type { RenderContext, Renderable } from "@opentui/core";
 import { Markdown } from "@pit/tui";
 import { getDefaultTextStyle, getMarkdownTheme, type PitTheme } from "../../domain/theming/index.ts";
+import { TRANSCRIPT_GUTTER } from "./spacing.ts";
 
 export interface MarkdownPort {
   renderable: Renderable;
@@ -10,5 +11,6 @@ export interface MarkdownPort {
   getText(): string;
 }
 
-export const createMarkdownPort = (ctx: RenderContext, theme: PitTheme, text: string): MarkdownPort =>
-  new Markdown(ctx, text, 1, 0, getMarkdownTheme(theme), getDefaultTextStyle(theme));
+export const createMarkdownPort = (ctx: RenderContext, theme: PitTheme, text: string): MarkdownPort => {
+  return new Markdown(ctx, text, TRANSCRIPT_GUTTER, 0, getMarkdownTheme(theme), getDefaultTextStyle(theme));
+};

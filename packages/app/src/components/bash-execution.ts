@@ -2,7 +2,7 @@ import { StyledText, fg, type Renderable, type RenderContext, type TextChunk } f
 import { Box, Component, Text, ansiTextToStyledText, type TextContent } from "@pit/tui";
 import type { PitTheme } from "../domain/theming/index.ts";
 import { bashOutputLines, formatBashHeader, formatBashStatus } from "./bash-format.ts";
-import { spaceBelow } from "./message/spacing.ts"; import { treePrefix } from "./tool-format.ts";
+import { spaceBelow, TRANSCRIPT_GUTTER } from "./message/spacing.ts"; import { treePrefix } from "./tool-format.ts";
 
 type BoxLike = Renderable & { add(child: Renderable): number; onMouseDown?: (event: any) => void; options?: Record<string, unknown> };
 type TextLike = Renderable & { content: TextContent; options?: Record<string, unknown> };
@@ -28,7 +28,7 @@ export class BashExecutionComponent extends Component {
     this.statusRenderable = statusRenderable;
     this.command = command;
     this.excluded = excluded;
-    this.shell = new Box(ctx, 1, 0, undefined, box as never);
+    this.shell = new Box(ctx, TRANSCRIPT_GUTTER, 0, undefined, box as never);
     this.renderable = this.shell.renderable as BoxLike;
     spaceBelow(this.renderable);
     this.text = new Text(ctx, this.body(), 0, 0, undefined, textRenderable);

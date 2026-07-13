@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process"; import { readFileSync, unlinkSync, writeFileSync } from "node:fs"; import { tmpdir } from "node:os"; import { join } from "node:path";
 import { BoxRenderable } from "@opentui/core";
 import { Container, Editor, TUI, Text, getKeybindings, type Component, type EditorComponent } from "@pit/tui";
-import { FooterComponent } from "../../components/footer.ts"; import { GreetingComponent } from "../../components/greeting.ts";
+import { FooterComponent } from "../../components/footer.ts"; import { GreetingComponent } from "../../components/greeting.ts"; import { TRANSCRIPT_GUTTER } from "../../components/message/spacing.ts";
 import { emptyTokens } from "../../components/footer-format.ts";
 import { parseBashInput } from "../../domain/bash/index.ts"; import { resolveEditorCommand } from "../../domain/keybindings/external-editor.ts"; import { formatPending } from "../../domain/keybindings/message-queue.ts"; import { nextModel } from "../../domain/keybindings/model-cycle.ts"; import { nextThinkingLevel } from "../../domain/keybindings/thinking-cycle.ts"; import { createTheme, getEditorTheme, type ThemeName } from "../../domain/theming/index.ts";
 import type { ImagePart, OpenableImage, SessionGateway } from "../../domain/index.ts";
@@ -76,7 +76,7 @@ export class ChatShell {
       spawn: (c, a) => { spawnSync(c, a, { stdio: "inherit" }); }, suspend: () => r.suspend(), resume: () => r.resume(), setText: (t) => this.editor.setText(t) });
   }
   private pasteImage(): void { const img = readClipboardImage(createClipboardImageDeps()); if (!img) return this.notify(process.platform === "darwin" ? "No image in clipboard" : "Paste image not supported on this platform"); this.pendingImages.push(img); this.rememberImages([img]); this.notify(`Image attached (${this.pendingImages.count})`); }
-  private notify(text: string): void { this.chat.addMessage(new Text(this.tui.ctx, text, 1)); } notifyExtension(text: string): void { this.notify(text); } areToolsExpanded(): boolean { return this.toolsExpanded; } isThinkingVisible(): boolean { return this.thinkingVisible; }
+  private notify(text: string): void { this.chat.addMessage(new Text(this.tui.ctx, text, TRANSCRIPT_GUTTER)); } notifyExtension(text: string): void { this.notify(text); } areToolsExpanded(): boolean { return this.toolsExpanded; } isThinkingVisible(): boolean { return this.thinkingVisible; }
   currentTheme() { return createTheme(this.settingsStore.get().theme); } showGreeting(): void { this.chat.addMessage(new GreetingComponent(this.tui.ctx, this.currentTheme())); } mountHeader(component: Component | undefined): void { this.extensionMount.mountHeader(component); } mountFooter(component: Component | undefined): void { this.extensionMount.mountFooter(component); }
   mountWidget(key: string, component: Component | undefined, placement?: "aboveEditor" | "belowEditor"): void { this.extensionMount.mountWidget(key, component, placement); }
   setWorkingMessage(message?: string): void { this.extensionMount.setWorkingMessage(message); } setWorkingVisible(visible: boolean): void { this.extensionMount.setWorkingVisible(visible); } flushCompactionQueue(): void { this.compactionCtl.flush(); }
@@ -89,7 +89,7 @@ export class ChatShell {
   runCommand(text: string): Promise<boolean> { return this.chrome.handle(text); }
   refreshFooter(): void { const s = this.session, ctx = s?.contextUsage?.();
     this.footer.update({ cwd: this.cwd, modelId: s?.modelId ?? "no-model", tokens: s?.tokenUsage ?? emptyTokens(), branch: this.gitBranch(), sessionName: s?.sessionName?.(), thinking: s?.thinkingLevel, contextPercent: ctx?.percent, contextWindow: ctx?.window }); }
-  applyTheme(themeName: ThemeName): void { const theme = createTheme(themeName); this.editor.borderColor = getEditorTheme(theme).borderColor; (this.root.renderable as BoxRenderable).backgroundColor = theme.color("background") as never; this.footer.applyTheme(theme); this.extensionMount.applyTheme(theme); this.refreshFooter(); }
+  applyTheme(themeName: ThemeName): void { const theme = createTheme(themeName), editorTheme = getEditorTheme(theme); this.editor.borderColor = editorTheme.borderColor; (this.editor.renderable as { fg?: unknown }).fg = editorTheme.textColor; (this.root.renderable as BoxRenderable).backgroundColor = theme.color("background") as never; this.footer.applyTheme(theme); this.extensionMount.applyTheme(theme); if (this.session?.history?.()?.length) replaySession(this, this.session, theme); else { this.chat.clear(); this.chat.addMessage(new GreetingComponent(this.tui.ctx, theme)); } this.refreshFooter(); } // transcript components bake colors at construction, so applying a theme rebuilds the view from history (same fidelity as resume/replay)
   registerExpandable(component: Expandable): void { component.setExpanded(this.toolsExpanded); this.expandables.push(component); } registerThinking(component: Expandable): void { component.setExpanded(this.thinkingVisible); this.thinkingBlocks.push(component); }
   private toggleTools(): void { this.setToolsExpanded(!this.toolsExpanded); }
   private async submit(text: string): Promise<void> {

@@ -12,10 +12,12 @@ class FakeText {
 const fakeText = () => new FakeText() as unknown as Renderable & { content: string; options: Record<string, unknown> };
 
 describe("ThinkingComponent", () => {
-  it("renders empty string in both modes when thinking is empty", () => {
+  it("aligns its empty state with transcript prose", () => {
     const renderable = fakeText();
     const component = new ThinkingComponent({} as never, createTheme("dark"), renderable);
     assert.equal(renderable.content, "");
+    assert.equal(renderable.options.paddingX, 1);
+    assert.equal(renderable.options.maxWidth, undefined);
     component.setExpanded(true);
     assert.equal(renderable.content, "");
   });

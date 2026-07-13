@@ -1,6 +1,6 @@
 import { getAgentDir, SettingsManager } from "@earendil-works/pi-coding-agent";
 import {
-  defaultPitSettings, parseHttpIdle,
+  defaultPitSettings, isThemeName, parseHttpIdle,
   type PitSettings, type QueueMode, type TransportName, type TreeFilterSetting, type TrustDefault,
 } from "../../domain/chrome/index.ts";
 import type { ThemeName } from "../../domain/theming/index.ts";
@@ -31,8 +31,9 @@ export class SettingsStore {
 
   get(): PitSettings {
     const m = this.manager;
+    const storedTheme = m.getTheme() ?? "";
     return {
-      theme: m.getTheme() === "light" ? "light" : defaultPitSettings().theme,
+      theme: isThemeName(storedTheme) ? storedTheme : defaultPitSettings().theme,
       autoCompact: m.getCompactionEnabled(),
       steeringMode: m.getSteeringMode(),
       followUpMode: m.getFollowUpMode(),
