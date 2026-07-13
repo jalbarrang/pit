@@ -26,6 +26,11 @@ describe("extractPathPrefix (auto-trigger)", () => {
   it("does not trigger on a bare word after another word", () => {
     assert.equal(extractPathPrefix("open readme"), null);
   });
+
+  it("does not trigger on a bare double quote", () => {
+    assert.equal(extractPathPrefix('"'), null);
+    assert.equal(extractPathPrefix('say "'), null);
+  });
 });
 
 describe("extractPathPrefix (force)", () => {

@@ -6,9 +6,20 @@ export class FakeOverlay {
   onSelect?: (item: SelectItem) => void;
   onCancel?: () => void;
   onSelectionChange?: (item: SelectItem) => void;
-  readonly options: { items: SelectItem[]; initialIndex?: number; searchable?: boolean; initialSearch?: string };
-  constructor(options: { items: SelectItem[]; initialIndex?: number; searchable?: boolean; initialSearch?: string }) { this.options = options; }
+  onTab?: () => void;
+  readonly options: { items: SelectItem[]; initialIndex?: number; searchable?: boolean; initialSearch?: string; header?: unknown };
+  items: SelectItem[];
+  selectedIndex: number;
+  header?: unknown;
+  constructor(options: { items: SelectItem[]; initialIndex?: number; searchable?: boolean; initialSearch?: string; header?: unknown }) {
+    this.options = options;
+    this.items = options.items;
+    this.selectedIndex = options.initialIndex ?? 0;
+    this.header = options.header;
+  }
   setWidth(): void {}
+  setItems(items: SelectItem[], selectedIndex = 0): void { this.items = items; this.selectedIndex = selectedIndex; }
+  setHeader(content: unknown): void { this.header = content; }
 }
 
 export class FakeSettingsOverlay {
@@ -21,7 +32,7 @@ export class FakeSettingsOverlay {
   updateValue(id: string, value: string): void { this.updates.push(`${id}=${value}`); }
 }
 
-export const makeHost = () => {
+export const makeHost = (sessionOverrides: Record<string, unknown> = {}) => {
   const log: string[] = [];
   let hidden = 0;
   const overlays: FakeOverlay[] = [];
@@ -39,6 +50,7 @@ export const makeHost = () => {
     availableThinkingLevels: () => ["off", "low", "high"],
     setThinkingLevel: (level: string) => void log.push(`setThinking:${level}`),
     applySessionSetting: (id: string, value: string) => { log.push(`session:${id}:${value}`); return id === "steeringMode" || id === "followUpMode" || id === "autoCompact"; },
+    ...sessionOverrides,
   };
   const host: SelectorHost = {
     tui: () => tui as never,

@@ -26,8 +26,6 @@ export const extractAtPrefix = (text: string): string | null => {
 };
 
 export const extractPathPrefix = (text: string, force = false): string | null => {
-  const quoted = extractQuotedPrefix(text);
-  if (quoted) return quoted;
   const pathPrefix = text.slice(lastDelimiter(text) + 1);
   if (force) return pathPrefix;
   if (pathPrefix.includes("/") || pathPrefix.startsWith(".") || pathPrefix.startsWith("~/")) return pathPrefix;

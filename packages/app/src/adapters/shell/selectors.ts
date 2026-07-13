@@ -2,8 +2,9 @@ import type { RenderContext } from "@opentui/core";
 import type { TUI } from "@pit/tui";
 import { SettingsOverlay, type SettingsOverlayOptions } from "../../components/chrome/settings-overlay.ts";
 import { SelectorOverlay, type SelectorOverlayOptions } from "../../components/chrome/selector-overlay.ts";
-import { findModel, isThemeName, modelSelectItems, sessionSelectItems, settingsItems, themeSelectItems, thinkingSelectItems, type PitSettings } from "../../domain/chrome/index.ts";
+import { isThemeName, sessionSelectItems, settingsItems, themeSelectItems, thinkingSelectItems, type PitSettings } from "../../domain/chrome/index.ts";
 import type { ThemeName } from "../../domain/theming/index.ts";
+import { openModelSelector } from "./model-selector.ts";
 import type { SessionGateway, SessionSummary } from "../../domain/index.ts";
 import { currentTheme, overlayWidth as width, selectListTheme, settingsListTheme } from "./selector-themes.ts";
 import { applySettingChange } from "./settings-apply.ts";
@@ -35,15 +36,7 @@ export class ChromeSelectors {
   }
 
   openModel(search: string): void {
-    const session = this.host.session();
-    const models = session?.listModels?.() ?? [];
-    if (!session || models.length === 0) return this.host.notify("No models available — run `pi` login first.");
-    const { items, initialIndex } = modelSelectItems(models, session.modelId);
-    this.open({ items, initialIndex, searchable: true, ...(search ? { initialSearch: search } : {}) }, async (key) => {
-      const model = findModel(models, key);
-      if (model) await session.setModel?.(model);
-      this.host.notify(`Model: ${key}`);
-    });
+    openModelSelector(this.host, (options, apply) => this.open(options, apply), search);
   }
 
   openThinking(): void {
